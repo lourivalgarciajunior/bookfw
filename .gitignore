@@ -1,0 +1,5 @@
+node_modules/
+manuscrito/*.docx
+manuscrito/*.epub
+manuscrito/*.pdf
+.bookfw-cache/

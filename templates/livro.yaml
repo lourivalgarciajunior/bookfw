@@ -1,0 +1,19 @@
+# {{titulo}} — configuracao da obra
+# Criado por bookfw em {{data}}. O que esta aqui e invariante: mudar exige DEC.
+
+titulo: {{titulo}}
+slug: {{slug}}
+autor: {{autor}}
+genero: {{genero}}
+
+# Contrato de voz — o validate cobra coerencia contra isto
+pessoa_narrativa: primeira
+tempo_verbal: passado
+publico: adulto
+
+# Metas
+palavras_alvo: 60000
+palavras_por_capitulo: 2500
+
+# Governanca
+wip_limit: 1

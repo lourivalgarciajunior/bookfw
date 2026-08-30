@@ -1,0 +1,14 @@
+{
+  "name": "bookfw",
+  "version": "0.1.0",
+  "description": "Governanca de escrita de livros — DEC -> PD -> SUM -> kanban de capitulos -> manuscrito.",
+  "type": "module",
+  "bin": { "bookfw": "bin/bookfw.mjs" },
+  "scripts": {
+    "test": "node test/smoke.mjs"
+  },
+  "engines": { "node": ">=22" },
+  "author": "Lourival Garcia <lourival.garcia@indieexpert.com.br>",
+  "license": "UNLICENSED",
+  "files": ["bin", "src", "templates", "README.md"]
+}
