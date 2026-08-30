@@ -16,6 +16,12 @@ export function brief(args) {
   const cap = caps.find((x) => x.arquivo === alvoId || x.arquivo === `${alvoId}.md` || String(x.numero) === String(alvoId) || x.fm.id === alvoId);
   if (!cap) throw new Erro(`Capitulo "${alvoId}" nao encontrado.`);
 
+  // brief e leitura, entao nao recusa — mas pedir briefing de capitulo fechado
+  // costuma ser alvo errado, e o aviso sai antes de alguem escrever por cima.
+  if (cap.estado === 'pronto') {
+    console.error(`[aviso] ${cap.arquivo} esta em pronto — este capitulo ja foi fechado.\n`);
+  }
+
   const cfg = lerConfig(raiz);
   const cn = canon(raiz);
   const idx = args.cena ? cap.cenas.findIndex((s, i) => String(s.id) === String(args.cena) || i + 1 === Number(args.cena)) : cap.cenas.findIndex((s) => !s.prosa);

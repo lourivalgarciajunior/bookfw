@@ -70,7 +70,7 @@ export function capNew(args) {
 export function capMove(args) {
   const raiz = acharProjeto();
   const [nome, destino] = args._;
-  if (!nome || !destino) throw new Erro('Uso: bookfw cap move <capitulo> <estado>');
-  const r = moverCapitulo(raiz, nome, destino);
+  if (!nome || !destino) throw new Erro('Uso: bookfw cap move <capitulo> <estado> [--forcar]');
+  const r = moverCapitulo(raiz, nome, destino, { forcar: Boolean(args.forcar) });
   console.log(`${c.cyan(r.de)} -> ${c.green(r.para)}  ${rel(raiz, r.caminho)}`);
 }

@@ -3,6 +3,7 @@
  * bookfw — governanca de escrita de livros.
  * DEC -> PD -> SUM -> kanban de capitulos -> manuscrito.
  */
+import { readFileSync } from 'node:fs';
 import { Erro, c } from '../src/core.mjs';
 import { init } from '../src/init.mjs';
 import { dec, pd, sum, capNew, capMove } from '../src/novo.mjs';
@@ -12,7 +13,10 @@ import { style } from '../src/style.mjs';
 import { brief } from '../src/brief.mjs';
 import { build } from '../src/build.mjs';
 
-const VERSAO = '0.1.0';
+// fonte unica: duplicar a versao aqui deixou o CLI dizendo 0.1.0 com o pacote em 0.1.1
+const VERSAO = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+).version;
 
 const AJUDA = `bookfw ${VERSAO} — governanca de escrita de livros
 
@@ -21,7 +25,7 @@ const AJUDA = `bookfw ${VERSAO} — governanca de escrita de livros
   bookfw pd ["Titulo"]              plano diretor da obra
   bookfw sum ["Titulo"]             sumario derivado do plano diretor
   bookfw cap new "Titulo do cap"    novo capitulo em backlog/
-  bookfw cap move <cap> <estado>    move no kanban
+  bookfw cap move <cap> <estado>    move no kanban (--forcar para reabrir pronto)
   bookfw brief <cap> [--cena N]     briefing da cena — o pacote do escritor
   bookfw style                      mede sua voz sobre samples/
   bookfw status                     kanban, promessas e contagem

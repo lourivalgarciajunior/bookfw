@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.2 — 2026-08-30
+
+### Corrigido
+
+- **`cap move` reabria capitulo em `pronto` sem perguntar.** Apontar o fluxo de
+  escrita para um capitulo fechado o devolvia para a bancada em silencio, e
+  texto acabado voltava a ser rascunho sem ninguem ter decidido. Sair de
+  `pronto` agora exige `--forcar`; todo o resto do kanban continua livre,
+  inclusive o `revisao -> escrita` que e o "volta" de rotina da revisao.
+- **`brief` avisa** quando o capitulo pedido esta em `pronto`. E leitura, entao
+  nao recusa — mas o aviso sai antes de alguem escrever por cima.
+- **A versao estava duplicada.** O CLI dizia 0.1.0 com o pacote em 0.1.1.
+  Agora `bookfw version` le do `package.json`.
+
+### Nota de teste
+
+O helper do smoke capturava so o stdout, entao aviso em stderr passava
+despercebido. Passou a juntar os dois.
+
 ## 0.1.1 — 2026-08-30
 
 ### Corrigido

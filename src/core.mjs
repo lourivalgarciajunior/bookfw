@@ -137,11 +137,21 @@ export function prosaDe(corpo) {
 
 export const palavras = (t) => (t.trim().match(/[\p{L}\p{N}'’-]+/gu) || []).length;
 
-export function moverCapitulo(raiz, nome, destino) {
+export function moverCapitulo(raiz, nome, destino, opts = {}) {
   if (!ESTADOS.includes(destino)) throw new Erro(`Estado "${destino}" nao existe. Use: ${ESTADOS.join(', ')}`);
   const alvo = capitulos(raiz).find((cap) =>
     cap.arquivo === nome || cap.arquivo === `${nome}.md` || cap.fm.id === nome || String(cap.numero) === String(nome));
   if (!alvo) throw new Erro(`Capitulo "${nome}" nao encontrado.`);
+
+  // Reabrir capitulo fechado e sempre deliberado. Sem esta guarda, apontar o
+  // fluxo de escrita para um capitulo pronto o devolve para a bancada em
+  // silencio, e texto acabado volta a ser rascunho sem ninguem ter decidido.
+  if (alvo.estado === 'pronto' && destino !== 'pronto' && !opts.forcar) {
+    throw new Erro(
+      `Capitulo ${alvo.arquivo} esta em pronto.\n`
+      + `       Reabrir texto fechado e deliberado — repita com --forcar se for isso mesmo.`,
+    );
+  }
   const novoDir = join(raiz, 'capitulos', destino);
   mkdirSync(novoDir, { recursive: true });
   const novo = join(novoDir, alvo.arquivo);

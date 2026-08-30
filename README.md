@@ -94,6 +94,19 @@ palavras_alvo: 1100
 
 São os mesmos campos que um roteiro pede depois. Adaptar a obra para cinema lê daqui, sem reler o livro.
 
+## A guarda do pronto
+
+Capitulo em `pronto` nao sai de la sem `--forcar`:
+
+```bash
+bookfw cap move 3 escrita             # recusa, e diz o porque
+bookfw cap move 3 escrita --forcar    # reabre
+```
+
+Existe por um motivo pratico: apontar o fluxo de escrita para um capitulo
+fechado o devolvia para a bancada em silencio. Todo o resto do kanban continua
+livre — inclusive o `revisao -> escrita`, que e o "volta" de rotina da revisao.
+
 ## O gate
 
 `bookfw validate` cobra:

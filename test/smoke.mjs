@@ -7,7 +7,7 @@
 import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -15,12 +15,10 @@ const CLI = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'bookf
 const raiz = mkdtempSync(join(tmpdir(), 'bookfw-'));
 let falhas = 0;
 
+/** saida junta stdout e stderr — aviso do CLI sai em stderr e tambem e testavel. */
 const run = (...args) => {
-  try {
-    return { saida: execFileSync(process.execPath, [CLI, ...args], { cwd: raiz, encoding: 'utf8' }), codigo: 0 };
-  } catch (e) {
-    return { saida: (e.stdout || '') + (e.stderr || ''), codigo: e.status ?? 1 };
-  }
+  const r = spawnSync(process.execPath, [CLI, ...args], { cwd: raiz, encoding: 'utf8' });
+  return { saida: (r.stdout || '') + (r.stderr || ''), codigo: r.status ?? 1 };
 };
 const ok = (nome, cond) => {
   if (cond) console.log(`  ok   ${nome}`);
@@ -85,6 +83,15 @@ ok('corte padrao mantem o nome limpo',
 ok('os dois cortes convivem no disco',
   existsSync(join(raiz, 'manuscrito', 'obra-de-teste.md'))
   && existsSync(join(raiz, 'manuscrito', 'obra-de-teste-esboco.md')));
+
+// guarda do pronto: reabrir capitulo fechado exige --forcar
+run('cap', 'move', '1', 'pronto');
+const reabrir = run('cap', 'move', '1', 'escrita');
+ok('recusa reabrir capitulo pronto sem --forcar', reabrir.codigo === 1);
+ok('a recusa explica o que fazer', reabrir.saida.includes('--forcar'));
+ok('brief avisa quando o capitulo esta pronto', run('brief', '1').saida.includes('esta em pronto'));
+ok('reabre com --forcar', run('cap', 'move', '1', 'escrita', '--forcar').codigo === 0);
+ok('mover para pronto segue livre', run('cap', 'move', '1', 'pronto').codigo === 0);
 
 rmSync(raiz, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
