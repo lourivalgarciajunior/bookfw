@@ -5,10 +5,13 @@
 import { join } from 'node:path';
 import { ESTADOS_ATIVOS, Erro, acharProjeto, c, capitulos, escrever, hoje, lerConfig, palavras, prosaDe, rel } from './core.mjs';
 
+/** O corte que produz o manuscrito de trabalho — tudo que ja tem prosa completa. */
+const CORTE_PADRAO = 'revisao';
+
 export function build(args) {
   const raiz = acharProjeto();
   const cfg = lerConfig(raiz);
-  const minimo = args.desde || 'esboco';
+  const minimo = args.desde || CORTE_PADRAO;
   const ordem = ESTADOS_ATIVOS;
   const corte = ordem.indexOf(minimo);
   if (corte < 0) throw new Erro(`--desde deve ser um de ${ordem.join(', ')}`);
@@ -25,13 +28,17 @@ export function build(args) {
       : prosaDe(cap.corpo).trim();
     partes.push(prosa || `> _[capitulo ainda sem prosa — ${cap.cenas.length} cenas planejadas]_`);
   }
+  // Um arquivo por corte. O corte padrao fica com o nome limpo, e e o que as
+  // ferramentas de exportacao leem; os outros ganham sufixo para nunca
+  // sobrescrever o manuscrito de trabalho com uma versao parcial.
   const texto = partes.join('\n');
-  const alvo = join(raiz, 'manuscrito', `${cfg.slug || 'manuscrito'}.md`);
+  const sufixo = minimo === CORTE_PADRAO ? '' : `-${minimo}`;
+  const alvo = join(raiz, 'manuscrito', `${cfg.slug || 'manuscrito'}${sufixo}.md`);
   escrever(alvo, texto);
 
   const total = palavras(texto);
   console.log(`${c.green('manuscrito gerado')}  ${rel(raiz, alvo)}`);
-  console.log(c.dim(`  ${caps.length} capitulos | ${total} palavras | ~${Math.ceil(total / 250)} paginas | gerado em ${hoje()}`));
+  console.log(c.dim(`  corte: ${minimo} ou adiante | ${caps.length} capitulos | ${total} palavras | ~${Math.ceil(total / 250)} paginas | gerado em ${hoje()}`));
   const alvoPal = Number(cfg.palavras_alvo || 0);
   if (alvoPal) console.log(c.dim(`  ${Math.round((total / alvoPal) * 100)}% do alvo de ${alvoPal}`));
   console.log(c.dim('  DOCX/EPUB e com o agente book-hermes'));

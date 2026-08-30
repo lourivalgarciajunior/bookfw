@@ -4,7 +4,7 @@
  *
  *   npm test
  */
-import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -66,7 +66,25 @@ ok('brief monta o pacote da cena', run('brief', '1').saida.includes('BRIEFING DE
 ok('status roda', run('status').codigo === 0);
 ok('context roda', run('context').saida.includes('Contexto da obra'));
 ok('build costura o manuscrito', run('build', '--desde', 'esboco').codigo === 0);
+
+// Um arquivo por corte. Sem isso, `--desde pronto` sobrescreve em silencio o
+// manuscrito de trabalho com uma versao parcial — e as duas tem a mesma cara.
+ok('corte nao padrao ganha sufixo no nome',
+  run('build', '--desde', 'esboco').saida.includes('-esboco.md'));
+
 ok('validate --json devolve JSON', JSON.parse(run('validate', '--json').saida).erros.length === 0);
+
+// dai em diante o capitulo vai para revisao, e o gate passa a cobrar prosa
+run('cap', 'move', '1', 'revisao');
+ok('gate reprova capitulo em revisao sem prosa escrita', run('validate').codigo === 1);
+
+const padrao = run('build');
+ok('corte padrao gera manuscrito', padrao.codigo === 0);
+ok('corte padrao mantem o nome limpo',
+  padrao.saida.includes('obra-de-teste.md') && !padrao.saida.includes('-revisao.md'));
+ok('os dois cortes convivem no disco',
+  existsSync(join(raiz, 'manuscrito', 'obra-de-teste.md'))
+  && existsSync(join(raiz, 'manuscrito', 'obra-de-teste-esboco.md')));
 
 rmSync(raiz, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');

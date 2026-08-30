@@ -27,7 +27,7 @@ const AJUDA = `bookfw ${VERSAO} — governanca de escrita de livros
   bookfw status                     kanban, promessas e contagem
   bookfw context                    dump da governanca para LLM
   bookfw validate [--json]          gate — zero violacoes antes de fechar
-  bookfw build [--desde esboco]     costura o manuscrito
+  bookfw build [--desde <estado>]   costura o manuscrito (padrao: revisao)
 
 estados: backlog esboco escrita revisao pronto bloqueado abandonado`;
 

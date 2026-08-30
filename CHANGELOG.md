@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.1 — 2026-08-30
+
+### Corrigido
+
+- **`build` escrevia sempre no mesmo arquivo.** Conferir a versao fechada com
+  `--desde pronto` sobrescrevia em silencio o manuscrito de trabalho por uma
+  versao parcial, com o mesmo nome e a mesma cara. Agora e um arquivo por
+  corte: o padrao mantem o nome limpo, os outros ganham sufixo (`-esboco`,
+  `-pronto`).
+- **Corte padrao do `build` passou de `esboco` para `revisao`.** `esboco` inclui
+  capitulo sem prosa, o que so serve para conferencia interna — nao para o
+  arquivo que as ferramentas de exportacao leem.
+
+### Nota
+
+O repositorio mudou de `trackfw_book` para `bookfw`, alinhando com o nome que o
+CLI, o pacote e o plugin ja usavam.
+
 ## 0.1.0 — 2026-08-30
 
 Primeira versão. Governança de obra longa: `DEC → PD → SUM → kanban de capítulos → manuscrito`.
