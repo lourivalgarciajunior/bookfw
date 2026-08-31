@@ -513,6 +513,77 @@ function preencheSumario(dir, tabela) {
   ok('context traz o placar de promessas', ctx.includes('P1 [nao plantada]'));
 }
 
+// ---------------------------------------------------------------------------
+// 0.3.0 — cap move em lote, renumber e retitle. Nome de arquivo e frontmatter
+// mudam juntos; feitos na mao, desencontram.
+// ---------------------------------------------------------------------------
+
+function comCincoCapitulos(titulo) {
+  const p = projeto(titulo);
+  for (let i = 1; i <= 5; i++) p.rodar('cap', 'new', `Capitulo ${i}`);
+  return p;
+}
+
+{
+  const p = comCincoCapitulos('Lote');
+  const faixa = p.rodar('cap', 'move', '2..4', 'esboco');
+  ok('cap move aceita faixa', faixa.codigo === 0 && faixa.saida.includes('3 capitulos movidos'));
+  ok('a faixa move exatamente os da faixa',
+    existsSync(join(p.dir, 'capitulos', 'esboco', 'cap-03-capitulo-3.md'))
+    && existsSync(join(p.dir, 'capitulos', 'backlog', 'cap-01-capitulo-1.md')));
+
+  const lista = p.rodar('cap', 'move', '1,5', 'esboco');
+  ok('cap move aceita lista', lista.codigo === 0 && lista.saida.includes('2 capitulos movidos'));
+  ok('sem repetir alvo', p.rodar('cap', 'move', '1..2,2', 'escrita').saida.includes('2 capitulos movidos'));
+
+  // Em lote, um capitulo fechado no meio da faixa nao pode deixar metade movida.
+  p.rodar('cap', 'move', '3', 'pronto');
+  const parcial = p.rodar('cap', 'move', '3..5', 'escrita');
+  ok('lote com capitulo pronto recusa inteiro', parcial.codigo === 1);
+  ok('a recusa diz que nada foi movido', parcial.saida.includes('nada foi movido'));
+  ok('e nenhum capitulo da faixa se moveu',
+    existsSync(join(p.dir, 'capitulos', 'esboco', 'cap-04-capitulo-4.md')));
+}
+
+{
+  const p = comCincoCapitulos('Renumerar');
+  const r = p.rodar('cap', 'renumber', '5', '9');
+  ok('renumber renomeia o arquivo', r.codigo === 0 && r.saida.includes('cap-09-capitulo-5.md'));
+  const fm = readFileSync(join(p.dir, 'capitulos', 'backlog', 'cap-09-capitulo-5.md'), 'utf8');
+  ok('renumber acerta o numero no frontmatter', /^numero: 9$/m.test(fm));
+  ok('renumber acerta o id no frontmatter', /^id: cap-09-capitulo-5$/m.test(fm));
+  ok('o arquivo antigo nao fica para tras',
+    !existsSync(join(p.dir, 'capitulos', 'backlog', 'cap-05-capitulo-5.md')));
+
+  const choque = p.rodar('cap', 'renumber', '1', '2');
+  ok('renumber recusa numero ocupado', choque.codigo === 1);
+  ok('a recusa nomeia quem ocupa', choque.saida.includes('cap-02-capitulo-2.md'));
+  ok('renumber recusa numero invalido', p.rodar('cap', 'renumber', '1', 'zero').codigo === 1);
+}
+
+{
+  const p = comCincoCapitulos('Retitular');
+  const r = p.rodar('cap', 'retitle', '2', 'O nome novo');
+  ok('retitle renomeia o arquivo', r.codigo === 0 && r.saida.includes('cap-02-o-nome-novo.md'));
+  const fm = readFileSync(join(p.dir, 'capitulos', 'backlog', 'cap-02-o-nome-novo.md'), 'utf8');
+  ok('retitle acerta o titulo no frontmatter', /^titulo: O nome novo$/m.test(fm));
+  ok('retitle acerta o id, que carrega o slug', /^id: cap-02-o-nome-novo$/m.test(fm));
+  ok('retitle preserva o numero', /^numero: 2$/m.test(fm));
+  ok('retitle recusa titulo com dois-pontos',
+    p.rodar('cap', 'retitle', '3', 'Isto e: proibido').codigo === 1);
+
+  // o corpo do capitulo nao pode ser tocado: so o frontmatter e reescrito
+  const arq = join(p.dir, 'capitulos', 'backlog', 'cap-04-capitulo-4.md');
+  writeFileSync(arq, readFileSync(arq, 'utf8').replace(
+    '<!-- a prosa da cena entra aqui, logo abaixo do contrato -->',
+    'Prosa com a palavra numero: no meio, que nao pode ser reescrita.\n',
+  ), 'utf8');
+  p.rodar('cap', 'retitle', '4', 'Outro nome');
+  ok('retitle nao mexe na prosa',
+    readFileSync(join(p.dir, 'capitulos', 'backlog', 'cap-04-outro-nome.md'), 'utf8')
+      .includes('Prosa com a palavra numero: no meio'));
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);

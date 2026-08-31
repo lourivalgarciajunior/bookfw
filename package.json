@@ -1,13 +1,15 @@
 {
   "name": "bookfw",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Governanca de escrita de livros — DEC -> PD -> SUM -> kanban de capitulos -> manuscrito.",
   "type": "module",
   "bin": {
     "bookfw": "bin/bookfw.mjs"
   },
   "scripts": {
-    "test": "node test/smoke.mjs"
+    "test": "node test/smoke.mjs",
+    "lint": "node tools/lint.mjs",
+    "check": "npm run lint && npm test"
   },
   "optionalDependencies": {
     "docx": "^9.0.0"
@@ -21,6 +23,7 @@
     "bin",
     "src",
     "templates",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ]
 }

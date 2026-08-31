@@ -6,7 +6,8 @@
 import { readFileSync } from 'node:fs';
 import { Erro, c } from '../src/core.mjs';
 import { init } from '../src/init.mjs';
-import { dec, pd, sum, capNew, capMove } from '../src/novo.mjs';
+import { dec, pd, sum, capNew } from '../src/novo.mjs';
+import { capMove, capRenumber, capRetitle } from '../src/cap.mjs';
 import { canonNew } from '../src/canon.mjs';
 import { cenaAdd } from '../src/cena.mjs';
 import { status, context } from '../src/status.mjs';
@@ -29,7 +30,9 @@ const AJUDA = `bookfw ${VERSAO} — governanca de escrita de livros
   bookfw sum ["Titulo"]             sumario derivado do plano diretor
   bookfw sum --materializar         cria no kanban os capitulos do sumario
   bookfw cap new "Titulo do cap"    novo capitulo em backlog/
-  bookfw cap move <cap> <estado>    move no kanban (--forcar para reabrir pronto)
+  bookfw cap move <cap|8..12> <est> move no kanban, um ou varios (--forcar)
+  bookfw cap renumber <cap> <n>     troca o numero, arquivo e frontmatter juntos
+  bookfw cap retitle <cap> "Titulo" troca o titulo, arquivo e frontmatter juntos
   bookfw cena add <cap>             novo contrato de cena no capitulo
   bookfw canon new <tipo> "Nome"    ficha de personagem ou lugar
   bookfw brief <cap> [--cena N]     briefing da cena — o pacote do escritor
@@ -67,7 +70,9 @@ try {
       const sub = args._.shift();
       if (sub === 'new') capNew(args);
       else if (sub === 'move') capMove(args);
-      else throw new Erro('Uso: bookfw cap new|move');
+      else if (sub === 'renumber') capRenumber(args);
+      else if (sub === 'retitle') capRetitle(args);
+      else throw new Erro('Uso: bookfw cap new|move|renumber|retitle');
       break;
     }
     case 'cena': {
