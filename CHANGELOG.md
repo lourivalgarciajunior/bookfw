@@ -1,5 +1,80 @@
 # Changelog
 
+## 0.2.1 — 2026-08-31
+
+Bloco 3 da auditoria: o sumario era governanca decorativa. O gate conferia que
+o arquivo existia e nunca abria; o `context`, que existe para um agente retomar
+a obra sem contexto nenhum, saia sem o outline. Os dois artefatos que o `init`
+cria e ninguem lia — `cronologia.md` e `regras.md` — entram junto.
+
+### Adicionado
+
+- **O gate le a tabela do sumario e compara com o kanban**, nos dois sentidos:
+  capitulo escrito que nao esta no sumario, e capitulo planejado que nunca foi
+  materializado. Tambem acusa titulo que divergiu do outline. Sao **avisos**,
+  nao erros: escrever e iterativo, e quem decide qual dos dois lados corrigir e
+  o autor — o gate so tira a divergencia do silencio.
+- **`bookfw context` passa a carregar sumario, cronologia, regras do mundo e o
+  placar de promessas** (plantada / paga / nao plantada). Era o dump "para LLM"
+  sem o documento que diz o que vem a seguir.
+
+### Nota sobre lacuna de numeracao
+
+Nao existe checagem de buraco na numeracao, e e deliberado: em `metamorfose` os
+numeros 13 a 19 estao livres de proposito e documentados no sumario. Buraco so
+significa alguma coisa **contra o plano** — e essa comparacao a checagem nova ja
+faz. Um aviso de lacuna solto seria ruido em toda obra que corta capitulo.
+
+Medido nas duas obras: `metamorfose` fica sem nenhum aviso novo (17 capitulos,
+17 linhas de sumario, vao intencional respeitado); `o-arquivo` ganha quatro
+avisos verdadeiros — os capitulos 07, 14, 25 e 26 foram escritos com o sumario
+parado em tres linhas.
+
+## 0.2.0 — 2026-08-31
+
+A exportacao de DOCX vivia fora do CLI, copiada em quatro projetos de livro
+como `tools/gerar-docx.mjs`. O cabecalho do proprio arquivo dizia "Generico:
+nada aqui e especifico de uma obra" — e mesmo assim eram quatro copias. Elas
+divergiram: tres correcoes existiam so em um dos livros. Esta versao traz o
+gerador para dentro.
+
+### Adicionado
+
+- **`bookfw docx [--desde <estado>]`** — a versao de leitura do manuscrito:
+  miolo A5, serifado, rosto, rodape numerado, sem marcacao de trabalho. Le o
+  mesmo corte do `build`, direto do kanban.
+- **Carimbo de ressalva com texto configuravel.** Capitulo com `verificar:`
+  preenchido abre com uma ressalva em italico, e o texto sai de
+  `ressalva_verificar` no `livro.yaml` — memoria e livro tecnico nao ressalvam
+  com as mesmas palavras. Sem a chave, o padrao continua *Fatos ainda nao
+  verificados pelo autor*. `origem: ESPECIME` tem precedencia.
+- **`docs/apendice.md`** — renderizado no fim do livro, uma pagina por secao
+  `## `, com o mesmo tratamento de `docs/front-matter.md`. Lugar para o que e
+  do produto e nao e capitulo: lista de pendencias, glossario, fontes.
+- **`docx` como `optionalDependencies`.** O nucleo do bookfw continua sem
+  dependencia nenhuma; sem o pacote, so este comando falha, com mensagem que
+  nomeia o que instalar. Resolve tambem a partir do `node_modules` da obra,
+  para o CLI linkado enxergar o pacote que ja estava la.
+
+### Corrigido
+
+- **Capitulo com `verificar:` em lista em bloco saia sem carimbo.** A copia
+  usava um parser de YAML proprio cuja regex exigia valor na mesma linha, entao
+  `verificar:` seguido de itens indentados nunca era capturado. O capitulo
+  chegava ao papel com a mesma cara de um capitulo conferido — que e
+  exatamente o contrario do que o carimbo existe para fazer. O comando novo
+  usa o `yamlRaso` do nucleo, que entende as duas formas.
+- **Frontmatter perdido em silencio.** O gerador copiado relia o `.md` do
+  manuscrito e recasava capitulo por numero, com regex sobre o cabecalho. Um
+  cabecalho fora do formato e o capitulo saia sem ato e sem ressalva, sem erro
+  e sem aviso. `build` e `docx` agora leem o kanban pela mesma funcao
+  (`selecao`), e o casamento por numero deixou de existir.
+
+### Mudado
+
+- `bookfw build` terminava apontando para "o agente book-hermes" para DOCX e
+  EPUB. Agora aponta para `bookfw docx`, que existe.
+
 ## 0.1.4 — 2026-08-31
 
 O gate cobrava artefato que o CLI nao sabia produzir. Ficha de canon, cena a

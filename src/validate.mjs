@@ -6,7 +6,7 @@
  */
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { acharProjeto, artefatos, c, canon, capitulos, lerConfig, promessas, rel } from './core.mjs';
+import { acharProjeto, artefatos, c, canon, capitulos, lerConfig, linhasDoSumario, promessas, rel, slug, sumario } from './core.mjs';
 
 const OBRIGATORIOS = ['objetivo', 'conflito', 'virada'];
 
@@ -39,6 +39,43 @@ export function validate(args) {
   const proms = promessas(raiz);
   const pagas = new Set();
   const plantadas = new Set();
+
+  // ---- kanban contra o sumario
+  // Ate aqui o sumario so era conferido por existencia: o gate nunca abria o
+  // arquivo. Capitulo escrito fora do plano e capitulo planejado que nunca foi
+  // materializado passavam os dois em silencio, e o outline virava decoracao.
+  // Sao avisos, nao erros: escrever e iterativo, e a divergencia so precisa
+  // ficar visivel — quem decide qual dos dois lados corrigir e o autor.
+  const sumArq = sumario(raiz);
+  if (sumArq) {
+    const { linhas, ignoradas } = linhasDoSumario(sumArq.corpo);
+    const planejado = new Map(linhas.map((l) => [l.numero, l]));
+    const materializado = new Set(caps.filter((x) => x.estado !== 'abandonado').map((x) => x.numero));
+
+    for (const cap of caps) {
+      if (cap.estado === 'abandonado') continue;
+      const linha = planejado.get(cap.numero);
+      const onde = rel(raiz, cap.caminho);
+      if (!linha) {
+        aviso(onde, `capitulo ${cap.numero} nao esta no sumario (${sumArq.arquivo}) — escrito fora do plano, ou o sumario ficou para tras`);
+        continue;
+      }
+      // Comparacao por slug: acento, caixa e travessao mudam sem que o titulo
+      // tenha mudado, e cobrar isso seria ruido.
+      if (cap.fm.titulo && slug(cap.fm.titulo) !== slug(linha.titulo)) {
+        aviso(onde, `titulo "${cap.fm.titulo}" diverge do sumario ("${linha.titulo}")`);
+      }
+    }
+
+    for (const l of linhas) {
+      if (!materializado.has(l.numero)) {
+        aviso('docs/sumario', `capitulo ${l.numero} ("${l.titulo}") planejado e nao materializado — rode: bookfw sum --materializar`);
+      }
+    }
+    for (const ig of ignoradas) {
+      aviso('docs/sumario', `linha "${ig.bruto}" nao vira capitulo (${ig.motivo}) — pendencia declarada no sumario`);
+    }
+  }
 
   // ---- WIP
   const emEscrita = caps.filter((x) => x.estado === 'escrita');

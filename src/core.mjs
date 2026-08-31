@@ -205,6 +205,72 @@ export function planoDiretor(raiz) {
   return todos.length ? todos[todos.length - 1] : null;
 }
 
+/**
+ * O sumario em vigor. Mesma regra do plano diretor: os arquivos sao
+ * `SUM-<data>-<slug>.md`, e o que vale e o ultimo.
+ */
+export function sumario(raiz) {
+  const todos = artefatos(raiz, 'sumario');
+  return todos.length ? todos[todos.length - 1] : null;
+}
+
+/**
+ * Le a tabela do sumario por NOME de coluna, nao por posicao: as obras reais
+ * trocam a ultima coluna (Palavras, Fonte) e a leitura posicional quebraria.
+ * Devolve uma linha por capitulo planejado.
+ */
+export function linhasDoSumario(corpo) {
+  const celulas = (l) => l.replace(/^\||\|$/g, '').split('|').map((x) => x.trim());
+  const separador = (l) => /^\|[\s|:-]*\|?$/.test(l);
+
+  // A tabela e o bloco CONTIGUO de linhas com barra. Varrer o arquivo inteiro
+  // atras de linha com barra misturava a tabela de capitulos com as outras do
+  // sumario: numa obra real, "a mesma pergunta da pagina 1" virou capitulo 1.
+  const todas = corpo.split('\n').map((l) => l.trim());
+  const blocos = [];
+  let atual = null;
+  for (const l of todas) {
+    if (l.startsWith('|')) (atual ??= blocos[blocos.push([]) - 1]).push(l);
+    else atual = null;
+  }
+
+  const bloco = blocos.find((b) => {
+    const cab = celulas(b[0]).map((x) => x.toLowerCase());
+    return cab.includes('#') && cab.some((x) => /^t[ií]tulo$/.test(x));
+  });
+  if (!bloco) return { linhas: [], ignoradas: [], temTabela: blocos.length > 0 };
+
+  const cab = celulas(bloco[0]).map((x) => x.toLowerCase());
+  const col = (...nomes) => cab.findIndex((x) => nomes.includes(x));
+  const iNum = col('#');
+  const iTit = col('titulo', 'título');
+  const iAto = col('ato');
+  const iPal = col('palavras', 'palavras_alvo');
+
+  const linhas = [];
+  const ignoradas = [];
+  for (const l of bloco.slice(1)) {
+    if (separador(l)) continue;
+    const cs = celulas(l);
+    const bruto = String(cs[iNum] || '').replace(/\*\*/g, '').trim();
+    const titulo = String(cs[iTit] || '').replace(/\*\*/g, '').trim();
+    // "04–06" nao e capitulo, e um vao ainda por escrever. Virar 406 em
+    // silencio seria pior que ignorar: cria um capitulo que ninguem planejou.
+    const m = bruto.match(/^0*(\d+)$/);
+    if (!m || !titulo) {
+      if (bruto || titulo) ignoradas.push({ bruto, titulo, motivo: m ? 'sem titulo' : 'numero nao e um capitulo so' });
+      continue;
+    }
+    linhas.push({
+      numero: Number(m[1]),
+      titulo,
+      ato: iAto >= 0 ? cs[iAto] : '',
+      palavras: iPal >= 0 ? String(cs[iPal] || '').replace(/[^0-9]/g, '') : '',
+    });
+  }
+  return { linhas, ignoradas, temTabela: true };
+}
+
 /** Promessas do PD: linhas `- P1 — texto` na seção Promessas. */
 export function promessas(raiz) {
   const pd = planoDiretor(raiz);

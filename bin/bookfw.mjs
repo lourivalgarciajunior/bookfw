@@ -14,6 +14,7 @@ import { validate } from '../src/validate.mjs';
 import { style } from '../src/style.mjs';
 import { brief } from '../src/brief.mjs';
 import { build } from '../src/build.mjs';
+import { docx } from '../src/docx.mjs';
 
 // fonte unica: duplicar a versao aqui deixou o CLI dizendo 0.1.0 com o pacote em 0.1.1
 const VERSAO = JSON.parse(
@@ -37,6 +38,7 @@ const AJUDA = `bookfw ${VERSAO} — governanca de escrita de livros
   bookfw context                    dump da governanca para LLM
   bookfw validate [--json]          gate — zero violacoes antes de fechar
   bookfw build [--desde <estado>]   costura o manuscrito (padrao: revisao)
+  bookfw docx [--desde <estado>]    versao de leitura em DOCX (pede o pacote docx)
 
 estados: backlog esboco escrita revisao pronto bloqueado abandonado`;
 
@@ -86,6 +88,7 @@ try {
     case 'context': context(args); break;
     case 'validate': process.exitCode = validate(args); break;
     case 'build': build(args); break;
+    case 'docx': await docx(args); break;
     case 'version': case '--version': case '-v': console.log(VERSAO); break;
     case undefined: case 'help': case '--help': case '-h': console.log(AJUDA); break;
     default:

@@ -177,13 +177,21 @@ ok('mover para pronto segue livre', run('cap', 'move', '1', 'pronto').codigo ===
 // 0.1.4 — os comandos que faltavam entre o que o gate cobra e o que o CLI cria.
 // ---------------------------------------------------------------------------
 
-/** Troca a tabela em branco do template do sumario por uma preenchida. */
+/**
+ * Reescreve o sumario com a tabela dada. Reescrever em vez de substituir as
+ * linhas do template deixa a funcao idempotente: o mesmo projeto pode ter o
+ * sumario trocado mais de uma vez no mesmo teste.
+ */
 function preencheSumario(dir, tabela) {
   const d = join(dir, 'docs', 'sumario');
   const arq = join(d, readdirSync(d)[0]);
-  writeFileSync(arq, readFileSync(arq, 'utf8').replace(
-    '| 01 | 1 |  |  | P1 | 2500 |\n| 02 | 1 |  |  |  | 2500 |', tabela,
-  ), 'utf8');
+  writeFileSync(arq, [
+    '---', 'titulo: Teste', 'data: 2026-01-01', '---', '',
+    '# Sumario', '',
+    '| # | Ato | Titulo | Funcao no arco | Promessas | Palavras |',
+    '|---|---|---|---|---|---|',
+    tabela, '',
+  ].join('\n'), 'utf8');
 }
 
 // canon new — o gate reprovava personagem sem ficha e o CLI nao sabia criar uma.
@@ -323,6 +331,186 @@ function preencheSumario(dir, tabela) {
   ok('--forcar passa por cima', dentro(porta, 'init', 'Livro B', '--forcar').codigo === 0);
   ok('--titulo vale como titulo',
     dentro(join(porta, 'livro-a'), 'status').saida.includes('Livro A'));
+}
+
+// ---------------------------------------------------------------------------
+// bookfw docx — o carimbo de ressalva.
+//
+// O modo de falha deste comando nao e o erro: e o capitulo nao confirmado
+// saindo do papel com a mesma cara de um capitulo apurado. Um so numero cobre
+// os dois sentidos da regressao — carimbo que some e carimbo que sobra.
+// ---------------------------------------------------------------------------
+{
+  // `docx` e dependencia opcional. Sem ela, os casos que geram arquivo sao
+  // pulados com aviso na tela — nunca silenciosamente verdes.
+  let Zip = null;
+  try {
+    await import('docx');
+    Zip = (await import('jszip')).default;
+  } catch { /* ausente */ }
+
+  if (!Zip) {
+    console.log('  PULADO  bookfw docx — pacote `docx` ausente (npm i docx para cobrir)');
+  } else {
+    const p = projeto('Carimbo');
+
+    /**
+     * Insere linhas no frontmatter, logo depois do `---` de abertura. O `\r?`
+     * nao e enfeite: no Windows o template chega com CRLF, e um `^---\n` cru
+     * nao casa — o helper nao insere nada e o teste passa a medir um
+     * frontmatter vazio, verde por engano.
+     */
+    const fmAdd = (arq, linhas) => {
+      const t = readFileSync(arq, 'utf8');
+      const novo = t.replace(/^---\r?\n/, (m) => `${m}${linhas.join('\n')}\n`);
+      if (novo === t) throw new Error(`fmAdd nao achou o frontmatter de ${arq}`);
+      writeFileSync(arq, novo, 'utf8');
+    };
+    const capArq = (n, slug) => join(p.dir, 'capitulos', 'backlog', `cap-0${n}-${slug}.md`);
+    const texto = async (nome) => {
+      const z = await Zip.loadAsync(readFileSync(join(p.dir, 'manuscrito', nome)));
+      return z.file('word/document.xml').async('string');
+    };
+    const conta = (s, alvo) => s.split(alvo).length - 1;
+
+    for (const t of ['Um', 'Dois', 'Tres', 'Quatro']) p.rodar('cap', 'new', t);
+
+    // 1. valor na mesma linha — a unica forma que o gerador copiado entendia
+    fmAdd(capArq(1, 'um'), ['verificar: a data da internacao']);
+    // 2. lista em bloco — a forma que saia do papel sem carimbo nenhum
+    fmAdd(capArq(2, 'dois'), ['verificar:', '  - a data', '  - o nome do hospital']);
+    // 3. especime tem precedencia sobre verificar
+    fmAdd(capArq(3, 'tres'), ['origem: ESPECIME DE FORMA', 'verificar: tudo']);
+    // 4. capitulo sem pendencia nenhuma: tem de sair limpo
+    for (let i = 1; i <= 4; i++) {
+      const arq = capArq(i, ['um', 'dois', 'tres', 'quatro'][i - 1]);
+      writeFileSync(arq, `${readFileSync(arq, 'utf8')}\n\nProsa do capitulo ${i}.\n`, 'utf8');
+      p.rodar('cap', 'move', String(i), 'revisao');
+    }
+
+    const livro = join(p.dir, 'livro.yaml');
+    writeFileSync(livro, `${readFileSync(livro, 'utf8')}\nressalva_verificar: Conferir em fonte primaria\n`, 'utf8');
+    writeFileSync(join(p.dir, 'docs', 'apendice.md'),
+      '# Apendice\n\n## O que ainda falta conferir\n\nA lista de pendencias da obra.\n', 'utf8');
+
+    const saida = p.rodar('docx');
+    ok('docx roda sem build previo', saida.codigo === 0);
+
+    // Presenca e ausencia no mesmo numero: 4 capitulos, 3 carimbados.
+    ok('docx conta os capitulos com ressalva', saida.saida.includes('4 capitulos, 3 com ressalva'));
+
+    const xml = await texto('Carimbo — versao de leitura.docx');
+    ok('carimbo sai na forma inline e na forma de lista em bloco',
+      conta(xml, 'Conferir em fonte primaria') === 2);
+    ok('ESPECIME tem precedencia sobre verificar',
+      conta(xml, 'ESPECIME DE FORMA — inventado inteiro') === 1);
+    ok('ressalva_verificar substitui o texto padrao',
+      conta(xml, 'Fatos ainda nao verificados pelo autor') === 0);
+    ok('capitulo sem pendencia sai sem carimbo',
+      conta(xml, 'Quatro') >= 1 && conta(xml, 'Conferir em fonte primaria') === 2);
+    ok('apendice sai no fim do livro',
+      xml.includes('O que ainda falta conferir')
+      && xml.indexOf('O que ainda falta conferir') > xml.indexOf('Prosa do capitulo 4'));
+
+    // Sem a chave no livro.yaml, o texto antigo continua sendo o padrao: livro
+    // que nunca configurou nada nao pode perder o carimbo nesta mudanca.
+    writeFileSync(livro, readFileSync(livro, 'utf8').replace(/^ressalva_verificar:.*$/m, ''), 'utf8');
+    p.rodar('docx');
+    const semChave = await texto('Carimbo — versao de leitura.docx');
+    ok('sem ressalva_verificar volta o texto padrao',
+      conta(semChave, 'Fatos ainda nao verificados pelo autor') === 2);
+
+    // O corte e o mesmo do build, lido do kanban — nao do .md do manuscrito.
+    p.rodar('cap', 'move', '4', 'escrita', '--forcar');
+    ok('--desde move o corte junto com o build',
+      p.rodar('docx').saida.includes('3 capitulos')
+      && p.rodar('docx', '--desde', 'escrita').saida.includes('4 capitulos'));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 0.2.1 — o sumario deixa de ser decorativo: o gate le a tabela, e o dump para
+// LLM passa a carregar outline, cronologia, regras e o placar de promessas.
+// ---------------------------------------------------------------------------
+
+{
+  const p = projeto('Kanban Contra Sumario');
+  preencheSumario(p.dir, [
+    '| 01 | 1 | A kombi | mundo e ferida | P1 | 2500 |',
+    '| 02 | 1 | O fosforo | incidente incitante | P2 | 2500 |',
+  ].join('\n'));
+  p.rodar('sum', '--materializar');
+  p.rodar('cap', 'new', 'Capitulo fora do plano');   // vira 03, ausente do sumario
+
+  const v = p.rodar('validate');
+  ok('gate acusa capitulo escrito fora do sumario', v.saida.includes('capitulo 3 nao esta no sumario'));
+  ok('gate nao reclama do que esta nos dois lados',
+    !v.saida.includes('capitulo 1 nao esta') && !v.saida.includes('capitulo 2 nao esta'));
+
+  // planejado e nunca materializado: o outro lado da mesma divergencia
+  preencheSumario(p.dir, [
+    '| 01 | 1 | A kombi | mundo e ferida | P1 | 2500 |',
+    '| 02 | 1 | O fosforo | incidente incitante | P2 | 2500 |',
+    '| 09 | 3 | O desfecho | paga tudo | P1 | 2500 |',
+  ].join('\n'));
+  const v2 = p.rodar('validate');
+  ok('gate acusa capitulo planejado e nao materializado',
+    v2.saida.includes('capitulo 9 ("O desfecho") planejado e nao materializado'));
+  ok('e diz o comando que resolve', v2.saida.includes('bookfw sum --materializar'));
+}
+
+// Vao deliberado no sumario nao e violacao: em metamorfose os numeros 13 a 19
+// estao livres de proposito. Buraco so importa contra o plano, nunca sozinho.
+{
+  const p = projeto('Vao Deliberado');
+  preencheSumario(p.dir, [
+    '| 01 | 1 | Primeiro | abertura | P1 | 2500 |',
+    '| 20 | 3 | Ultimo | fechamento | P1 | 2500 |',
+  ].join('\n'));
+  p.rodar('sum', '--materializar');
+  const v = p.rodar('validate');
+  ok('numeracao com vao planejado nao gera aviso',
+    !v.saida.includes('nao esta no sumario') && !v.saida.includes('nao materializado'));
+}
+
+// Titulo que diverge do sumario e aviso; acento e caixa nao sao divergencia.
+{
+  const p = projeto('Titulo Divergente');
+  preencheSumario(p.dir, [
+    '| 01 | 1 | A cozinha | abertura | P1 | 2500 |',
+    '| 02 | 1 | O fosforo | segunda | P2 | 2500 |',
+  ].join('\n'));
+  p.rodar('sum', '--materializar');
+
+  const arq = join(p.dir, 'capitulos', 'backlog', 'cap-01-a-cozinha.md');
+  writeFileSync(arq, readFileSync(arq, 'utf8').replace('titulo: A cozinha', 'titulo: A varanda'), 'utf8');
+  const arq2 = join(p.dir, 'capitulos', 'backlog', 'cap-02-o-fosforo.md');
+  writeFileSync(arq2, readFileSync(arq2, 'utf8').replace('titulo: O fosforo', 'titulo: O Fósforo'), 'utf8');
+
+  const v = p.rodar('validate');
+  ok('gate acusa titulo que diverge do sumario', v.saida.includes('"A varanda" diverge do sumario'));
+  ok('acento e caixa nao contam como divergencia', !v.saida.includes('Fósforo'));
+}
+
+// context era o dump "para LLM" sem o outline, sem a cronologia e sem as regras.
+{
+  const p = projeto('Contexto Completo');
+  preencheSumario(p.dir, ['| 01 | 1 | A kombi | mundo e ferida | P1 | 2500 |'].join('\n'));
+  p.rodar('sum', '--materializar');
+  const pdDir = join(p.dir, 'docs', 'plano-diretor');
+  const pdArq = join(pdDir, readdirSync(pdDir)[0]);
+  writeFileSync(pdArq, readFileSync(pdArq, 'utf8')
+    .replace('\n- P1 — \n', '\n- P1 — o fio que o desfecho paga\n'), 'utf8');
+  writeFileSync(join(p.dir, 'docs', 'canon', 'cronologia.md'),
+    '# Cronologia\n\n- dia 1: MARCO TEMPORAL DE TESTE\n', 'utf8');
+  writeFileSync(join(p.dir, 'docs', 'canon', 'regras.md'),
+    '# Regras\n\n- REGRA DE MUNDO DE TESTE\n', 'utf8');
+
+  const ctx = p.rodar('context').saida;
+  ok('context carrega o sumario', ctx.includes('## Sumario') && ctx.includes('A kombi'));
+  ok('context carrega a cronologia', ctx.includes('MARCO TEMPORAL DE TESTE'));
+  ok('context carrega as regras do mundo', ctx.includes('REGRA DE MUNDO DE TESTE'));
+  ok('context traz o placar de promessas', ctx.includes('P1 [nao plantada]'));
 }
 
 for (const d of descartar) rmSync(d, { recursive: true, force: true });

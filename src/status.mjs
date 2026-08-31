@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ESTADOS_ATIVOS, acharProjeto, artefatos, c, canon, capitulos, lerConfig, planoDiretor, promessas, rel } from './core.mjs';
+import { ESTADOS_ATIVOS, acharProjeto, artefatos, c, canon, capitulos, lerConfig, planoDiretor, promessas, rel, sumario } from './core.mjs';
 
 export function status() {
   const raiz = acharProjeto();
@@ -57,13 +57,39 @@ export function context() {
 
   for (const d of artefatos(raiz, 'dec')) out.push(`\n## ${d.arquivo}\n${d.corpo.trim()}`);
 
+  // O sumario e o que diz o que vem a seguir, e ficava de fora do dump que
+  // existe justamente para um agente retomar a obra sem contexto nenhum.
+  const sumArq = sumario(raiz);
+  if (sumArq) out.push(`\n## Sumario (${sumArq.arquivo})\n${sumArq.corpo.trim()}`);
+
   const sc = join(raiz, 'docs/style-card.md');
   if (existsSync(sc)) out.push(`\n## Style card\n${readFileSync(sc, 'utf8').trim()}`);
+
+  // Cronologia e regras sao canon tanto quanto as fichas: o init as cria e nada
+  // as lia, entao a contradicao de tempo e de mundo nunca chegava a quem escreve.
+  for (const [titulo, arq] of [['Cronologia', 'cronologia.md'], ['Regras do mundo', 'regras.md']]) {
+    const caminho = join(raiz, 'docs/canon', arq);
+    if (existsSync(caminho)) out.push(`\n## ${titulo}\n${readFileSync(caminho, 'utf8').trim()}`);
+  }
 
   out.push(`\n## Canon — personagens`);
   for (const p of cn.personagens) out.push(`- ${p.nome}${p.apelidos.length ? ` (${p.apelidos.join(', ')})` : ''}: ${(p.fm.resumo || '').slice(0, 200)}`);
   out.push(`\n## Canon — lugares`);
   for (const l of cn.lugares) out.push(`- ${l.nome}: ${(l.fm.resumo || '').slice(0, 200)}`);
+
+  // Razao de promessas plantadas e pagas: e o estado de governanca mais caro de
+  // reconstruir lendo os capitulos, e o mais barato de imprimir aqui.
+  const proms = promessas(raiz);
+  if (proms.length) {
+    const cenas = caps.flatMap((x) => x.cenas);
+    const plantadas = new Set(cenas.flatMap((s) => [].concat(s.promessas || [])));
+    const pagas = new Set(cenas.flatMap((s) => [].concat(s.paga || [])));
+    out.push(`\n## Promessas`);
+    for (const p of proms) {
+      const estado = pagas.has(p.id) ? 'paga' : plantadas.has(p.id) ? 'plantada, nao paga' : 'nao plantada';
+      out.push(`- ${p.id} [${estado}] ${p.texto}`);
+    }
+  }
 
   out.push(`\n## Kanban`);
   for (const cap of caps) {
