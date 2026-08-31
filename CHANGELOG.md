@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.3.0 — 2026-08-31
+
+Blocos 4 e 5 da auditoria: o atrito diario do kanban, e a disciplina que o
+bookfw cobrava das obras e nao cobrava de si.
+
+### Adicionado
+
+- **`cap move` aceita lista e faixa**: `bookfw cap move 8..12 pronto`,
+  `bookfw cap move 1,5,9 revisao`. Fechar os dez capitulos em revisao de
+  `metamorfose` eram dez comandos. Em lote, a guarda do `pronto` e conferida
+  **antes** de mover qualquer um — um capitulo fechado no meio da faixa recusa o
+  lote inteiro em vez de deixar metade movida.
+- **`bookfw cap renumber <cap> <n>`** — troca o numero mexendo em nome de
+  arquivo, `id` e `numero` do frontmatter ao mesmo tempo. Recusa numero ja
+  ocupado: renumerar por cima trocaria dois textos de lugar sem dizer.
+- **`bookfw cap retitle <cap> "Titulo"`** — troca o titulo e leva junto o slug do
+  nome do arquivo e do `id`. Ate aqui, mudar o titulo no frontmatter deixava o
+  arquivo preso ao nome antigo para sempre.
+- **`npm run lint`** (`tools/lint.mjs`, zero dependencia) — sete regras, cada uma
+  nascida de coisa que ja quebrou: template que nenhum comando le, placeholder
+  que nada preenche, comando fora da ajuda, versao sem entrada no changelog,
+  arquivo que o npm nao empacota, modulo orfao em `src/`, comando ausente do
+  README. `npm run check` roda lint e smoke.
+- **CI no GitHub Actions**, em Linux e Windows. O autor escreve no Windows e os
+  bugs de CRLF e de nome de arquivo so aparecem la — o `cap renumber` recusou
+  todo capitulo do disco por procurar `---
+` num arquivo com `---
+`.
+
+### Corrigido
+
+- **`CHANGELOG.md` nao ia no pacote.** Quem instalasse do registry nao tinha como
+  saber o que mudou. Agora esta no `files`, e o lint cobra.
+
 ## 0.2.1 — 2026-08-31
 
 Bloco 3 da auditoria: o sumario era governanca decorativa. O gate conferia que

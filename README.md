@@ -44,7 +44,9 @@ bookfw sum --materializar          # a tabela do sumario vira kanban
 bookfw canon new personagem "Marta" --apelidos "Dona Marta"
 bookfw cena add 1 --local Cozinha --objetivo "atender antes que desliguem"
 bookfw cap move 1 esboco
-bookfw cap move 1 escrita
+bookfw cap move 2..5 escrita        # lista e faixa tambem valem
+bookfw cap renumber 5 9             # arquivo e frontmatter juntos
+bookfw cap retitle 9 "O nome novo"
 bookfw brief 1 --cena 1.1          # o pacote que o escritor recebe
 bookfw validate
 bookfw cap move 1 revisao
@@ -213,8 +215,18 @@ Os subagents são as Musas: Calíope (plano diretor), Melpômene (enredo e tens�
 
 Comandos: `/bookfw:init`, `:style`, `:dec`, `:pd`, `:sum`, `:draft`, `:canon`, `:review`, `:move`, `:status`, `:validate`, `:build`.
 
-## Testes
+## Testes e lint
 
 ```bash
-npm test
+npm run check
 ```
+
+`npm test` é o smoke: cria projetos descartáveis, percorre o fluxo inteiro e
+confere que o gate reprova o que tem de reprovar. `npm run lint` é o gate do
+próprio repositório — template que nenhum comando lê, placeholder que nada
+preenche, comando fora da ajuda ou do README, versão sem entrada no changelog,
+arquivo que o npm não empacota, módulo órfão em `src/`. Cada regra nasceu de
+alguma coisa que já quebrou.
+
+O CI roda os dois em Linux e Windows. O autor escreve no Windows, e é lá que
+aparecem os bugs de CRLF e de nome de arquivo.

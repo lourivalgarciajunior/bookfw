@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { Erro, acharProjeto, artefatos, c, capitulos, escrever, hoje, lerConfig, linhasDoSumario, moverCapitulo, planoDiretor, rel, slug, sumario, template } from './core.mjs';
+import { Erro, acharProjeto, artefatos, c, capitulos, escrever, hoje, lerConfig, linhasDoSumario, planoDiretor, rel, slug, sumario, template } from './core.mjs';
 
 function checaTitulo(t) {
   if (!t) throw new Erro('Titulo obrigatorio.');
@@ -123,10 +123,3 @@ export function capNew(args) {
   console.log(`${c.green('Capitulo criado')}  ${rel(raiz, caminho)}`);
 }
 
-export function capMove(args) {
-  const raiz = acharProjeto();
-  const [nome, destino] = args._;
-  if (!nome || !destino) throw new Erro('Uso: bookfw cap move <capitulo> <estado> [--forcar]');
-  const r = moverCapitulo(raiz, nome, destino, { forcar: Boolean(args.forcar) });
-  console.log(`${c.cyan(r.de)} -> ${c.green(r.para)}  ${rel(raiz, r.caminho)}`);
-}
