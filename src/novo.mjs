@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { Erro, acharProjeto, artefatos, c, capitulos, escrever, hoje, lerConfig, moverCapitulo, rel, slug, template } from './core.mjs';
+import { Erro, acharProjeto, artefatos, c, capitulos, escrever, hoje, lerConfig, moverCapitulo, planoDiretor, rel, slug, template } from './core.mjs';
 
 function checaTitulo(t) {
   if (!t) throw new Erro('Titulo obrigatorio.');
@@ -36,7 +36,7 @@ export function pd(args) {
 
 export function sum(args) {
   const raiz = acharProjeto();
-  const pdArq = artefatos(raiz, 'plano-diretor')[0];
+  const pdArq = planoDiretor(raiz);
   if (!pdArq) throw new Erro('Nenhum plano diretor. Rode `bookfw pd` antes — sumario sem PD e outline sem promessa.');
   const cfg = lerConfig(raiz);
   const titulo = checaTitulo(args._.join(' ') || cfg.titulo);

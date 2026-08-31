@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.1.3 — 2026-08-31
+
+Quatro bugs achados na auditoria depois de escrever a primeira obra completa.
+Tres deles faziam o gate mentir; um perdia texto. Cada um saiu com teste de
+regressao — a suite nova, rodada contra o codigo da 0.1.2, reprova em oito
+asserçoes e passa em todas as outras.
+
+### Corrigido
+
+- **Cabecalho no meio do capitulo cortava a prosa fora do manuscrito.** A prosa
+  de uma cena era lida ate o proximo `## `, entao qualquer cabecalho escrito no
+  meio do capitulo engolia o resto — em silencio. Pior: o `status` contava o
+  texto inteiro e o `build` costurava so a primeira metade, de modo que a
+  contagem confirmava um manuscrito que nao existia. Agora a prosa vai de um
+  contrato de cena ao contrato seguinte, e nota de trabalho fica em comentario
+  HTML, que sai dos dois.
+- **Promessa com crase no texto sumia do gate.** Um filtro que existia para
+  ignorar o exemplo do template descartava a linha inteira ao ver um acento
+  grave. Promessa escrita como ``- P1 — o `arquivo` que nao apaga`` nao era
+  cobrada, e a obra podia fechar com fio solto recebendo OK. Agora so bloco
+  cercado e ignorado; crase no meio do texto e texto.
+- **Plano diretor revisado era ignorado.** `promessas`, `status`, `context` e
+  `sum` liam o **primeiro** PD do diretorio, que pela ordem de nome e o mais
+  antigo. Revisar o plano desligava a cobranca de Chekhov sem avisar. Passa a
+  valer o mais recente, e o `validate` diz qual e quando ha mais de um.
+- **Capitulo em `bloqueado` sumia do manuscrito sem uma linha.** O `build` so
+  olha a escada `backlog -> pronto`; capitulo com prosa fora dela desaparecia
+  calado. Agora e nomeado na saida, e o resumo diz quantos de quantos entraram.
+
 ## 0.1.2 — 2026-08-30
 
 ### Corrigido
