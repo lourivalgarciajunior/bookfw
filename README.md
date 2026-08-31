@@ -94,6 +94,11 @@ palavras_alvo: 1100
 
 São os mesmos campos que um roteiro pede depois. Adaptar a obra para cinema lê daqui, sem reler o livro.
 
+**Onde a prosa de uma cena começa e termina:** do fim do contrato dela até o
+contrato seguinte. Cabeçalho não interrompe prosa — ele é estrutura de trabalho
+e não entra no manuscrito. Nota, dúvida e pendência vão em comentário HTML
+(`<!-- ... -->`), que sai da contagem e do manuscrito.
+
 ## A guarda do pronto
 
 Capitulo em `pronto` nao sai de la sem `--forcar`:
@@ -120,6 +125,16 @@ livre — inclusive o `revisao -> escrita`, que e o "volta" de rotina da revisao
 - numeração sem duplicata
 - capítulo em revisão ou pronto com prosa de verdade, dentro da faixa de palavras
 - **toda promessa do plano diretor plantada e paga**
+
+Com mais de um plano diretor em `docs/plano-diretor/`, **vale o mais recente** —
+e o gate diz qual, para a escolha não ser silenciosa.
+
+## O manuscrito
+
+`bookfw build` costura a partir de `revisao` (ou do que `--desde` mandar) e diz
+quantos capítulos de quantos entraram. Capítulo com prosa que ficou de fora da
+escada — em `bloqueado` — é **nomeado na saída**: buraco no manuscrito não sai
+calado.
 
 ## Style card
 

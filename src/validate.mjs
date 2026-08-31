@@ -23,6 +23,11 @@ export function validate(args) {
   const pds = artefatos(raiz, 'plano-diretor');
   const sums = artefatos(raiz, 'sumario');
   if (!pds.length) erro('docs/plano-diretor', 'nenhum plano diretor — escrever capitulo sem PD e escrever no escuro');
+  // Qual PD esta valendo tem de ser visivel: com dois no diretorio, as
+  // promessas cobradas saem so de um deles.
+  if (pds.length > 1) {
+    aviso('docs/plano-diretor', `${pds.length} planos diretores — vale ${pds[pds.length - 1].arquivo}, os outros nao sao lidos`);
+  }
   if (!decs.length) aviso('docs/dec', 'nenhuma DEC — POV, tempo verbal e tipo de final nao estao fixados');
   if (pds.length && !sums.length) erro('docs/sumario', 'plano diretor sem sumario — nao ha o que escrever cena a cena');
 

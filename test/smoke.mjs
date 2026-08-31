@@ -4,7 +4,7 @@
  *
  *   npm test
  */
-import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, readFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -13,7 +13,22 @@ import { dirname, resolve } from 'node:path';
 
 const CLI = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'bookfw.mjs');
 const raiz = mkdtempSync(join(tmpdir(), 'bookfw-'));
+const descartar = [raiz];
 let falhas = 0;
+
+/** Projeto descartavel proprio, para o teste que precisa comecar do zero. */
+function projeto(titulo) {
+  const dir = mkdtempSync(join(tmpdir(), 'bookfw-'));
+  descartar.push(dir);
+  const rodar = (...args) => {
+    const r = spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8' });
+    return { saida: (r.stdout || '') + (r.stderr || ''), codigo: r.status ?? 1 };
+  };
+  rodar('init', titulo);
+  rodar('pd');
+  rodar('sum');
+  return { dir, rodar };
+}
 
 /** saida junta stdout e stderr — aviso do CLI sai em stderr e tambem e testavel. */
 const run = (...args) => {
@@ -93,6 +108,71 @@ ok('brief avisa quando o capitulo esta pronto', run('brief', '1').saida.includes
 ok('reabre com --forcar', run('cap', 'move', '1', 'escrita', '--forcar').codigo === 0);
 ok('mover para pronto segue livre', run('cap', 'move', '1', 'pronto').codigo === 0);
 
-rmSync(raiz, { recursive: true, force: true });
+// ---------------------------------------------------------------------------
+// Regressao dos quatro bugs de 0.1.3. Cada bloco e a sonda que provou a falha.
+// ---------------------------------------------------------------------------
+
+// 1. Cabecalho no meio do capitulo cortava a prosa. O `status` contava o texto
+//    inteiro e o manuscrito saia com metade, sem aviso nenhum.
+{
+  const p = projeto('Prosa Cortada');
+  p.rodar('cap', 'new', 'Um');
+  const arq = join(p.dir, 'capitulos', 'backlog', 'cap-01-um.md');
+  writeFileSync(arq, readFileSync(arq, 'utf8').replace(
+    '<!-- a prosa da cena entra aqui, logo abaixo do contrato -->',
+    'Primeira metade da prosa da cena.\n\n## Corte no meio\n\nSENTINELA depois do cabecalho.\n',
+  ), 'utf8');
+  p.rodar('build', '--desde', 'backlog');
+  const ms = readFileSync(join(p.dir, 'manuscrito', 'prosa-cortada-backlog.md'), 'utf8');
+  ok('prosa depois de cabecalho entra no manuscrito', ms.includes('SENTINELA'));
+  ok('o cabecalho de trabalho nao entra no manuscrito', !ms.includes('Corte no meio'));
+  ok('a contagem do capitulo inclui a prosa toda',
+    /capitulos 1 \| cenas 1 \| palavras 1[0-9]\b/.test(p.rodar('validate').saida));
+}
+
+// 2. Promessa com crase no texto sumia do gate — o livro fechava com fio solto
+//    e o validate dava OK.
+{
+  const p = projeto('Promessa Com Crase');
+  const dirPd = join(p.dir, 'docs', 'plano-diretor');
+  const pd = join(dirPd, readdirSync(dirPd)[0]);
+  // ancorado na linha: o texto de instrucao do template cita `- P1 — texto`
+  // como exemplo, e um replace solto acertaria a citacao em vez da promessa.
+  writeFileSync(pd, readFileSync(pd, 'utf8')
+    .replace('\n- P1 — \n', '\n- P1 — o `arquivo` que nao apaga volta no fim\n'), 'utf8');
+  ok('promessa com crase e contada', JSON.parse(p.rodar('validate', '--json').saida).promessas === 1);
+  ok('promessa com crase aparece no status', p.rodar('status').saida.includes('nao apaga volta no fim'));
+}
+
+// 3. Plano diretor revisado era ignorado: `[0]` pegava o mais antigo, e
+//    revisar o PD desligava a cobranca de promessa em silencio.
+{
+  const p = projeto('Plano Revisado');
+  writeFileSync(join(p.dir, 'docs', 'plano-diretor', 'PD-2099-01-01-revisao.md'),
+    '---\ntitulo: Plano Revisado\n---\n\n## Promessas\n\n- P9 — a promessa que so existe no plano novo\n', 'utf8');
+  const v = p.rodar('validate');
+  ok('vale o plano diretor mais recente', v.saida.includes('P9'));
+  ok('o gate diz qual plano diretor esta valendo', v.saida.includes('PD-2099-01-01-revisao.md'));
+}
+
+// 4. Capitulo em bloqueado sumia do manuscrito sem uma linha de aviso.
+{
+  const p = projeto('Capitulo Bloqueado');
+  p.rodar('cap', 'new', 'Um');
+  p.rodar('cap', 'new', 'Dois');
+  const arq = join(p.dir, 'capitulos', 'backlog', 'cap-02-dois.md');
+  writeFileSync(arq, readFileSync(arq, 'utf8').replace(
+    '<!-- a prosa da cena entra aqui, logo abaixo do contrato -->',
+    'Prosa escrita e depois bloqueada, que nao pode sumir calada.\n',
+  ), 'utf8');
+  p.rodar('cap', 'move', '2', 'bloqueado');
+  const b = p.rodar('build', '--desde', 'backlog');
+  ok('build avisa o capitulo com prosa que ficou de fora', b.saida.includes('fora do manuscrito'));
+  ok('o aviso nomeia o arquivo e o estado',
+    b.saida.includes('cap-02-dois.md') && b.saida.includes('bloqueado'));
+  ok('build diz quantos capitulos de quantos entraram', b.saida.includes('1 de 2 capitulos'));
+}
+
+for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ESTADOS_ATIVOS, acharProjeto, artefatos, c, canon, capitulos, lerConfig, promessas, rel } from './core.mjs';
+import { ESTADOS_ATIVOS, acharProjeto, artefatos, c, canon, capitulos, lerConfig, planoDiretor, promessas, rel } from './core.mjs';
 
 export function status() {
   const raiz = acharProjeto();
@@ -52,7 +52,7 @@ export function context() {
   out.push(`# Contexto da obra — ${cfg.titulo}`);
   out.push(`Genero ${cfg.genero} | narracao em ${cfg.pessoa_narrativa} pessoa | tempo verbal ${cfg.tempo_verbal} | alvo ${cfg.palavras_alvo} palavras`);
 
-  const pd = artefatos(raiz, 'plano-diretor')[0];
+  const pd = planoDiretor(raiz);
   if (pd) out.push(`\n## Plano diretor (${pd.arquivo})\n${pd.corpo.trim()}`);
 
   for (const d of artefatos(raiz, 'dec')) out.push(`\n## ${d.arquivo}\n${d.corpo.trim()}`);

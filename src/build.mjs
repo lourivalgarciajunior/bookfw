@@ -16,8 +16,18 @@ export function build(args) {
   const corte = ordem.indexOf(minimo);
   if (corte < 0) throw new Erro(`--desde deve ser um de ${ordem.join(', ')}`);
 
-  const caps = capitulos(raiz).filter((x) => ordem.indexOf(x.estado) >= corte);
+  const todos = capitulos(raiz);
+  const caps = todos.filter((x) => ordem.indexOf(x.estado) >= corte);
   if (!caps.length) throw new Erro(`Nenhum capitulo em ${minimo} ou adiante.`);
+
+  // Capitulo bloqueado com prosa tem de ser dito. Ficar abaixo do corte e o
+  // proposito do corte, e abandonar e decisao ja tomada — mas bloqueado e
+  // pendencia, e o manuscrito saia com o buraco sem uma linha de aviso.
+  const bloqueados = todos.filter((x) => x.estado === 'bloqueado' && x.palavras > 0);
+  const abaixoDoCorte = todos.filter((x) => {
+    const i = ordem.indexOf(x.estado);
+    return i >= 0 && i < corte;
+  });
 
   const partes = [`# ${cfg.titulo}\n`];
   if (cfg.autor && cfg.autor !== 'a definir') partes.push(`_${cfg.autor}_\n`);
@@ -38,8 +48,12 @@ export function build(args) {
 
   const total = palavras(texto);
   console.log(`${c.green('manuscrito gerado')}  ${rel(raiz, alvo)}`);
-  console.log(c.dim(`  corte: ${minimo} ou adiante | ${caps.length} capitulos | ${total} palavras | ~${Math.ceil(total / 250)} paginas | gerado em ${hoje()}`));
+  const fora = abaixoDoCorte.length ? `, ${abaixoDoCorte.length} abaixo do corte` : '';
+  console.log(c.dim(`  corte: ${minimo} ou adiante | ${caps.length} de ${todos.length} capitulos${fora} | ${total} palavras | ~${Math.ceil(total / 250)} paginas | gerado em ${hoje()}`));
   const alvoPal = Number(cfg.palavras_alvo || 0);
   if (alvoPal) console.log(c.dim(`  ${Math.round((total / alvoPal) * 100)}% do alvo de ${alvoPal}`));
+  for (const cap of bloqueados) {
+    console.log(`  ${c.yellow('fora do manuscrito')} ${rel(raiz, cap.caminho)} — ${cap.palavras} palavras em ${cap.estado}`);
+  }
   console.log(c.dim('  DOCX/EPUB e com o agente book-hermes'));
 }

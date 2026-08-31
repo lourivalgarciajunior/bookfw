@@ -115,16 +115,24 @@ export function capitulos(raiz) {
  * virada — então a adaptação lê daqui sem reler a prosa.
  */
 export function cenasDe(corpo) {
-  const cenas = [];
+  const blocos = [];
   const re = /```cena\n([\s\S]*?)```/g;
   let m;
-  while ((m = re.exec(corpo))) {
-    const dados = yamlRaso(m[1]);
-    const depois = corpo.slice(m.index + m[0].length);
-    const prosa = depois.split(/\n## |\n```cena/)[0].replace(/<!--[\s\S]*?-->/g, '');
-    cenas.push({ ...dados, prosa: prosa.trim(), palavras: palavras(prosa) });
-  }
-  return cenas;
+  while ((m = re.exec(corpo))) blocos.push({ dados: yamlRaso(m[1]), inicio: m.index, fim: m.index + m[0].length });
+
+  // A prosa de uma cena vai do fim do contrato dela ate o contrato seguinte.
+  // Cortar no proximo `## ` engolia em silencio tudo que viesse depois de um
+  // cabecalho escrito no meio do capitulo: o `status` contava o texto inteiro
+  // e o `build` costurava so a primeira metade, sem ninguem ser avisado.
+  // Nota de trabalho vai em comentario HTML, que sai daqui e do manuscrito.
+  return blocos.map((b, i) => {
+    const ate = i + 1 < blocos.length ? blocos[i + 1].inicio : corpo.length;
+    const prosa = corpo.slice(b.fim, ate)
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/^#{1,6} .*$/gm, '')
+      .trim();
+    return { ...b.dados, prosa, palavras: palavras(prosa) };
+  });
 }
 
 /** Prosa = corpo sem os blocos de contrato e sem os cabeçalhos. */
@@ -186,12 +194,25 @@ export function canon(raiz) {
   return { personagens: ler('personagens'), lugares: ler('lugares') };
 }
 
+/**
+ * O plano diretor em vigor. Os arquivos sao `PD-<data>-<slug>.md`, entao a
+ * ordem alfabetica e a cronologica: o que vale e o ultimo. Pegar o primeiro
+ * fazia a obra ser validada contra um PD abandonado — revisar o plano
+ * desligava a cobranca das promessas em silencio.
+ */
+export function planoDiretor(raiz) {
+  const todos = artefatos(raiz, 'plano-diretor');
+  return todos.length ? todos[todos.length - 1] : null;
+}
+
 /** Promessas do PD: linhas `- P1 — texto` na seção Promessas. */
 export function promessas(raiz) {
-  const pd = artefatos(raiz, 'plano-diretor')[0];
+  const pd = planoDiretor(raiz);
   if (!pd) return [];
   const sec = pd.corpo.split(/^## /m).find((s) => /^Promessas/i.test(s)) || '';
-  return [...sec.matchAll(/^-[ \t]*(P\d+)[ \t]*[—–-][ \t]*(\S.*)$/gm)]
-    .filter((m) => !m[0].includes(String.fromCharCode(96)))
+  // Exemplo dentro de bloco cercado nao e promessa; crase no meio do texto e.
+  // Descartar a linha inteira por causa de uma crase apagava promessa de
+  // verdade do gate, e o livro fechava com fio solto dando OK.
+  return [...sec.replace(/^```[\s\S]*?^```/gm, '').matchAll(/^-[ \t]*(P\d+)[ \t]*[—–-][ \t]*(\S.*)$/gm)]
     .map((m) => ({ id: m[1], texto: m[2].trim() }));
 }
