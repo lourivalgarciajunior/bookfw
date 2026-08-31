@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.4.1 — 2026-08-31
+
+O bloco de metrica fechava com uma linha de "palavras marcantes". Medida na
+`metamorfose`, ela entregava **dez palavras funcionais em doze**:
+
+> estava, corpo, ainda, apenas, tinha, algo, cada, talvez, houve, naquele, vida, havia
+
+O reparo que o sintoma sugere — ampliar a lista de palavras vazias — ataca o
+lugar errado. **Frequencia bruta em portugues devolve palavra funcional por
+construcao**, e nao ha lista de exclusao que resolva isso sem virar um dicionario
+mantido a mao. O bloco entra em todo briefing de cena e, desde a 0.4.0, no
+briefing de capa, onde deveria dizer de que a obra e feita para quem vai
+desenhar. Ver ADR-2026-08-31 sobre lexico do style card.
+
+### Corrigido
+
+- **Duas listas em vez de uma.** *Lexico da obra* — substantivo, adjetivo e verbo
+  recorrentes, depois de descontadas as palavras funcionais de portugues. Na
+  `metamorfose` passa a ser `corpo, vida, consciencia, momento, casulo,
+  fevereiro, forca, lado, tempo, lagarta, limite, sentido, mundo`. Casulo,
+  lagarta, consciencia e limite sao a obra.
+- **Tique de voz reportado com taxa.** `apenas`, `talvez` e `ainda` nao eram
+  ruido: sao a hesitacao caracteristica do autor. Sair do lexico de conteudo nao
+  e ser descartado — e ser reportado no lugar certo, com a unidade certa
+  (`ainda 5.5, apenas 5.2, talvez 3.5` por mil palavras). Adverbio em `-mente`
+  entra junto, exigindo quatro caracteres antes do sufixo: sem isso o
+  substantivo `mente`, que na `metamorfose` e palavra da obra, virava tique.
+- **Plural e singular contam junto**, e so quando as duas formas ja aparecem no
+  texto — assim `mes` nunca vira `me`. Genero **nao** e dobrado: `silenciosa`
+  contra `silencioso` pode ser escolha, e fundir apagaria a escolha.
+- **Amostra abaixo de 1000 palavras e declarada**, no bloco e na saida do
+  comando. `o-arquivo` tem 92 palavras em `samples/` e imprimia `sempre 54.3 por
+  mil` com a mesma cara de autoridade que tem sobre 3433 palavras. Metrica sobre
+  amostra insuficiente e pior que metrica ausente, porque parece medida.
+- **`bookfw capa brief` acompanha o rotulo novo** e continua lendo o antigo. Esse
+  bloco e lido por regex: trocar o rotulo sem o leitor acompanhar esvaziaria o
+  briefing de capa sem erro nenhum.
+
+### Residual declarado
+
+Sem etiquetagem morfologica, verbo flexionado sobra no lexico de conteudo
+(`parecia`). A lista de funcionais e so de portugues. A saida natural, se a
+aproximacao nao bastar, esta registrada na ADR: TF-IDF contra corpus de
+referencia — rejeitado agora por peso e manutencao.
+
 ## 0.4.0 — 2026-08-31
 
 O fluxo terminava no DOCX de leitura. Entre o manuscrito pronto e o livro

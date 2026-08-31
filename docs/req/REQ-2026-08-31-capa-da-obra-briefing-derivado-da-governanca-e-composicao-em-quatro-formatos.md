@@ -63,4 +63,4 @@ ADR: `docs/adr/ADR-2026-08-31-capa-como-svg-governado-pela-obra-com-resvg-como-d
 
 ## Linked Roadmap
 
-Roadmap: `docs/roadmaps/wip/ROADMAP-2026-08-31-capa-da-obra-briefing-derivado-da-governanca-e-composicao-em-quatro-formatos.md`
+Roadmap: `docs/roadmaps/done/ROADMAP-2026-08-31-capa-da-obra-briefing-derivado-da-governanca-e-composicao-em-quatro-formatos.md`
