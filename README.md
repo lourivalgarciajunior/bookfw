@@ -132,6 +132,15 @@ livre — inclusive o `revisao -> escrita`, que e o "volta" de rotina da revisao
 Com mais de um plano diretor em `docs/plano-diretor/`, **vale o mais recente** —
 e o gate diz qual, para a escolha não ser silenciosa.
 
+O gate também **lê a tabela do sumário e compara com o kanban**, nos dois
+sentidos: capítulo escrito que não está no outline, capítulo planejado que nunca
+foi materializado, título que divergiu. São avisos — escrever é iterativo, e
+quem decide qual lado corrigir é o autor.
+
+Não há checagem de buraco na numeração, de propósito: buraco só significa algo
+contra o plano, e essa comparação já é feita. Numeração com vão declarado no
+sumário passa limpa.
+
 Quando reprova, o gate **dá o comando que resolve**: personagem sem ficha vira
 `bookfw canon new personagem "X"`, capítulo sem contrato vira `bookfw cena add 3`.
 Regra da casa: o gate não cobra artefato que o CLI não saiba criar.

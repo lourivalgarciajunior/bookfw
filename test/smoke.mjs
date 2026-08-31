@@ -177,13 +177,21 @@ ok('mover para pronto segue livre', run('cap', 'move', '1', 'pronto').codigo ===
 // 0.1.4 — os comandos que faltavam entre o que o gate cobra e o que o CLI cria.
 // ---------------------------------------------------------------------------
 
-/** Troca a tabela em branco do template do sumario por uma preenchida. */
+/**
+ * Reescreve o sumario com a tabela dada. Reescrever em vez de substituir as
+ * linhas do template deixa a funcao idempotente: o mesmo projeto pode ter o
+ * sumario trocado mais de uma vez no mesmo teste.
+ */
 function preencheSumario(dir, tabela) {
   const d = join(dir, 'docs', 'sumario');
   const arq = join(d, readdirSync(d)[0]);
-  writeFileSync(arq, readFileSync(arq, 'utf8').replace(
-    '| 01 | 1 |  |  | P1 | 2500 |\n| 02 | 1 |  |  |  | 2500 |', tabela,
-  ), 'utf8');
+  writeFileSync(arq, [
+    '---', 'titulo: Teste', 'data: 2026-01-01', '---', '',
+    '# Sumario', '',
+    '| # | Ato | Titulo | Funcao no arco | Promessas | Palavras |',
+    '|---|---|---|---|---|---|',
+    tabela, '',
+  ].join('\n'), 'utf8');
 }
 
 // canon new — o gate reprovava personagem sem ficha e o CLI nao sabia criar uma.
@@ -418,6 +426,91 @@ function preencheSumario(dir, tabela) {
       p.rodar('docx').saida.includes('3 capitulos')
       && p.rodar('docx', '--desde', 'escrita').saida.includes('4 capitulos'));
   }
+}
+
+// ---------------------------------------------------------------------------
+// 0.2.1 — o sumario deixa de ser decorativo: o gate le a tabela, e o dump para
+// LLM passa a carregar outline, cronologia, regras e o placar de promessas.
+// ---------------------------------------------------------------------------
+
+{
+  const p = projeto('Kanban Contra Sumario');
+  preencheSumario(p.dir, [
+    '| 01 | 1 | A kombi | mundo e ferida | P1 | 2500 |',
+    '| 02 | 1 | O fosforo | incidente incitante | P2 | 2500 |',
+  ].join('\n'));
+  p.rodar('sum', '--materializar');
+  p.rodar('cap', 'new', 'Capitulo fora do plano');   // vira 03, ausente do sumario
+
+  const v = p.rodar('validate');
+  ok('gate acusa capitulo escrito fora do sumario', v.saida.includes('capitulo 3 nao esta no sumario'));
+  ok('gate nao reclama do que esta nos dois lados',
+    !v.saida.includes('capitulo 1 nao esta') && !v.saida.includes('capitulo 2 nao esta'));
+
+  // planejado e nunca materializado: o outro lado da mesma divergencia
+  preencheSumario(p.dir, [
+    '| 01 | 1 | A kombi | mundo e ferida | P1 | 2500 |',
+    '| 02 | 1 | O fosforo | incidente incitante | P2 | 2500 |',
+    '| 09 | 3 | O desfecho | paga tudo | P1 | 2500 |',
+  ].join('\n'));
+  const v2 = p.rodar('validate');
+  ok('gate acusa capitulo planejado e nao materializado',
+    v2.saida.includes('capitulo 9 ("O desfecho") planejado e nao materializado'));
+  ok('e diz o comando que resolve', v2.saida.includes('bookfw sum --materializar'));
+}
+
+// Vao deliberado no sumario nao e violacao: em metamorfose os numeros 13 a 19
+// estao livres de proposito. Buraco so importa contra o plano, nunca sozinho.
+{
+  const p = projeto('Vao Deliberado');
+  preencheSumario(p.dir, [
+    '| 01 | 1 | Primeiro | abertura | P1 | 2500 |',
+    '| 20 | 3 | Ultimo | fechamento | P1 | 2500 |',
+  ].join('\n'));
+  p.rodar('sum', '--materializar');
+  const v = p.rodar('validate');
+  ok('numeracao com vao planejado nao gera aviso',
+    !v.saida.includes('nao esta no sumario') && !v.saida.includes('nao materializado'));
+}
+
+// Titulo que diverge do sumario e aviso; acento e caixa nao sao divergencia.
+{
+  const p = projeto('Titulo Divergente');
+  preencheSumario(p.dir, [
+    '| 01 | 1 | A cozinha | abertura | P1 | 2500 |',
+    '| 02 | 1 | O fosforo | segunda | P2 | 2500 |',
+  ].join('\n'));
+  p.rodar('sum', '--materializar');
+
+  const arq = join(p.dir, 'capitulos', 'backlog', 'cap-01-a-cozinha.md');
+  writeFileSync(arq, readFileSync(arq, 'utf8').replace('titulo: A cozinha', 'titulo: A varanda'), 'utf8');
+  const arq2 = join(p.dir, 'capitulos', 'backlog', 'cap-02-o-fosforo.md');
+  writeFileSync(arq2, readFileSync(arq2, 'utf8').replace('titulo: O fosforo', 'titulo: O Fósforo'), 'utf8');
+
+  const v = p.rodar('validate');
+  ok('gate acusa titulo que diverge do sumario', v.saida.includes('"A varanda" diverge do sumario'));
+  ok('acento e caixa nao contam como divergencia', !v.saida.includes('Fósforo'));
+}
+
+// context era o dump "para LLM" sem o outline, sem a cronologia e sem as regras.
+{
+  const p = projeto('Contexto Completo');
+  preencheSumario(p.dir, ['| 01 | 1 | A kombi | mundo e ferida | P1 | 2500 |'].join('\n'));
+  p.rodar('sum', '--materializar');
+  const pdDir = join(p.dir, 'docs', 'plano-diretor');
+  const pdArq = join(pdDir, readdirSync(pdDir)[0]);
+  writeFileSync(pdArq, readFileSync(pdArq, 'utf8')
+    .replace('\n- P1 — \n', '\n- P1 — o fio que o desfecho paga\n'), 'utf8');
+  writeFileSync(join(p.dir, 'docs', 'canon', 'cronologia.md'),
+    '# Cronologia\n\n- dia 1: MARCO TEMPORAL DE TESTE\n', 'utf8');
+  writeFileSync(join(p.dir, 'docs', 'canon', 'regras.md'),
+    '# Regras\n\n- REGRA DE MUNDO DE TESTE\n', 'utf8');
+
+  const ctx = p.rodar('context').saida;
+  ok('context carrega o sumario', ctx.includes('## Sumario') && ctx.includes('A kombi'));
+  ok('context carrega a cronologia', ctx.includes('MARCO TEMPORAL DE TESTE'));
+  ok('context carrega as regras do mundo', ctx.includes('REGRA DE MUNDO DE TESTE'));
+  ok('context traz o placar de promessas', ctx.includes('P1 [nao plantada]'));
 }
 
 for (const d of descartar) rmSync(d, { recursive: true, force: true });

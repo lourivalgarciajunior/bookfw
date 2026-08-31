@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.2.1 — 2026-08-31
+
+Bloco 3 da auditoria: o sumario era governanca decorativa. O gate conferia que
+o arquivo existia e nunca abria; o `context`, que existe para um agente retomar
+a obra sem contexto nenhum, saia sem o outline. Os dois artefatos que o `init`
+cria e ninguem lia — `cronologia.md` e `regras.md` — entram junto.
+
+### Adicionado
+
+- **O gate le a tabela do sumario e compara com o kanban**, nos dois sentidos:
+  capitulo escrito que nao esta no sumario, e capitulo planejado que nunca foi
+  materializado. Tambem acusa titulo que divergiu do outline. Sao **avisos**,
+  nao erros: escrever e iterativo, e quem decide qual dos dois lados corrigir e
+  o autor — o gate so tira a divergencia do silencio.
+- **`bookfw context` passa a carregar sumario, cronologia, regras do mundo e o
+  placar de promessas** (plantada / paga / nao plantada). Era o dump "para LLM"
+  sem o documento que diz o que vem a seguir.
+
+### Nota sobre lacuna de numeracao
+
+Nao existe checagem de buraco na numeracao, e e deliberado: em `metamorfose` os
+numeros 13 a 19 estao livres de proposito e documentados no sumario. Buraco so
+significa alguma coisa **contra o plano** — e essa comparacao a checagem nova ja
+faz. Um aviso de lacuna solto seria ruido em toda obra que corta capitulo.
+
+Medido nas duas obras: `metamorfose` fica sem nenhum aviso novo (17 capitulos,
+17 linhas de sumario, vao intencional respeitado); `o-arquivo` ganha quatro
+avisos verdadeiros — os capitulos 07, 14, 25 e 26 foram escritos com o sumario
+parado em tres linhas.
+
 ## 0.2.0 — 2026-08-31
 
 A exportacao de DOCX vivia fora do CLI, copiada em quatro projetos de livro
