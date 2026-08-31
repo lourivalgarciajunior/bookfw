@@ -722,6 +722,90 @@ function preenchePd(dir, extra = '') {
   ok('com capa no lugar o aviso some', !p.rodar('validate').saida.includes('nenhuma capa'));
 }
 
+// ---------------------------------------------------------------------------
+// 0.4.1 — o lexico do style card. Frequencia bruta em portugues devolve palavra
+// funcional por construcao; a medida passa a separar conteudo de tique de voz.
+// ---------------------------------------------------------------------------
+
+/** Amostra com voz: hesitacao repetida, lexico proprio e o substantivo "mente". */
+function comAmostra(p, repeticoes = 40) {
+  const paragrafo = [
+    'O corpo estava ali e a consciencia tinha ido embora.',
+    'Havia apenas o casulo, e talvez o casulo fosse a resposta.',
+    'A lagarta ainda nao sabia que os corpos mudam completamente.',
+    'A mente dele estava em outro lugar, e a mente nao obedece.',
+  ].join('\n\n');
+  writeFileSync(join(p.dir, 'samples', 'amostra.md'),
+    `${`${paragrafo}\n\n`.repeat(repeticoes)}`, 'utf8');
+}
+
+{
+  const p = projeto('Lexico');
+  comAmostra(p);
+  const r = p.rodar('style');
+  ok('style roda com amostra de verdade', r.codigo === 0);
+  const card = readFileSync(join(p.dir, 'docs', 'style-card.md'), 'utf8');
+  const lexico = card.match(/Lexico da obra: ([^\n]+)/)[1];
+  const tiques = card.match(/Tiques de voz: ([^\n]+)/)[1];
+
+  // O defeito de origem: verbo auxiliar no topo do ranking.
+  ok('auxiliar nao entra no lexico',
+    !/\b(estava|tinha|havia|fosse)\b/.test(lexico));
+  ok('substantivo da obra entra no lexico', /corpo/.test(lexico) && /casulo/.test(lexico));
+
+  // Sair do conteudo nao e ser descartado: hedge e sinal, e vai com taxa.
+  ok('hedge vai para os tiques, com taxa', /apenas [\d.]+/.test(tiques) && /talvez [\d.]+/.test(tiques));
+  ok('e nao para o lexico de conteudo', !/\b(apenas|talvez|ainda)\b/.test(lexico));
+  ok('adverbio em -mente e tique', /completamente/.test(tiques));
+
+  // O substantivo "mente" nao e o sufixo "-mente".
+  ok('o substantivo "mente" fica no lexico', /\bmente\b/.test(lexico));
+  ok('e nao vira tique de voz', !/\bmente [\d.]/.test(tiques));
+
+  // Plural e singular sao a mesma palavra; o rotulo fica com a forma mais usada.
+  ok('plural e singular contam junto', (lexico.match(/\bcorpos?\b/g) || []).length === 1);
+
+  ok('o comando mostra o lexico na saida', r.saida.includes('lexico: '));
+}
+
+{
+  // 92 palavras nao medem voz. A metrica sai, mas nao passa por medida firme.
+  const p = projeto('Amostra Curta');
+  writeFileSync(join(p.dir, 'samples', 'pouco.md'),
+    'Um texto curto demais para dizer qualquer coisa sobre a voz de alguem.\n', 'utf8');
+  const r = p.rodar('style');
+  ok('amostra curta ainda mede', r.codigo === 0);
+  ok('o comando avisa a amostra curta', r.saida.includes('amostra curta'));
+  ok('e a ressalva fica no proprio bloco, nao so no console',
+    readFileSync(join(p.dir, 'docs', 'style-card.md'), 'utf8').includes('**Amostra curta.**'));
+
+  const q = projeto('Amostra Suficiente');
+  comAmostra(q, 60);
+  ok('amostra suficiente nao recebe ressalva',
+    !q.rodar('style').saida.includes('amostra curta')
+    && !readFileSync(join(q.dir, 'docs', 'style-card.md'), 'utf8').includes('**Amostra curta.**'));
+}
+
+{
+  // O briefing de capa le este bloco por REGEX: rotulo trocado sem o leitor
+  // acompanhar esvazia o briefing sem erro nenhum.
+  const p = projeto('Lexico Na Capa');
+  preenchePd(p.dir);
+  comAmostra(p);
+  p.rodar('style');
+  p.rodar('capa', 'brief');
+  ok('o briefing de capa consome o lexico novo',
+    readFileSync(join(p.dir, 'capa', 'briefing.md'), 'utf8').includes('casulo'));
+
+  // style card gerado antes da 0.4.1 continua no disco das obras
+  const card = join(p.dir, 'docs', 'style-card.md');
+  writeFileSync(card, readFileSync(card, 'utf8')
+    .replace(/Lexico da obra: [^\n]+/, 'Palavras marcantes: rotulo, antigo, preservado.'), 'utf8');
+  p.rodar('capa', 'brief');
+  ok('e o style card no formato antigo nao quebra',
+    readFileSync(join(p.dir, 'capa', 'briefing.md'), 'utf8').includes('rotulo, antigo, preservado'));
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);

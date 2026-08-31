@@ -247,7 +247,22 @@ entrega o SVG, avisa e diz o que instalar.
 
 ## Style card
 
-`bookfw style` mede sobre `samples/`: frase mediana, desvio, proporção de frase curta e longa, parágrafo mediano, proporção de diálogo, perguntas e primeira pessoa por mil palavras, léxico marcante. O bloco gerado não se edita à mão.
+`bookfw style` mede sobre `samples/`: frase mediana, desvio, proporção de frase
+curta e longa, parágrafo mediano, proporção de diálogo, perguntas e primeira
+pessoa por mil palavras.
+
+O léxico sai em **duas listas**, porque são coisas diferentes. *Léxico da obra* —
+substantivo, adjetivo e verbo recorrentes, descontadas as palavras funcionais —
+é do que o livro é feito, e é o que o briefing de capa consome. *Tiques de voz* —
+hedge, intensificador e advérbio em `-mente` — vêm **com taxa por mil palavras**,
+porque `apenas` e `talvez` não são ruído: são a hesitação característica do autor.
+
+> Frequência bruta em português devolve palavra funcional por construção. A lista
+> antiga entregava dez funcionais em doze. Ampliar a lista de exclusão atacaria o
+> sintoma; a medida é que estava errada.
+
+Amostra abaixo de 1000 palavras sai com ressalva no próprio bloco. Métrica sobre
+amostra insuficiente é pior que métrica ausente, porque parece medida. O bloco gerado não se edita à mão.
 
 O julgamento — o que o autor faz de propósito, o que ele nunca faz — é escrito por cima, e o card inteiro entra em todo briefing de cena. É o que faz a primeira versão sair na voz do autor.
 

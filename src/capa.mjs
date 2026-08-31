@@ -21,11 +21,16 @@ export function secao(corpo, nome) {
   return achada.replace(/^.*\n/, '').trim();
 }
 
-/** Lexico marcante medido pelo `bookfw style`, se o style card ja tiver metrica. */
+/**
+ * Lexico de conteudo medido pelo `bookfw style`. Aceita o rotulo antigo
+ * ("Palavras marcantes") porque style card gerado antes da 0.4.1 continua no
+ * disco das obras — e este bloco e lido por regex, entao o rotulo trocado sem
+ * o leitor acompanhar esvazia o briefing de capa sem erro nenhum.
+ */
 function marcantes(raiz) {
   const sc = join(raiz, 'docs/style-card.md');
   if (!existsSync(sc)) return [];
-  const m = readFileSync(sc, 'utf8').match(/Palavras marcantes:\s*([^\n.]+)/i);
+  const m = readFileSync(sc, 'utf8').match(/(?:Lexico da obra|L[eé]xico da obra|Palavras marcantes):\s*([^\n.]+)/i);
   return m ? m[1].split(',').map((x) => x.trim()).filter(Boolean) : [];
 }
 
