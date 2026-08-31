@@ -50,6 +50,7 @@ bookfw validate
 bookfw cap move 1 revisao
 bookfw cap move 1 pronto
 bookfw build
+bookfw docx                        # a versao que vai para a mao do leitor
 ```
 
 Consulta: `bookfw status`, `bookfw context` (dump da governança formatado para LLM).
@@ -68,7 +69,7 @@ docs/canon/regras.md            o que e verdade nesta obra
 docs/style-card.md              a voz do autor, medida e julgada
 samples/                        textos ja escritos pelo autor
 capitulos/<estado>/             o kanban
-manuscrito/                     saida do build
+manuscrito/                     saida do build e do docx
 ```
 
 ## Contrato de cena
@@ -151,6 +152,38 @@ a coluna final. Linha que não vira capítulo — um vão como `| 04–06 | a es
 quantos capítulos de quantos entraram. Capítulo com prosa que ficou de fora da
 escada — em `bloqueado` — é **nomeado na saída**: buraco no manuscrito não sai
 calado.
+
+## A versão de leitura
+
+`bookfw docx` produz o arquivo que vai para a mão de quem lê: miolo A5,
+serifado, rosto, rodapé numerado, sem nenhuma marcação de trabalho. Lê o mesmo
+corte que o `build` — `--desde` vale igual, e o padrão é o mesmo — direto do
+kanban, então não depende de o `build` ter rodado antes.
+
+Duas páginas editoriais entram se existirem, uma página por seção `## `:
+`docs/front-matter.md` antes do primeiro capítulo, `docs/apendice.md` depois do
+último. O texto é da obra — aviso de conteúdo, nota de versão, glossário,
+fontes.
+
+**Capítulo não confirmado sai carimbado.** Se o frontmatter tem `verificar:`
+preenchido — na mesma linha ou em lista abaixo —, o capítulo abre com uma
+ressalva em itálico, para que suposição não passe por apuração. O texto do
+carimbo sai de `ressalva_verificar` no `livro.yaml`; sem ele, o padrão é
+*Fatos ainda nao verificados pelo autor*. Memória e livro técnico não ressalvam
+com as mesmas palavras:
+
+```yaml
+ressalva_verificar: Afirmacoes a conferir em fonte primaria antes de publicar
+```
+
+`origem:` contendo `ESPECIME` carimba mais forte, e tem precedência. A saída
+diz **quantos capítulos foram carimbados** — carimbo que some vira número, não
+descoberta na leitura do arquivo pronto.
+
+O pacote `docx` é dependência **opcional**: o resto do bookfw não tem
+dependência nenhuma, e quem só governa texto não precisa carregar um gerador de
+OOXML para rodar `status` ou `validate`. Sem ele, só este comando falha, e a
+mensagem diz o que instalar.
 
 ## Style card
 

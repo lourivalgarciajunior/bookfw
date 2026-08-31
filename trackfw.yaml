@@ -1,0 +1,17 @@
+# trackfw configuration
+# generated: 2026-08-31
+
+frontend: 
+backend: 
+backend_framework: 
+pkg_manager: npm
+hooks: none
+ci: none
+require_req_in_commit: false
+
+# governance paths (edit to match your project structure)
+adr_dirs:
+  - docs/adr
+req_dir: docs/req
+roadmap_dir: docs/roadmaps
+roadmap_namespacing: flat

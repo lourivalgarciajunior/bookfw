@@ -325,6 +325,101 @@ function preencheSumario(dir, tabela) {
     dentro(join(porta, 'livro-a'), 'status').saida.includes('Livro A'));
 }
 
+// ---------------------------------------------------------------------------
+// bookfw docx — o carimbo de ressalva.
+//
+// O modo de falha deste comando nao e o erro: e o capitulo nao confirmado
+// saindo do papel com a mesma cara de um capitulo apurado. Um so numero cobre
+// os dois sentidos da regressao — carimbo que some e carimbo que sobra.
+// ---------------------------------------------------------------------------
+{
+  // `docx` e dependencia opcional. Sem ela, os casos que geram arquivo sao
+  // pulados com aviso na tela — nunca silenciosamente verdes.
+  let Zip = null;
+  try {
+    await import('docx');
+    Zip = (await import('jszip')).default;
+  } catch { /* ausente */ }
+
+  if (!Zip) {
+    console.log('  PULADO  bookfw docx — pacote `docx` ausente (npm i docx para cobrir)');
+  } else {
+    const p = projeto('Carimbo');
+
+    /**
+     * Insere linhas no frontmatter, logo depois do `---` de abertura. O `\r?`
+     * nao e enfeite: no Windows o template chega com CRLF, e um `^---\n` cru
+     * nao casa — o helper nao insere nada e o teste passa a medir um
+     * frontmatter vazio, verde por engano.
+     */
+    const fmAdd = (arq, linhas) => {
+      const t = readFileSync(arq, 'utf8');
+      const novo = t.replace(/^---\r?\n/, (m) => `${m}${linhas.join('\n')}\n`);
+      if (novo === t) throw new Error(`fmAdd nao achou o frontmatter de ${arq}`);
+      writeFileSync(arq, novo, 'utf8');
+    };
+    const capArq = (n, slug) => join(p.dir, 'capitulos', 'backlog', `cap-0${n}-${slug}.md`);
+    const texto = async (nome) => {
+      const z = await Zip.loadAsync(readFileSync(join(p.dir, 'manuscrito', nome)));
+      return z.file('word/document.xml').async('string');
+    };
+    const conta = (s, alvo) => s.split(alvo).length - 1;
+
+    for (const t of ['Um', 'Dois', 'Tres', 'Quatro']) p.rodar('cap', 'new', t);
+
+    // 1. valor na mesma linha — a unica forma que o gerador copiado entendia
+    fmAdd(capArq(1, 'um'), ['verificar: a data da internacao']);
+    // 2. lista em bloco — a forma que saia do papel sem carimbo nenhum
+    fmAdd(capArq(2, 'dois'), ['verificar:', '  - a data', '  - o nome do hospital']);
+    // 3. especime tem precedencia sobre verificar
+    fmAdd(capArq(3, 'tres'), ['origem: ESPECIME DE FORMA', 'verificar: tudo']);
+    // 4. capitulo sem pendencia nenhuma: tem de sair limpo
+    for (let i = 1; i <= 4; i++) {
+      const arq = capArq(i, ['um', 'dois', 'tres', 'quatro'][i - 1]);
+      writeFileSync(arq, `${readFileSync(arq, 'utf8')}\n\nProsa do capitulo ${i}.\n`, 'utf8');
+      p.rodar('cap', 'move', String(i), 'revisao');
+    }
+
+    const livro = join(p.dir, 'livro.yaml');
+    writeFileSync(livro, `${readFileSync(livro, 'utf8')}\nressalva_verificar: Conferir em fonte primaria\n`, 'utf8');
+    writeFileSync(join(p.dir, 'docs', 'apendice.md'),
+      '# Apendice\n\n## O que ainda falta conferir\n\nA lista de pendencias da obra.\n', 'utf8');
+
+    const saida = p.rodar('docx');
+    ok('docx roda sem build previo', saida.codigo === 0);
+
+    // Presenca e ausencia no mesmo numero: 4 capitulos, 3 carimbados.
+    ok('docx conta os capitulos com ressalva', saida.saida.includes('4 capitulos, 3 com ressalva'));
+
+    const xml = await texto('Carimbo — versao de leitura.docx');
+    ok('carimbo sai na forma inline e na forma de lista em bloco',
+      conta(xml, 'Conferir em fonte primaria') === 2);
+    ok('ESPECIME tem precedencia sobre verificar',
+      conta(xml, 'ESPECIME DE FORMA — inventado inteiro') === 1);
+    ok('ressalva_verificar substitui o texto padrao',
+      conta(xml, 'Fatos ainda nao verificados pelo autor') === 0);
+    ok('capitulo sem pendencia sai sem carimbo',
+      conta(xml, 'Quatro') >= 1 && conta(xml, 'Conferir em fonte primaria') === 2);
+    ok('apendice sai no fim do livro',
+      xml.includes('O que ainda falta conferir')
+      && xml.indexOf('O que ainda falta conferir') > xml.indexOf('Prosa do capitulo 4'));
+
+    // Sem a chave no livro.yaml, o texto antigo continua sendo o padrao: livro
+    // que nunca configurou nada nao pode perder o carimbo nesta mudanca.
+    writeFileSync(livro, readFileSync(livro, 'utf8').replace(/^ressalva_verificar:.*$/m, ''), 'utf8');
+    p.rodar('docx');
+    const semChave = await texto('Carimbo — versao de leitura.docx');
+    ok('sem ressalva_verificar volta o texto padrao',
+      conta(semChave, 'Fatos ainda nao verificados pelo autor') === 2);
+
+    // O corte e o mesmo do build, lido do kanban — nao do .md do manuscrito.
+    p.rodar('cap', 'move', '4', 'escrita', '--forcar');
+    ok('--desde move o corte junto com o build',
+      p.rodar('docx').saida.includes('3 capitulos')
+      && p.rodar('docx', '--desde', 'escrita').saida.includes('4 capitulos'));
+  }
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);

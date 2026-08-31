@@ -6,12 +6,27 @@ import { join } from 'node:path';
 import { ESTADOS_ATIVOS, Erro, acharProjeto, c, capitulos, escrever, hoje, lerConfig, palavras, prosaDe, rel } from './core.mjs';
 
 /** O corte que produz o manuscrito de trabalho — tudo que ja tem prosa completa. */
-const CORTE_PADRAO = 'revisao';
+export const CORTE_PADRAO = 'revisao';
 
-export function build(args) {
-  const raiz = acharProjeto();
-  const cfg = lerConfig(raiz);
-  const minimo = args.desde || CORTE_PADRAO;
+/**
+ * A prosa final de um capitulo: as cenas costuradas com o separador, ou o
+ * corpo limpo quando o capitulo nao usa contrato de cena.
+ */
+export function prosaFinal(cap) {
+  return cap.cenas.length
+    ? cap.cenas.map((s) => s.prosa).filter(Boolean).join('\n\n* * *\n\n')
+    : prosaDe(cap.corpo).trim();
+}
+
+/**
+ * Quais capitulos entram na saida, dado o corte. Fonte unica do `build` e do
+ * `docx`: o gerador de DOCX vivia copiado dentro das obras e reconstruia esta
+ * selecao relendo o `.md` do manuscrito e recasando capitulo por numero. Um
+ * cabecalho fora do formato e o capitulo perdia o frontmatter em silencio —
+ * saia no papel sem ato e sem carimbo de ressalva, com a mesma cara de um
+ * capitulo conferido. Lendo o kanban uma vez so, essa classe de erro some.
+ */
+export function selecao(raiz, minimo = CORTE_PADRAO) {
   const ordem = ESTADOS_ATIVOS;
   const corte = ordem.indexOf(minimo);
   if (corte < 0) throw new Erro(`--desde deve ser um de ${ordem.join(', ')}`);
@@ -23,19 +38,30 @@ export function build(args) {
   // Capitulo bloqueado com prosa tem de ser dito. Ficar abaixo do corte e o
   // proposito do corte, e abandonar e decisao ja tomada — mas bloqueado e
   // pendencia, e o manuscrito saia com o buraco sem uma linha de aviso.
-  const bloqueados = todos.filter((x) => x.estado === 'bloqueado' && x.palavras > 0);
-  const abaixoDoCorte = todos.filter((x) => {
-    const i = ordem.indexOf(x.estado);
-    return i >= 0 && i < corte;
-  });
+  return {
+    ordem,
+    corte,
+    todos,
+    caps,
+    bloqueados: todos.filter((x) => x.estado === 'bloqueado' && x.palavras > 0),
+    abaixoDoCorte: todos.filter((x) => {
+      const i = ordem.indexOf(x.estado);
+      return i >= 0 && i < corte;
+    }),
+  };
+}
+
+export function build(args) {
+  const raiz = acharProjeto();
+  const cfg = lerConfig(raiz);
+  const minimo = args.desde || CORTE_PADRAO;
+  const { todos, caps, bloqueados, abaixoDoCorte } = selecao(raiz, minimo);
 
   const partes = [`# ${cfg.titulo}\n`];
   if (cfg.autor && cfg.autor !== 'a definir') partes.push(`_${cfg.autor}_\n`);
   for (const cap of caps) {
     partes.push(`\n\n## ${String(cap.numero).padStart(2, '0')} — ${cap.fm.titulo || ''}\n`);
-    const prosa = cap.cenas.length
-      ? cap.cenas.map((s) => s.prosa).filter(Boolean).join('\n\n* * *\n\n')
-      : prosaDe(cap.corpo).trim();
+    const prosa = prosaFinal(cap);
     partes.push(prosa || `> _[capitulo ainda sem prosa — ${cap.cenas.length} cenas planejadas]_`);
   }
   // Um arquivo por corte. O corte padrao fica com o nome limpo, e e o que as
@@ -55,5 +81,5 @@ export function build(args) {
   for (const cap of bloqueados) {
     console.log(`  ${c.yellow('fora do manuscrito')} ${rel(raiz, cap.caminho)} — ${cap.palavras} palavras em ${cap.estado}`);
   }
-  console.log(c.dim('  DOCX/EPUB e com o agente book-hermes'));
+  console.log(c.dim('  versao de leitura em DOCX: bookfw docx'));
 }
