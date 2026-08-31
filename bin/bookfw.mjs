@@ -8,6 +8,7 @@ import { Erro, c } from '../src/core.mjs';
 import { init } from '../src/init.mjs';
 import { dec, pd, sum, capNew } from '../src/novo.mjs';
 import { capMove, capRenumber, capRetitle } from '../src/cap.mjs';
+import { capa, capaBrief } from '../src/capa.mjs';
 import { canonNew } from '../src/canon.mjs';
 import { cenaAdd } from '../src/cena.mjs';
 import { status, context } from '../src/status.mjs';
@@ -36,6 +37,8 @@ const AJUDA = `bookfw ${VERSAO} — governanca de escrita de livros
   bookfw cena add <cap>             novo contrato de cena no capitulo
   bookfw canon new <tipo> "Nome"    ficha de personagem ou lugar
   bookfw brief <cap> [--cena N]     briefing da cena — o pacote do escritor
+  bookfw capa brief                 briefing da capa, derivado da obra
+  bookfw capa [--formato <f>]       compoe a capa (svg,ebook,impressao,miniatura)
   bookfw style                      mede sua voz sobre samples/
   bookfw status                     kanban, promessas e contagem
   bookfw context                    dump da governanca para LLM
@@ -85,6 +88,12 @@ try {
       const sub = args._.shift();
       if (sub === 'new') canonNew(args);
       else throw new Erro('Uso: bookfw canon new personagem|lugar "Nome"');
+      break;
+    }
+    case 'capa': {
+      const sub = args._[0] === 'brief' ? args._.shift() : null;
+      if (sub === 'brief') capaBrief(args);
+      else await capa(args);
       break;
     }
     case 'brief': brief(args); break;

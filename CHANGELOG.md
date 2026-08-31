@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.4.0 — 2026-08-31
+
+O fluxo terminava no DOCX de leitura. Entre o manuscrito pronto e o livro
+publicado faltava a capa — o unico artefato que precisa de uma coisa que um CLI
+Node de zero dependencia nao tem e nao vai ter: arte rasterizada. A resposta e a
+mesma que o `brief` deu para a escrita: capa e um problema de briefing antes de
+ser um problema de desenho. Ver ADR-2026-08-31 sobre capa como SVG governado.
+
+### Adicionado
+
+- **`bookfw capa brief`** — monta o pacote que vai para o gerador de imagem ou
+  para o ilustrador, derivado do que ja esta governado: premissa, tema, promessa
+  ao leitor, promessas numeradas, lugares do canon, lexico medido pelo `style` e
+  a secao "Nao vai ter" do plano diretor. **Cada bloco aponta a origem**, para
+  que linha errada se corrija na fonte e nao no briefing — senao a proxima
+  geracao reescreve o conserto. Sai com um bloco de prompt pronto para colar e
+  um bloco do que nao deve aparecer na arte.
+- **`bookfw capa`** — compoe. Havendo `capa/arte.(png|jpg|webp)`, a arte e
+  embutida **em data URI**, nunca por caminho relativo: SVG com `href="capa/..."`
+  abre na maquina do autor e quebra em qualquer outra, inclusive na da grafica.
+  Sem arte, a capa sai **tipografica**, com paleta derivada do genero — capa
+  legitima, e o que desbloqueia o livro pronto sem ilustracao. `--tipografica`
+  forca essa forma mesmo havendo arte.
+- **Quatro formatos**, por `--formato`: `ebook` (1600x2560, padrao),
+  `impressao` (capa espalhada 6x9 com sangria e lombada), `miniatura` e `svg`.
+  **O SVG sai em todo formato**, nao so no ebook: e a fonte da verdade, e a capa
+  de impressao e justamente a que mais precisa de ajuste fino.
+- **Quarta capa com texto**, tirada da promessa ao leitor do plano diretor. Capa
+  espalhada com verso em branco nao e entregavel.
+- **Lombada calculada**, nao estimada de olho: paginas do corte x espessura do
+  papel branco KDP. O comando declara quantas paginas assumiu.
+- **`@resvg/resvg-js` como dependencia opcional**, no padrao do `docx`. Sem ele o
+  comando entrega o SVG, avisa e diz o que instalar — degrada, nao quebra.
+- **O gate enxerga a capa**: obra com capitulo em `pronto` e sem capa recebe
+  aviso, nunca erro. So cobra depois do primeiro capitulo fechado — avisar antes
+  da hora treina o autor a ignorar aviso.
+
+### Residual declarado
+
+A largura do titulo e estimada por media de glifo, nao medida na fonte real:
+titulo no limite pode precisar de ajuste manual, e o comando avisa quando
+quebrou em mais de uma linha em vez de esconder a estimativa. Tratamento de
+imagem — filtro, mascara, sombra composta — fica fora: para isso existe o SVG.
+
 ## 0.3.0 — 2026-08-31
 
 Blocos 4 e 5 da auditoria: o atrito diario do kanban, e a disciplina que o
@@ -26,7 +70,8 @@ bookfw cobrava das obras e nao cobrava de si.
 - **CI no GitHub Actions**, em Linux e Windows. O autor escreve no Windows e os
   bugs de CRLF e de nome de arquivo so aparecem la — o `cap renumber` recusou
   todo capitulo do disco por procurar `---
-` num arquivo com `---
+` num arquivo com `---
+
 `.
 
 ### Corrigido

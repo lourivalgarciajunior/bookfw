@@ -53,6 +53,8 @@ bookfw cap move 1 revisao
 bookfw cap move 1 pronto
 bookfw build
 bookfw docx                        # a versao que vai para a mao do leitor
+bookfw capa brief                  # o briefing que vai para o gerador de imagem
+bookfw capa --formato ebook,impressao
 ```
 
 Consulta: `bookfw status`, `bookfw context` (dump da governança formatado para LLM).
@@ -71,6 +73,7 @@ docs/canon/regras.md            o que e verdade nesta obra
 docs/style-card.md              a voz do autor, medida e julgada
 samples/                        textos ja escritos pelo autor
 capitulos/<estado>/             o kanban
+capa/                           briefing, arte do autor e a capa composta
 manuscrito/                     saida do build e do docx
 ```
 
@@ -195,6 +198,52 @@ O pacote `docx` é dependência **opcional**: o resto do bookfw não tem
 dependência nenhuma, e quem só governa texto não precisa carregar um gerador de
 OOXML para rodar `status` ou `validate`. Sem ele, só este comando falha, e a
 mensagem diz o que instalar.
+
+## A capa
+
+O fluxo termina no livro publicado, e a capa é o único artefato que precisa de
+uma coisa que o CLI não tem: arte rasterizada. A resposta é a mesma que o `brief`
+deu para a escrita — **capa é um problema de briefing antes de ser um problema
+de desenho**.
+
+```bash
+bookfw capa brief     # capa/briefing.md, derivado da obra
+# gere a arte, salve como capa/arte.png
+bookfw capa --formato ebook,impressao,miniatura
+```
+
+`capa brief` monta o pacote a partir do que já está governado: premissa, tema,
+promessa ao leitor, promessas numeradas, lugares do canon, léxico medido pelo
+`style` e a seção "Não vai ter" do plano diretor. **Cada bloco aponta a origem**
+— linha errada se corrige na fonte, não no briefing, senão a próxima geração
+reescreve o conserto. Sai com prompt pronto para colar e com o que **não** deve
+aparecer na arte.
+
+`capa` compõe. Com `capa/arte.png` no lugar, a arte entra **em data URI** —
+nunca por caminho relativo, que abriria na sua máquina e quebraria na da
+gráfica. Sem arte, a capa sai **tipográfica**, com paleta derivada do gênero:
+capa legítima, e o que desbloqueia o livro pronto sem ilustração.
+`--tipografica` força essa forma mesmo havendo arte.
+
+| Formato | O que é |
+|---|---|
+| `ebook` | 1600×2560, o padrão de Kindle, Kobo e Google Play |
+| `impressao` | capa espalhada 6×9 com verso, lombada e sangria |
+| `miniatura` | para mandar junto com o DOCX a quem vai ler e opinar |
+| `svg` | só o vetor, sem rasterizar |
+
+**O SVG sai em todo formato**, não só no ebook: é a fonte da verdade, versiona
+em texto no git, e a capa de impressão é justamente a que mais precisa de ajuste
+fino. A lombada é calculada da contagem de palavras, e o comando declara quantas
+páginas assumiu. A quarta capa recebe a promessa ao leitor do plano diretor —
+capa espalhada com verso em branco não é entregável.
+
+O PNG precisa de `@resvg/resvg-js`, dependência **opcional**. Sem ele o comando
+entrega o SVG, avisa e diz o que instalar.
+
+> A largura do título é estimada por média de glifo, não medida na fonte real.
+> Título no limite pode precisar de ajuste manual — o comando avisa quando
+> quebrou em mais de uma linha, em vez de esconder a estimativa.
 
 ## Style card
 

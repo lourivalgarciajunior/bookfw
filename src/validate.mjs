@@ -4,7 +4,7 @@
  * lugares: cena sem conflito, personagem que muda de nome, promessa que o
  * desfecho nao paga.
  */
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { acharProjeto, artefatos, c, canon, capitulos, lerConfig, linhasDoSumario, promessas, rel, slug, sumario } from './core.mjs';
 
@@ -149,6 +149,16 @@ export function validate(args) {
     } else if (!pagas.has(p.id)) {
       (fechado ? erro : aviso)('plano-diretor', `promessa ${p.id} plantada e nunca paga — declare "paga: [${p.id}]" na cena de desfecho`);
     }
+  }
+
+  // ---- capa
+  // So cobra quando ha capitulo fechado: obra no capitulo 3 nao precisa de capa,
+  // e avisar antes da hora treina o autor a ignorar aviso.
+  const fechados = caps.filter((x) => x.estado === 'pronto').length;
+  const temCapa = existsSync(join(raiz, 'capa'))
+    && readdirSync(join(raiz, 'capa')).some((f) => /\.(svg|png|jpe?g)$/i.test(f));
+  if (fechados && !temCapa) {
+    aviso('capa/', `${fechados} capitulo(s) em pronto e nenhuma capa — rode: bookfw capa brief`);
   }
 
   // ---- style card
