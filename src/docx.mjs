@@ -208,7 +208,20 @@ export async function docx(args) {
   const nome = `${texto(cfg.titulo) || 'manuscrito'} — versao de leitura.docx`;
   const alvo = join(raiz, 'manuscrito', nome);
   mkdirSync(join(raiz, 'manuscrito'), { recursive: true });
-  writeFileSync(alvo, await Packer.toBuffer(doc));
+  // O leitor costuma estar com o arquivo anterior aberto no Word quando pede
+  // a versao nova. No Windows isso e EBUSY, e o stack trace cru nao ajuda
+  // ninguem a entender que basta fechar o documento.
+  try {
+    writeFileSync(alvo, await Packer.toBuffer(doc));
+  } catch (e) {
+    if (e.code === 'EBUSY' || e.code === 'EPERM' || e.code === 'EACCES') {
+      throw new Erro([
+        `${rel(raiz, alvo)} esta aberto em outro programa.`,
+        '       Feche o arquivo (Word costuma ser o culpado) e rode de novo.',
+      ].join(String.fromCharCode(10)));
+    }
+    throw e;
+  }
 
   // A contagem nao e enfeite: e o unico jeito de o carimbo sumindo virar
   // numero em vez de descoberta na leitura do arquivo pronto.
