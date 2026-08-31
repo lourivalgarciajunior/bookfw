@@ -39,6 +39,7 @@ const AJUDA = `bookfw ${VERSAO} — governanca de escrita de livros
   bookfw brief <cap> [--cena N]     briefing da cena — o pacote do escritor
   bookfw capa brief                 briefing da capa, derivado da obra
   bookfw capa [--formato <f>]       compoe a capa (svg,ebook,impressao,miniatura)
+  bookfw capa --escurecer 0.1       veu sobre a arte, 0 a 1 (padrao 0.42)
   bookfw style                      mede sua voz sobre samples/
   bookfw status                     kanban, promessas e contagem
   bookfw context                    dump da governanca para LLM

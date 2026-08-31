@@ -649,6 +649,20 @@ function preenchePd(dir, extra = '') {
   ok('a arte entra como data URI', comArte.includes('href="data:image/png;base64,'));
   ok('e nunca como caminho relativo', !comArte.includes('href="capa/'));
 
+  // O veu escuro e fixo em 0.42, calibrado para foto clara. Sobre arte que ja
+  // nasce escura ele apaga o desenho — na capa real da metamorfose sumiu com a
+  // linha inteira. Quem sabe quanto a arte aguenta e quem olha a capa.
+  ok('o veu sobre a arte e regulavel',
+    readFileSync(join(p.dir, 'capa', 'capa-svg-ebook.svg'), 'utf8').includes('opacity="0.42"'));
+  p.rodar('capa', '--formato', 'svg', '--escurecer', '0.05');
+  const claro = readFileSync(join(p.dir, 'capa', 'capa-svg-ebook.svg'), 'utf8');
+  ok('--escurecer troca o veu', claro.includes('opacity="0.05"') && !claro.includes('opacity="0.42"'));
+  p.rodar('capa', '--formato', 'svg', '--escurecer', '0');
+  ok('--escurecer 0 nao poe veu nenhum',
+    !/fill="#[0-9a-f]{6}" opacity="0"/.test(readFileSync(join(p.dir, 'capa', 'capa-svg-ebook.svg'), 'utf8')));
+  ok('--escurecer fora de 0..1 e recusado', p.rodar('capa', '--escurecer', '2').codigo === 1);
+  p.rodar('capa', '--formato', 'svg');
+
   const tip = p.rodar('capa', '--formato', 'svg', '--tipografica');
   ok('--tipografica ignora a arte existente', tip.saida.includes('tipografica, sem arte'));
   ok('e o SVG resultante nao tem imagem',

@@ -238,6 +238,10 @@ fino. A lombada é calculada da contagem de palavras, e o comando declara quanta
 páginas assumiu. A quarta capa recebe a promessa ao leitor do plano diretor —
 capa espalhada com verso em branco não é entregável.
 
+Sobre a arte entra um véu escuro, para o título ler. Ele é calibrado para foto
+clara e **apaga arte que já nasce escura** — `--escurecer 0.05` quase não
+escurece, `--escurecer 0` não põe véu nenhum. A saída diz quanto aplicou.
+
 O PNG precisa de `@resvg/resvg-js`, dependência **opcional**. Sem ele o comando
 entrega o SVG, avisa e diz o que instalar.
 
