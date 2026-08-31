@@ -584,6 +584,144 @@ function comCincoCapitulos(titulo) {
       .includes('Prosa com a palavra numero: no meio'));
 }
 
+// ---------------------------------------------------------------------------
+// 0.4.0 — capa. O SVG e a fonte da verdade e sai sem dependencia nenhuma; o
+// PNG e derivado, e depende do rasterizador opcional.
+// ---------------------------------------------------------------------------
+
+/** Preenche o PD com as secoes que a capa le. */
+function preenchePd(dir, extra = '') {
+  const d = join(dir, 'docs', 'plano-diretor');
+  const arq = join(d, readdirSync(d)[0]);
+  writeFileSync(arq, [
+    '---', 'titulo: Teste', '---', '',
+    '## Premissa', '', 'Um homem perde o controle e descobre quem o sustenta.', '',
+    '## Tema', '', 'O controle e ilusao administrada.', '',
+    '## Promessa ao leitor', '', 'Relato honesto de quem chegou ao fundo e voltou.', '',
+    '## Promessas', '', '- P1 — o fio que o desfecho paga', '',
+    '## Desfecho', '', 'Ele aceita ajuda para poder ajudar.', '',
+    '## Nao vai ter', '', '- Cena de luz no fim do tunel.', '- Vilao medico.', '',
+    extra,
+  ].join('\n'), 'utf8');
+  return arq;
+}
+
+{
+  const p = projeto('Capa Briefing');
+  preenchePd(p.dir);
+  const b = p.rodar('capa', 'brief');
+  ok('capa brief roda', b.codigo === 0);
+  const brf = readFileSync(join(p.dir, 'capa', 'briefing.md'), 'utf8');
+  ok('o briefing traz a premissa', brf.includes('perde o controle e descobre quem o sustenta'));
+  ok('o briefing traz as promessas numeradas', brf.includes('P1 — o fio que o desfecho paga'));
+  ok('o briefing traz o bloco de prompt', brf.includes('Capa de livro. Genero:'));
+  ok('cada bloco aponta a origem', brf.includes('_fonte: docs/plano-diretor/'));
+
+  // Secao em lista aparada como paragrafo entregava instrucao pela metade ao
+  // gerador de imagem: "Cronologia embaralhada — a ordem e a dos dias, e essa d…"
+  ok('o que evitar sai em itens inteiros, nunca cortado no meio',
+    brf.includes('Evitar: Cena de luz no fim do tunel; Vilao medico'));
+
+  // o helper `projeto` ja roda `pd`; para este caso o projeto nasce so com init
+  const cru = mkdtempSync(join(tmpdir(), 'bookfw-'));
+  descartar.push(cru);
+  spawnSync(process.execPath, [CLI, 'init', 'Sem Plano'], { cwd: cru, encoding: 'utf8' });
+  const semPd = spawnSync(process.execPath, [CLI, 'capa', 'brief'], { cwd: cru, encoding: 'utf8' });
+  ok('capa brief recusa obra sem plano diretor', semPd.status === 1);
+}
+
+{
+  const p = projeto('Capa SVG');
+  preenchePd(p.dir);
+  const r = p.rodar('capa', '--formato', 'svg');
+  ok('capa gera SVG sem dependencia nenhuma', r.codigo === 0);
+  const svg = readFileSync(join(p.dir, 'capa', 'capa-svg-ebook.svg'), 'utf8');
+  ok('o SVG traz o titulo', svg.includes('Capa SVG'));
+  ok('o SVG tem a dimensao de ebook', svg.includes('width="1600"') && svg.includes('height="2560"'));
+  ok('sem arte, a capa sai tipografica', r.saida.includes('tipografica, sem arte'));
+
+  // Arte entra como data URI. Com caminho relativo o SVG abre na maquina do
+  // autor e quebra em qualquer outra, inclusive na da grafica.
+  writeFileSync(join(p.dir, 'capa', 'arte.png'), Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'));
+  p.rodar('capa', '--formato', 'svg');
+  const comArte = readFileSync(join(p.dir, 'capa', 'capa-svg-ebook.svg'), 'utf8');
+  ok('a arte entra como data URI', comArte.includes('href="data:image/png;base64,'));
+  ok('e nunca como caminho relativo', !comArte.includes('href="capa/'));
+
+  const tip = p.rodar('capa', '--formato', 'svg', '--tipografica');
+  ok('--tipografica ignora a arte existente', tip.saida.includes('tipografica, sem arte'));
+  ok('e o SVG resultante nao tem imagem',
+    !readFileSync(join(p.dir, 'capa', 'capa-svg-ebook.svg'), 'utf8').includes('<image'));
+}
+
+{
+  const p = projeto('Capa Impressao');
+  preenchePd(p.dir);
+  const r = p.rodar('capa', '--formato', 'impressao');
+  ok('a lombada e declarada, nao escondida', /\d+ paginas estimadas, lombada de \d+px/.test(r.saida));
+
+  // Lombada calculada, nao constante plausivel: duas obras de tamanhos
+  // diferentes tem de sair com lombadas diferentes.
+  const q = projeto('Capa Impressao Grossa');
+  preenchePd(q.dir);
+  q.rodar('cap', 'new', 'Um');
+  const arq = join(q.dir, 'capitulos', 'backlog', 'cap-01-um.md');
+  writeFileSync(arq, readFileSync(arq, 'utf8').replace(
+    '<!-- a prosa da cena entra aqui, logo abaixo do contrato -->',
+    'palavra '.repeat(40000),
+  ), 'utf8');
+  const grossa = q.rodar('capa', '--formato', 'impressao');
+  const lombada = (s) => Number(s.match(/lombada de (\d+)px/)[1]);
+  ok('obra maior produz lombada maior', lombada(grossa.saida) > lombada(r.saida));
+  // a capa de impressao e a que mais precisa de ajuste fino: tem de ter SVG
+  ok('a capa de impressao tambem sai em SVG',
+    existsSync(join(p.dir, 'capa', 'capa-impressao-impressao.svg')));
+  ok('a quarta capa traz a promessa ao leitor do PD',
+    readFileSync(join(p.dir, 'capa', 'capa-impressao-impressao.svg'), 'utf8').includes('chegou ao fundo'));
+}
+
+{
+  // Sem o rasterizador o comando entrega o SVG e diz o que instalar. Silenciar
+  // a falta e sair com codigo 0 sem produzir nada seria pior que quebrar.
+  const p = projeto('Capa Sem Rasterizador');
+  preenchePd(p.dir);
+  const r = p.rodar('capa', '--formato', 'ebook');
+  const temResvg = existsSync(join(p.dir, 'capa', 'capa-sem-rasterizador-ebook.png'));
+  ok('sem o pacote opcional o comando nao quebra', r.codigo === 0);
+  ok(temResvg ? 'com o pacote, o PNG sai' : 'sem o pacote, o aviso diz o que instalar',
+    temResvg || r.saida.includes('npm i @resvg/resvg-js'));
+}
+
+{
+  // O gate so cobra capa quando ha capitulo fechado: obra no capitulo 3 nao
+  // precisa de capa, e avisar antes da hora treina o autor a ignorar aviso.
+  const p = projeto('Capa No Gate');
+  preenchePd(p.dir);
+  p.rodar('cap', 'new', 'Um');
+  ok('sem capitulo em pronto o gate nao cobra capa', !p.rodar('validate').saida.includes('nenhuma capa'));
+
+  const arq = join(p.dir, 'capitulos', 'backlog', 'cap-01-um.md');
+  writeFileSync(arq, readFileSync(arq, 'utf8')
+    .replace('objetivo:', 'objetivo: sair')
+    .replace('conflito:', 'conflito: a porta')
+    .replace('virada:', 'virada: nao era a porta')
+    .replace('<!-- a prosa da cena entra aqui, logo abaixo do contrato -->', 'palavra '.repeat(400)), 'utf8');
+  p.rodar('cap', 'move', '1', 'pronto');
+  const v = p.rodar('validate');
+  ok('com capitulo em pronto e sem capa, o gate avisa', v.saida.includes('nenhuma capa'));
+  ok('e diz o comando que resolve', v.saida.includes('bookfw capa brief'));
+  // na lista de avisos, nunca na de erros — o codigo de saida nao serve de
+  // prova aqui, porque a obra deste teste esta toda em pronto com promessa
+  // nao plantada, o que ja e um erro legitimo e proprio do gate.
+  const j = JSON.parse(p.rodar('validate', '--json').saida);
+  ok('capa ausente e aviso, nunca erro',
+    j.avisos.some((a) => a.includes('nenhuma capa')) && !j.erros.some((e) => e.includes('nenhuma capa')));
+
+  p.rodar('capa', '--formato', 'svg');
+  ok('com capa no lugar o aviso some', !p.rodar('validate').saida.includes('nenhuma capa'));
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);
