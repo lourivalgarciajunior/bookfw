@@ -1,8 +1,8 @@
 ---
-nome: 
-apelidos: []
-papel: 
-resumo: 
+nome: {{nome}}
+apelidos: {{apelidos}}
+papel: {{papel}}
+resumo: {{resumo}}
 ---
 
 ## Quem e

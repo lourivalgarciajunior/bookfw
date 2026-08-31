@@ -7,6 +7,8 @@ import { readFileSync } from 'node:fs';
 import { Erro, c } from '../src/core.mjs';
 import { init } from '../src/init.mjs';
 import { dec, pd, sum, capNew, capMove } from '../src/novo.mjs';
+import { canonNew } from '../src/canon.mjs';
+import { cenaAdd } from '../src/cena.mjs';
 import { status, context } from '../src/status.mjs';
 import { validate } from '../src/validate.mjs';
 import { style } from '../src/style.mjs';
@@ -24,8 +26,11 @@ const AJUDA = `bookfw ${VERSAO} — governanca de escrita de livros
   bookfw dec "Decisao"              decisao de obra (POV, tempo verbal, final)
   bookfw pd ["Titulo"]              plano diretor da obra
   bookfw sum ["Titulo"]             sumario derivado do plano diretor
+  bookfw sum --materializar         cria no kanban os capitulos do sumario
   bookfw cap new "Titulo do cap"    novo capitulo em backlog/
   bookfw cap move <cap> <estado>    move no kanban (--forcar para reabrir pronto)
+  bookfw cena add <cap>             novo contrato de cena no capitulo
+  bookfw canon new <tipo> "Nome"    ficha de personagem ou lugar
   bookfw brief <cap> [--cena N]     briefing da cena — o pacote do escritor
   bookfw style                      mede sua voz sobre samples/
   bookfw status                     kanban, promessas e contagem
@@ -61,6 +66,18 @@ try {
       if (sub === 'new') capNew(args);
       else if (sub === 'move') capMove(args);
       else throw new Erro('Uso: bookfw cap new|move');
+      break;
+    }
+    case 'cena': {
+      const sub = args._.shift();
+      if (sub === 'add') cenaAdd(args);
+      else throw new Erro('Uso: bookfw cena add <capitulo>');
+      break;
+    }
+    case 'canon': {
+      const sub = args._.shift();
+      if (sub === 'new') canonNew(args);
+      else throw new Erro('Uso: bookfw canon new personagem|lugar "Nome"');
       break;
     }
     case 'brief': brief(args); break;

@@ -173,6 +173,139 @@ ok('mover para pronto segue livre', run('cap', 'move', '1', 'pronto').codigo ===
   ok('build diz quantos capitulos de quantos entraram', b.saida.includes('1 de 2 capitulos'));
 }
 
+// ---------------------------------------------------------------------------
+// 0.1.4 — os comandos que faltavam entre o que o gate cobra e o que o CLI cria.
+// ---------------------------------------------------------------------------
+
+/** Troca a tabela em branco do template do sumario por uma preenchida. */
+function preencheSumario(dir, tabela) {
+  const d = join(dir, 'docs', 'sumario');
+  const arq = join(d, readdirSync(d)[0]);
+  writeFileSync(arq, readFileSync(arq, 'utf8').replace(
+    '| 01 | 1 |  |  | P1 | 2500 |\n| 02 | 1 |  |  |  | 2500 |', tabela,
+  ), 'utf8');
+}
+
+// canon new — o gate reprovava personagem sem ficha e o CLI nao sabia criar uma.
+{
+  const p = projeto('Canon Novo');
+  const cr = p.rodar('canon', 'new', 'personagem', 'Marta Vieira', '--apelidos', 'Marta, Dona Marta');
+  ok('canon new cria ficha de personagem', cr.codigo === 0);
+  const ficha = readFileSync(join(p.dir, 'docs', 'canon', 'personagens', 'marta-vieira.md'), 'utf8');
+  ok('a ficha nasce com o nome preenchido', ficha.includes('nome: Marta Vieira'));
+  ok('a ficha nasce com os apelidos', ficha.includes('apelidos: [Marta, Dona Marta]'));
+  ok('a ficha nao deixa placeholder sobrando', !ficha.includes('{{'));
+
+  ok('canon new aceita o plural do diretorio',
+    p.rodar('canon', 'new', 'lugares', 'Cozinha da casa').codigo === 0);
+  ok('o lugar tambem nasce sem placeholder',
+    !readFileSync(join(p.dir, 'docs', 'canon', 'lugares', 'cozinha-da-casa.md'), 'utf8').includes('{{'));
+
+  // Nome repetido e o comeco de toda contradicao: duas fichas do mesmo sujeito.
+  const choque = p.rodar('canon', 'new', 'personagem', 'dona marta');
+  ok('canon new recusa nome que ja e apelido de outra ficha', choque.codigo === 1);
+  ok('a recusa nomeia a ficha que ja ocupa o nome', choque.saida.includes('marta-vieira.md'));
+
+  // O gate deixou de apontar diretorio e passou a dar o comando pronto.
+  p.rodar('cap', 'new', 'Um');
+  p.rodar('cena', 'add', '1', '--personagens', 'Fulano', '--objetivo', 'x', '--conflito', 'y', '--virada', 'z');
+  p.rodar('cap', 'move', '1', 'esboco');
+  ok('o gate diz o comando que cria a ficha que falta',
+    p.rodar('validate').saida.includes('bookfw canon new personagem "Fulano"'));
+}
+
+// sum --materializar — eram 17 e 24 `cap new` digitados nas duas obras reais.
+{
+  const p = projeto('Sumario Materializado');
+  // ultima coluna "Fonte", nao "Palavras": as obras reais trocam essa coluna,
+  // entao a leitura tem de ser por nome de coluna e nao por posicao.
+  preencheSumario(p.dir, [
+    '| 01 | 1 | A kombi | mundo e ferida | P1 | original |',
+    '| 02 | 1 | O fosforo | incidente incitante | P2 | fluxo |',
+    '| 07 | 2a | A mascara | falso ganho | **paga P1** | fluxo |',
+  ].join('\n'));
+
+  const sim = p.rodar('sum', '--simular');
+  ok('sum --simular lista o que criaria', sim.saida.includes('criaria') && sim.saida.includes('A kombi'));
+  ok('sum --simular nao escreve nada', !existsSync(join(p.dir, 'capitulos', 'backlog', 'cap-01-a-kombi.md')));
+
+  const mat = p.rodar('sum', '--materializar');
+  ok('sum --materializar cria os capitulos do sumario',
+    existsSync(join(p.dir, 'capitulos', 'backlog', 'cap-01-a-kombi.md'))
+    && existsSync(join(p.dir, 'capitulos', 'backlog', 'cap-07-a-mascara.md')));
+  ok('a coluna final variavel nao atrapalha a leitura', mat.saida.includes('3 criados'));
+  ok('o numero do sumario e respeitado, buraco inclusive',
+    readFileSync(join(p.dir, 'capitulos', 'backlog', 'cap-07-a-mascara.md'), 'utf8').includes('numero: 7'));
+
+  const denovo = p.rodar('sum', '--materializar');
+  ok('materializar duas vezes nao duplica nada', denovo.saida.includes('0 criados'));
+  ok('e diz o que pulou', denovo.saida.includes('ja existe') && denovo.saida.includes('cap-01-a-kombi.md'));
+}
+
+// Sumario de obra real: uma segunda tabela depois da de capitulos, e uma linha
+// de vao ("04–06 | a escrever"). Varrer o arquivo inteiro atras de linha com
+// barra criava capitulo 406 e um capitulo 1 fantasma vindo de "da pagina 1".
+{
+  const p = projeto('Sumario Real');
+  preencheSumario(p.dir, [
+    '| 01 | 1 | A kombi | mundo e ferida | P1 | original |',
+    '| 04–06 | 2a | a escrever |  |  |  |',
+    '',
+    'Texto entre as duas tabelas, que e o que as separa.',
+    '',
+    '| Ato | Capitulos | Funcao | Virada que fecha o ato |',
+    '|---|---|---|---|',
+    '| 2 | 08-12 | pressao, perdas, ponto mais baixo | ele perde o emprego |',
+    '| 3 | 20-24 | escolha, climax, novo equilibrio | pede ajuda pela primeira vez |',
+  ].join('\n'));
+
+  const s = p.rodar('sum', '--simular');
+  ok('a segunda tabela do sumario nao vira capitulo',
+    !s.saida.includes('ponto mais baixo') && !s.saida.includes('novo equilibrio'));
+  ok('so a tabela de capitulos e lida', s.saida.includes('1 a criar'));
+  ok('linha de vao nao vira capitulo inventado', !s.saida.includes('406'));
+  ok('linha de vao e reportada, nao sumida', s.saida.includes('ignorada') && s.saida.includes('04–06'));
+
+  p.rodar('sum', '--materializar');
+  const criados = readdirSync(join(p.dir, 'capitulos', 'backlog'));
+  ok('materializou exatamente o capitulo valido', criados.length === 1 && criados[0] === 'cap-01-a-kombi.md');
+}
+
+// sum --materializar sobre sumario em branco: erro que diz qual dos dois e.
+{
+  const p = projeto('Sumario Vazio');
+  const vazio = p.rodar('sum', '--materializar');
+  ok('materializar sumario em branco reprova', vazio.codigo === 1);
+  ok('e distingue tabela vazia de tabela ausente', vazio.saida.includes('preenchidos'));
+}
+
+// cena add — da segunda cena em diante era edicao de markdown na mao.
+{
+  const p = projeto('Cena Nova');
+  p.rodar('cap', 'new', 'Um');
+  const a = p.rodar('cena', 'add', '1', '--objetivo', 'sair antes que percebam');
+  ok('cena add acrescenta contrato ao capitulo', a.codigo === 0);
+  ok('o id segue a numeracao que o capitulo ja usa', a.saida.includes('cena 1.2'));
+  ok('a dica lista so o que ficou em branco',
+    a.saida.includes('conflito, virada em branco') && !a.saida.includes('objetivo, conflito'));
+
+  const arq = join(p.dir, 'capitulos', 'backlog', 'cap-01-um.md');
+  ok('o bloco novo e um contrato de cena valido',
+    /```cena\n[\s\S]*?id: 1\.2[\s\S]*?```/.test(readFileSync(arq, 'utf8')));
+  ok('o capitulo passa a ter duas cenas', p.rodar('status').saida.includes(' 2 cenas'));
+
+  // id com letra continua com letra: impor esquema reescreveria a mao do autor.
+  writeFileSync(arq, readFileSync(arq, 'utf8').replace('id: 1.2', 'id: 1.B'), 'utf8');
+  ok('id com letra continua na letra seguinte', p.rodar('cena', 'add', '1').saida.includes('cena 1.C'));
+
+  // mesma guarda do cap move: capitulo fechado nao muda de estrutura sozinho
+  p.rodar('cap', 'move', '1', 'pronto', '--forcar');
+  const emPronto = p.rodar('cena', 'add', '1');
+  ok('cena add recusa capitulo em pronto sem --forcar', emPronto.codigo === 1);
+  ok('a recusa explica o que fazer', emPronto.saida.includes('--forcar'));
+  ok('cena add em pronto passa com --forcar', p.rodar('cena', 'add', '1', '--forcar').codigo === 0);
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);

@@ -40,7 +40,9 @@ bookfw style                       # mede sua voz sobre samples/
 bookfw dec "Narracao em primeira pessoa no passado"
 bookfw pd                          # plano diretor
 bookfw sum                         # sumario derivado do plano diretor
-bookfw cap new "Titulo do capitulo" --ato 1
+bookfw sum --materializar          # a tabela do sumario vira kanban
+bookfw canon new personagem "Marta" --apelidos "Dona Marta"
+bookfw cena add 1 --local Cozinha --objetivo "atender antes que desliguem"
 bookfw cap move 1 esboco
 bookfw cap move 1 escrita
 bookfw brief 1 --cena 1.1          # o pacote que o escritor recebe
@@ -128,6 +130,20 @@ livre — inclusive o `revisao -> escrita`, que e o "volta" de rotina da revisao
 
 Com mais de um plano diretor em `docs/plano-diretor/`, **vale o mais recente** —
 e o gate diz qual, para a escolha não ser silenciosa.
+
+Quando reprova, o gate **dá o comando que resolve**: personagem sem ficha vira
+`bookfw canon new personagem "X"`, capítulo sem contrato vira `bookfw cena add 3`.
+Regra da casa: o gate não cobra artefato que o CLI não saiba criar.
+
+## Do sumário para o kanban
+
+`bookfw sum --materializar` lê a tabela do sumário e cria os capítulos em
+`backlog/`. É idempotente — capítulo que já existe é pulado —, então acrescentar
+linha ao sumário e rodar de novo cria só o que falta. `--simular` mostra antes.
+
+A tabela é lida **por nome de coluna**, não por posição: obras diferentes trocam
+a coluna final. Linha que não vira capítulo — um vão como `| 04–06 | a escrever |`
+— é reportada como ignorada, com o motivo. Nada some calado.
 
 ## O manuscrito
 

@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.1.4 — 2026-08-31
+
+O gate cobrava artefato que o CLI nao sabia produzir. Ficha de canon, cena a
+partir da segunda e capitulo do sumario nasciam na mao — e ficha e cena sao
+exatamente o que o `validate` reprova com **erro**. Esta versao fecha o
+circuito: o gate agora nomeia o comando que resolve o que ele acabou de apontar.
+
+### Adicionado
+
+- **`bookfw canon new personagem|lugar "Nome"`** — cria a ficha a partir dos
+  templates `personagem.md` e `lugar.md`, que existiam no disco e nenhum comando
+  usava. Aceita `--apelidos`, `--papel`, `--resumo`, `--tipo`, e **recusa nome ou
+  apelido que ja esteja no canon**, inclusive entre personagem e lugar: a cena
+  declara os dois no mesmo espaco de nomes, e duas fichas do mesmo sujeito
+  divergem em silencio.
+- **`bookfw cena add <cap>`** — acrescenta contrato de cena ao capitulo. O id
+  segue o esquema que o capitulo ja usa (`6.1` -> `6.2`, `6.A` -> `6.B`), aceita
+  os campos por flag, avisa qual personagem ainda nao tem ficha e diz quais dos
+  tres campos obrigatorios ficaram em branco. Mesma guarda do `cap move`:
+  capitulo em `pronto` exige `--forcar`.
+- **`bookfw sum --materializar`** — cria no kanban os capitulos da tabela do
+  sumario. Eram 17 e 24 `cap new` digitados nas duas obras reais. Idempotente:
+  capitulo que ja existe e pulado, entao rodar de novo depois de acrescentar
+  linha so cria o que falta. `--simular` mostra sem escrever.
+
+### Corrigido
+
+- **Mensagem do gate passou a dar o comando.** `personagem "X" nao existe no
+  canon` virou `rode: bookfw canon new personagem "X"`; o mesmo para lugar e
+  para capitulo sem contrato de cena.
+
+### Nota de leitura do sumario
+
+A tabela e lida **por nome de coluna**, nao por posicao — as duas obras reais
+tem colunas finais diferentes (`Palavras`, `Fonte`) — e so o bloco **contiguo**
+de linhas com barra conta como tabela. Varrer o arquivo inteiro atras de linha
+com barra misturava a tabela de capitulos com as outras do sumario: em
+`o-arquivo`, "a mesma pergunta da pagina 1" virava um capitulo 1 fantasma e o
+vao `04–06` virava um capitulo 406. Linha que nao vira capitulo e **reportada
+como ignorada**, com o motivo, em vez de sumir.
+
 ## 0.1.3 — 2026-08-31
 
 Quatro bugs achados na auditoria depois de escrever a primeira obra completa.
