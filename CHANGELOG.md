@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.2 — 2026-08-31
+
+### Corrigido
+
+- **O veu escuro sobre a arte deixou de ser fixo.** A composicao aplicava 42% de
+  escurecimento sobre a arte para o titulo ler — calibragem certa para foto
+  clara, e mortal para arte que ja nasce escura. Achado compondo a capa real da
+  `metamorfose`: uma arte vetorial de linha teve a linha quase apagada, e num
+  segundo conceito o escurecimento matou justamente o branco, que era o conceito
+  inteiro. Agora `--escurecer` vai de 0 a 1, com 0.42 de padrao, e a saida diz
+  quanto foi aplicado. Quem sabe quanto a arte aguenta e quem olha a capa.
+
 ## 0.4.1 — 2026-08-31
 
 O bloco de metrica fechava com uma linha de "palavras marcantes". Medida na

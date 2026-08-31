@@ -162,6 +162,9 @@ const paletaDe = (genero) => {
   return PALETAS[Object.keys(PALETAS).find((k) => g.includes(k))] || PALETAS.padrao;
 };
 
+/** Veu escuro sobre a arte, para o titulo ler. Certo para foto; demais para arte escura. */
+const ESCURECER_PADRAO = 0.42;
+
 const escapar = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /**
@@ -192,7 +195,7 @@ export function lombadaDe(paginas) {
   return Math.round(paginas * ESPESSURA_PAGINA);
 }
 
-function svgFrente({ largura, altura, cfg, arte, paleta, x = 0 }) {
+function svgFrente({ largura, altura, cfg, arte, paleta, escurecer = ESCURECER_PADRAO, x = 0 }) {
   const p = [];
   const margem = Math.round(largura * 0.1);
   const util = largura - margem * 2;
@@ -201,7 +204,12 @@ function svgFrente({ largura, altura, cfg, arte, paleta, x = 0 }) {
     // data URI, nunca caminho relativo: SVG com href para capa/arte.png abre na
     // maquina do autor e quebra em qualquer outra, inclusive na da grafica.
     p.push(`<image x="${x}" y="0" width="${largura}" height="${altura}" preserveAspectRatio="xMidYMid slice" href="${arte}"/>`);
-    p.push(`<rect x="${x}" y="0" width="${largura}" height="${altura}" fill="${paleta.fundo}" opacity="0.42"/>`);
+    // O veu existe para o titulo ler sobre foto clara. Fixo em 0.42 ele apaga
+    // arte que ja nasce escura: numa arte vetorial de linha, a linha sumiu.
+    // Quem sabe quanto a arte aguenta e quem olha a capa — dai o `--escurecer`.
+    if (escurecer > 0) {
+      p.push(`<rect x="${x}" y="0" width="${largura}" height="${altura}" fill="${paleta.fundo}" opacity="${escurecer}"/>`);
+    }
   } else {
     p.push(`<rect x="${x}" y="0" width="${largura}" height="${altura}" fill="${paleta.fundo}"/>`);
     p.push(`<rect x="${x + margem}" y="${Math.round(altura * 0.14)}" width="${util}" height="2" fill="${paleta.realce}"/>`);
@@ -257,7 +265,7 @@ function svgVerso({ largura, altura, paleta, blurb, autor }) {
   return p.join('\n  ');
 }
 
-export function svgDaCapa({ formato, cfg, arte, palavras, blurb }) {
+export function svgDaCapa({ formato, cfg, arte, palavras, blurb, escurecer = ESCURECER_PADRAO }) {
   const paleta = paletaDe(cfg.genero);
   const abre = (w, h) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
 
@@ -276,7 +284,7 @@ export function svgDaCapa({ formato, cfg, arte, palavras, blurb }) {
       `  <rect width="${w}" height="${h}" fill="${paleta.fundo}"/>`,
       `  <g transform="translate(0,${SANGRIA})">`,
       `  <g transform="translate(${SANGRIA},0)">${svgVerso({ largura: TRIM.largura, altura: TRIM.altura, paleta, blurb, autor: cfg.autor })}</g>`,
-      `  ${svgFrente({ largura: TRIM.largura, altura: TRIM.altura, cfg, arte, paleta, x: xFrente })}`,
+      `  ${svgFrente({ largura: TRIM.largura, altura: TRIM.altura, cfg, arte, paleta, escurecer, x: xFrente })}`,
       // lombada: so entra texto se houver espaco de sobra para ele ser legivel
       lombada > 40
         ? `  <text x="${SANGRIA + TRIM.largura + lombada / 2}" y="${TRIM.altura / 2}" font-family="Georgia, serif"`
@@ -291,7 +299,7 @@ export function svgDaCapa({ formato, cfg, arte, palavras, blurb }) {
   const dim = formato === 'miniatura' ? MINIATURA : EBOOK;
   return { largura: dim.largura, altura: dim.altura, svg: [
     abre(dim.largura, dim.altura),
-    `  ${svgFrente({ largura: dim.largura, altura: dim.altura, cfg, arte, paleta })}`,
+    `  ${svgFrente({ largura: dim.largura, altura: dim.altura, cfg, arte, paleta, escurecer })}`,
     '</svg>',
   ].join('\n') };
 }
@@ -331,6 +339,11 @@ export async function capa(args) {
   for (const f of pedidos) if (!FORMATOS.includes(f)) throw new Erro(`--formato deve ser um de ${FORMATOS.join(', ')}`);
   const soSvg = Boolean(args.formato) && String(args.formato).split(',').every((x) => x.trim() === 'svg');
 
+  const escurecer = args.escurecer === undefined ? ESCURECER_PADRAO : Number(args.escurecer);
+  if (!Number.isFinite(escurecer) || escurecer < 0 || escurecer > 1) {
+    throw new Erro('--escurecer vai de 0 a 1. 0 nao escurece nada; 0.42 e o padrao, calibrado para foto.');
+  }
+
   // Sem arte, capa tipografica: o autor com o livro pronto e sem ilustracao nao
   // pode ficar bloqueado. `--tipografica` forca isso mesmo havendo arte.
   const arquivoArte = args.tipografica ? null : arteDe(raiz);
@@ -354,7 +367,7 @@ export async function capa(args) {
   // O SVG sai sempre, em todo formato: e a fonte da verdade, e e a capa de
   // impressao — a que mais precisa de ajuste fino — que antes so tinha PNG.
   for (const formato of pedidos) {
-    const r = svgDaCapa({ formato, cfg, arte, palavras, blurb });
+    const r = svgDaCapa({ formato, cfg, arte, palavras, blurb, escurecer });
     if (formato === 'impressao') avisoLombada = `${r.paginas} paginas estimadas, lombada de ${r.lombada}px (${(r.lombada / DPI).toFixed(3)}in)`;
     gerados.push(escrever(join(raiz, 'capa', `${base}-${formato}.svg`), r.svg));
     if (!Resvg) continue;
@@ -364,7 +377,7 @@ export async function capa(args) {
   }
 
   console.log(`${c.green('capa gerada')}  ${gerados.map((g) => rel(raiz, g)).join(', ')}`);
-  console.log(c.dim(`  ${arquivoArte ? `arte: ${rel(raiz, arquivoArte)}` : 'tipografica, sem arte'} | genero ${cfg.genero || 'padrao'}`));
+  console.log(c.dim(`  ${arquivoArte ? `arte: ${rel(raiz, arquivoArte)} escurecida ${Math.round(escurecer * 100)}%` : 'tipografica, sem arte'} | genero ${cfg.genero || 'padrao'}`));
   if (avisoLombada) console.log(c.dim(`  ${avisoLombada}`));
 
   const linhas = quebrar(cfg.titulo, 100, 100 - 100 * 0.2);
