@@ -306,6 +306,25 @@ function preencheSumario(dir, tabela) {
   ok('cena add em pronto passa com --forcar', p.rodar('cena', 'add', '1', '--forcar').codigo === 0);
 }
 
+// init dentro de uma pasta que ja guarda livros espalharia os arquivos ao lado deles.
+{
+  const porta = mkdtempSync(join(tmpdir(), 'bookfw-porta-'));
+  descartar.push(porta);
+  const dentro = (cwd, ...args) => {
+    const r = spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8' });
+    return { saida: (r.stdout || '') + (r.stderr || ''), codigo: r.status ?? 1 };
+  };
+  mkdirSync(join(porta, 'livro-a'), { recursive: true });
+  dentro(join(porta, 'livro-a'), 'init', 'Livro A');
+  const espalha = dentro(porta, 'init', 'Livro B');
+  ok('init recusa pasta que ja guarda livros', espalha.codigo === 1);
+  ok('a recusa nomeia o projeto encontrado', espalha.saida.includes('livro-a'));
+  ok('a recusa ensina o mkdir', espalha.saida.includes('mkdir meu-livro'));
+  ok('--forcar passa por cima', dentro(porta, 'init', 'Livro B', '--forcar').codigo === 0);
+  ok('--titulo vale como titulo',
+    dentro(join(porta, 'livro-a'), 'status').saida.includes('Livro A'));
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);
