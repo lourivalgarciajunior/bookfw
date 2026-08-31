@@ -1,7 +1,7 @@
 ---
-nome: 
-tipo: 
-resumo: 
+nome: {{nome}}
+tipo: {{tipo}}
+resumo: {{resumo}}
 ---
 
 ## O que e

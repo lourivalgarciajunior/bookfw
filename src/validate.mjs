@@ -62,7 +62,7 @@ export function validate(args) {
       erro(onde, `frontmatter diz estado "${cap.fm.estado}" mas o arquivo esta em ${cap.estado}/`);
     }
     if (cap.estado !== 'backlog' && cap.cenas.length === 0) {
-      erro(onde, 'sem contrato de cena — bloco ```cena e o que o escritor recebe de briefing');
+      erro(onde, `sem contrato de cena — rode: bookfw cena add ${cap.numero}`);
     }
     cap.cenas.forEach((cena, i) => {
       const tag = `${onde} cena ${cena.id || i + 1}`;
@@ -75,11 +75,11 @@ export function validate(args) {
       }
       for (const nome of [].concat(cena.personagens || [])) {
         if (nome && !nomesCanon.has(String(nome).toLowerCase())) {
-          erro(tag, `personagem "${nome}" nao existe no canon — crie docs/canon/personagens/`);
+          erro(tag, `personagem "${nome}" nao existe no canon — rode: bookfw canon new personagem "${nome}"`);
         }
       }
       if (String(cena.local || '').trim() && !nomesCanon.has(String(cena.local).toLowerCase())) {
-        aviso(tag, `local "${cena.local}" nao esta no canon`);
+        aviso(tag, `local "${cena.local}" nao esta no canon — rode: bookfw canon new lugar "${cena.local}"`);
       }
       for (const p of [].concat(cena.promessas || [])) plantadas.add(p);
       for (const p of [].concat(cena.paga || [])) pagas.add(p);
