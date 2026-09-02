@@ -15,5 +15,9 @@ publico: adulto
 palavras_alvo: 60000
 palavras_por_capitulo: 2500
 
+# Capa — quanto o veu escurece a arte para o titulo ler (0 a 1)
+# 0.42 e calibrado para foto clara; arte escura pede menos
+capa_escurecer: 0.42
+
 # Governanca
 wip_limit: 1

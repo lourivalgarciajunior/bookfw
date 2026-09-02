@@ -661,6 +661,29 @@ function preenchePd(dir, extra = '') {
   ok('--escurecer 0 nao poe veu nenhum',
     !/fill="#[0-9a-f]{6}" opacity="0"/.test(readFileSync(join(p.dir, 'capa', 'capa-svg-ebook.svg'), 'utf8')));
   ok('--escurecer fora de 0..1 e recusado', p.rodar('capa', '--escurecer', '2').codigo === 1);
+
+  // A calibragem e da OBRA. Sem lugar para grava-la, o arquivo composto deixa
+  // de ser regeneravel: quem clonasse o repositorio e rodasse `bookfw capa`
+  // receberia o padrao de foto e uma capa diferente da que o autor aprovou.
+  const yaml = join(p.dir, 'livro.yaml');
+  const base = readFileSync(yaml, 'utf8');
+  const calibrar = (valor) => writeFileSync(yaml, `${base}\ncapa_escurecer: ${valor}\n`, 'utf8');
+  const svgDaCapa = () => readFileSync(join(p.dir, 'capa', 'capa-svg-ebook.svg'), 'utf8');
+
+  calibrar('0.07');
+  const daObra = p.rodar('capa', '--formato', 'svg');
+  ok('o veu sai do livro.yaml quando declarado', svgDaCapa().includes('opacity="0.07"'));
+  ok('e a saida diz de onde a calibragem veio', daObra.saida.includes('(livro.yaml)'));
+  ok('o flag tem precedencia sobre o livro.yaml',
+    p.rodar('capa', '--formato', 'svg', '--escurecer', '0.3').saida.includes('(--escurecer)')
+    && svgDaCapa().includes('opacity="0.3"'));
+
+  calibrar('muito');
+  const ruim = p.rodar('capa', '--formato', 'svg');
+  ok('valor invalido no livro.yaml e recusado', ruim.codigo === 1);
+  ok('e a recusa aponta o livro.yaml, nao o flag', ruim.saida.includes('capa_escurecer no livro.yaml'));
+
+  writeFileSync(yaml, base, 'utf8');
   p.rodar('capa', '--formato', 'svg');
 
   const tip = p.rodar('capa', '--formato', 'svg', '--tipografica');

@@ -339,9 +339,20 @@ export async function capa(args) {
   for (const f of pedidos) if (!FORMATOS.includes(f)) throw new Erro(`--formato deve ser um de ${FORMATOS.join(', ')}`);
   const soSvg = Boolean(args.formato) && String(args.formato).split(',').every((x) => x.trim() === 'svg');
 
-  const escurecer = args.escurecer === undefined ? ESCURECER_PADRAO : Number(args.escurecer);
+  // A calibragem do veu e da OBRA, nao da linha de comando: sem lugar para
+  // grava-la, os arquivos compostos deixam de ser regeneraveis — quem clonasse
+  // o repositorio e rodasse `bookfw capa` receberia os 42% e uma capa errada.
+  // Mesmo padrao do `ressalva_verificar` que o docx ja le do livro.yaml.
+  const daObra = cfg.capa_escurecer;
+  const bruto = args.escurecer ?? (daObra === undefined || daObra === '' ? ESCURECER_PADRAO : daObra);
+  const escurecer = Number(bruto);
   if (!Number.isFinite(escurecer) || escurecer < 0 || escurecer > 1) {
-    throw new Erro('--escurecer vai de 0 a 1. 0 nao escurece nada; 0.42 e o padrao, calibrado para foto.');
+    const origem = args.escurecer !== undefined ? 'Veio de --escurecer.' : 'Veio de capa_escurecer no livro.yaml.';
+    throw new Erro([
+      `"${bruto}" nao serve para escurecer: vai de 0 a 1.`,
+      '       0 nao escurece nada; 0.42 e o padrao, calibrado para foto clara.',
+      `       ${origem}`,
+    ].join('\n'));
   }
 
   // Sem arte, capa tipografica: o autor com o livro pronto e sem ilustracao nao
@@ -377,7 +388,8 @@ export async function capa(args) {
   }
 
   console.log(`${c.green('capa gerada')}  ${gerados.map((g) => rel(raiz, g)).join(', ')}`);
-  console.log(c.dim(`  ${arquivoArte ? `arte: ${rel(raiz, arquivoArte)} escurecida ${Math.round(escurecer * 100)}%` : 'tipografica, sem arte'} | genero ${cfg.genero || 'padrao'}`));
+  const origemVeu = args.escurecer !== undefined ? '--escurecer' : (daObra !== undefined && daObra !== '' ? 'livro.yaml' : 'padrao');
+  console.log(c.dim(`  ${arquivoArte ? `arte: ${rel(raiz, arquivoArte)} escurecida ${Math.round(escurecer * 100)}% (${origemVeu})` : 'tipografica, sem arte'} | genero ${cfg.genero || 'padrao'}`));
   if (avisoLombada) console.log(c.dim(`  ${avisoLombada}`));
 
   const linhas = quebrar(cfg.titulo, 100, 100 - 100 * 0.2);
