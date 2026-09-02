@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.4.4 — 2026-09-02
+
+Tres defeitos achados compondo a capa de "Os Oito Modelos da Reforma
+Tributaria" — o primeiro livro de nao-ficcao a passar pelo comando. Nenhum
+deles aparecia na `metamorfose`, que tem titulo de uma palavra e genero de uma
+palavra.
+
+### Corrigido
+
+- **Titulo longo crescia por cima da arte.** O corpo era fixo em 11.5% da
+  largura e o bloco descia sem limite: o titulo saiu em quatro linhas sobre a
+  imagem. Titulo longo e a norma em nao-ficcao, nao a excecao. Agora o corpo
+  cede ate o bloco caber na faixa dele, a saida diz quando reduziu, e avisa
+  quando nem no corpo minimo cabe — em vez de disfarcar.
+- **A paleta errava o genero por uma letra.** `nao-ficcao tecnica` nao contem
+  `tecnico`, entao o livro tecnico saia com o dourado do padrao em vez do azul.
+  O casamento passou a ser pelo radical, e vale tambem para `memorias`,
+  `romances` e `historias`.
+- **Markdown ia impresso na quarta capa.** O texto vem do plano diretor, que usa
+  negrito: a contracapa saiu com `**o que a transicao quebra no sistema**`
+  literal, asterisco e tudo. Negrito, italico, codigo, titulo e citacao agora
+  saem da marcacao e ficam so com o texto.
+
 ## 0.4.3 — 2026-09-02
 
 ### Adicionado

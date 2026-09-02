@@ -157,9 +157,15 @@ const PALETAS = {
   tecnico: { fundo: '#101418', texto: '#e6edf3', realce: '#4c8fbd' },
   padrao: { fundo: '#17181b', texto: '#eceae6', realce: '#a08a5e' },
 };
+/**
+ * Casa pelo radical, sem a vogal final: "nao-ficcao tecnica" nao contem
+ * "tecnico" e caia no padrao dourado — o livro tecnico saia com a cor errada
+ * por uma letra. Mesma armadilha para "memorias", "romances", "historias".
+ */
 const paletaDe = (genero) => {
-  const g = String(genero || '').toLowerCase();
-  return PALETAS[Object.keys(PALETAS).find((k) => g.includes(k))] || PALETAS.padrao;
+  const g = String(genero || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  const chave = Object.keys(PALETAS).find((k) => k !== 'padrao' && g.includes(k.slice(0, -1)));
+  return PALETAS[chave] || PALETAS.padrao;
 };
 
 /** Veu escuro sobre a arte, para o titulo ler. Certo para foto; demais para arte escura. */
@@ -168,10 +174,44 @@ const ESCURECER_PADRAO = 0.42;
 const escapar = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /**
+ * O texto da quarta capa vem do plano diretor, que e markdown e usa negrito.
+ * Sem tirar a marcacao, o asterisco ia impresso: a contracapa de "Os Oito
+ * Modelos" saiu com `**o que a transicao quebra no sistema**` literal.
+ */
+export function semMarcacao(s) {
+  return String(s || '')
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')   // link e imagem viram o rotulo
+    .replace(/(\*\*\*|___)(.+?)\1/g, '$2')
+    .replace(/(\*\*|__)(.+?)\1/g, '$2')
+    .replace(/(\*|_)(.+?)\1/g, '$2')
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s{0,3}>\s?/gm, '');
+}
+
+/**
  * Quebra por ESTIMATIVA de largura: 0.52 em por glifo numa serifada, media
  * grosseira. Nao e metrica de fonte — o comando declara isso em vez de deixar
  * o autor descobrir com o titulo vazando da capa. Ver residual na ADR.
  */
+/**
+ * O maior corpo em que o titulo cabe na faixa reservada a ele. Encolher tambem
+ * reduz o numero de linhas, entao a busca converge: cada passo cabe mais
+ * palavra por linha. O piso existe para nao virar letra miuda — abaixo dele o
+ * titulo sai grande demais mesmo, e o comando avisa em vez de disfarcar.
+ */
+export function ajustarTitulo(titulo, largura, altura, larguraUtil) {
+  const MAX_BLOCO = altura * 0.30;
+  const PISO = largura * 0.05;
+  let corpo = Math.round(largura * 0.115);
+  let linhas = quebrar(titulo, corpo, larguraUtil);
+  while (linhas.length * corpo * 1.18 > MAX_BLOCO && corpo > PISO) {
+    corpo = Math.round(corpo * 0.94);
+    linhas = quebrar(titulo, corpo, larguraUtil);
+  }
+  return { corpo, linhas, apertado: linhas.length * corpo * 1.18 > MAX_BLOCO };
+}
+
 export function quebrar(titulo, tamanho, larguraUtil) {
   const porGlifo = tamanho * 0.52;
   const cabem = Math.max(6, Math.floor(larguraUtil / porGlifo));
@@ -216,8 +256,11 @@ function svgFrente({ largura, altura, cfg, arte, paleta, escurecer = ESCURECER_P
     p.push(`<rect x="${x + margem}" y="${Math.round(altura * 0.72)}" width="${util}" height="2" fill="${paleta.realce}"/>`);
   }
 
-  const corpoTitulo = Math.round(largura * 0.115);
-  const linhas = quebrar(cfg.titulo, corpoTitulo, util);
+  // O corpo do titulo era fixo em 11.5% da largura, e o bloco crescia para
+  // baixo sem limite: "Os Oito Modelos da Reforma Tributaria" saiu em quatro
+  // linhas por cima da arte. Titulo longo e a norma em nao-ficcao, nao a
+  // excecao — entao o corpo cede ate o bloco caber na sua faixa.
+  const { corpo: corpoTitulo, linhas } = ajustarTitulo(cfg.titulo, largura, altura, util);
   const topo = Math.round(altura * 0.24);
   linhas.forEach((linha, i) => {
     p.push(`<text x="${x + largura / 2}" y="${topo + i * corpoTitulo * 1.18}" font-family="Georgia, 'Times New Roman', serif"`
@@ -368,7 +411,7 @@ export async function capa(args) {
   // A quarta capa sai da promessa ao leitor do PD; sem PD, sai vazia em vez de
   // inventada — capa que promete o que o livro nao promete e pior que capa lisa.
   const pd = planoDiretor(raiz);
-  const blurb = pd ? (resumo(secao(pd.corpo, 'Promessa'), 900) || resumo(secao(pd.corpo, 'Premissa'), 900)) : '';
+  const blurb = pd ? semMarcacao(resumo(secao(pd.corpo, 'Promessa'), 900) || resumo(secao(pd.corpo, 'Premissa'), 900)) : '';
 
   const base = cfg.slug || 'capa';
   const Resvg = soSvg ? null : await carregarResvg(raiz);
@@ -392,9 +435,14 @@ export async function capa(args) {
   console.log(c.dim(`  ${arquivoArte ? `arte: ${rel(raiz, arquivoArte)} escurecida ${Math.round(escurecer * 100)}% (${origemVeu})` : 'tipografica, sem arte'} | genero ${cfg.genero || 'padrao'}`));
   if (avisoLombada) console.log(c.dim(`  ${avisoLombada}`));
 
-  const linhas = quebrar(cfg.titulo, 100, 100 - 100 * 0.2);
-  if (linhas.length > 1) {
-    console.log(c.dim(`  titulo quebrado em ${linhas.length} linhas — a largura e estimada, nao medida na fonte; confira o SVG`));
+  const t = ajustarTitulo(cfg.titulo, EBOOK.largura, EBOOK.altura, EBOOK.largura * 0.8);
+  if (t.linhas.length > 1) {
+    console.log(c.dim(`  titulo em ${t.linhas.length} linhas`
+      + `${t.corpo < EBOOK.largura * 0.115 ? `, corpo reduzido para caber` : ''}`
+      + ' — a largura e estimada, nao medida na fonte; confira o SVG'));
+  }
+  if (t.apertado) {
+    console.log(`  ${c.yellow('titulo longo demais')} nem no corpo minimo ele cabe na faixa — encurte o titulo ou ajuste o SVG a mao`);
   }
   if (!Resvg && !soSvg) {
     console.log(`  ${c.yellow('sem rasterizador')} o SVG saiu; PNG precisa do pacote opcional.`);

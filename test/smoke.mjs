@@ -686,6 +686,35 @@ function preenchePd(dir, extra = '') {
   writeFileSync(yaml, base, 'utf8');
   p.rodar('capa', '--formato', 'svg');
 
+  // Titulo de nao-ficcao e longo por natureza. Com corpo fixo em 11.5% da
+  // largura, "Os Oito Modelos da Reforma Tributaria" saia em quatro linhas por
+  // cima da arte: o bloco crescia para baixo sem limite.
+  const yaml2 = join(p.dir, 'livro.yaml');
+  const antes = readFileSync(yaml2, 'utf8');
+  writeFileSync(yaml2, antes.replace(/^titulo: .*$/m,
+    'titulo: Os Oito Modelos da Reforma Tributaria Brasileira'), 'utf8');
+  const longo = p.rodar('capa', '--formato', 'svg');
+  const svgLongo = readFileSync(join(p.dir, 'capa', 'capa-svg-ebook.svg'), 'utf8');
+  const corpos = [...svgLongo.matchAll(/font-size="(\d+)"/g)].map((m) => Number(m[1]));
+  ok('titulo longo tem o corpo reduzido para caber', Math.max(...corpos) < 1600 * 0.115);
+  ok('e o comando diz que reduziu', longo.saida.includes('corpo reduzido para caber'));
+  const linhasTitulo = (svgLongo.match(/Os |Modelos|Reforma|Tributaria|Brasileira/g) || []).length;
+  ok('o bloco do titulo cabe na faixa reservada', (() => {
+    const ys = [...svgLongo.matchAll(/<text[^>]*y="([\d.]+)"[^>]*font-size="(\d+)"/g)]
+      .map((m) => Number(m[1])).filter((y) => y < 2000);
+    return ys.length > 0 && Math.max(...ys) - Math.min(...ys) <= 2560 * 0.30;
+  })());
+  writeFileSync(yaml2, antes, 'utf8');
+
+  // O genero "nao-ficcao tecnica" nao contem "tecnico": o livro tecnico saia
+  // com a paleta dourada do padrao, errando a cor por uma letra.
+  writeFileSync(yaml2, antes.replace(/^genero: .*$/m, 'genero: nao-ficcao tecnica'), 'utf8');
+  p.rodar('capa', '--formato', 'svg', '--tipografica');
+  ok('genero no plural ou no feminino acha a paleta certa',
+    readFileSync(join(p.dir, 'capa', 'capa-svg-ebook.svg'), 'utf8').includes('#101418'));
+  writeFileSync(yaml2, antes, 'utf8');
+  p.rodar('capa', '--formato', 'svg');
+
   const tip = p.rodar('capa', '--formato', 'svg', '--tipografica');
   ok('--tipografica ignora a arte existente', tip.saida.includes('tipografica, sem arte'));
   ok('e o SVG resultante nao tem imagem',
@@ -711,6 +740,20 @@ function preenchePd(dir, extra = '') {
   const grossa = q.rodar('capa', '--formato', 'impressao');
   const lombada = (s) => Number(s.match(/lombada de (\d+)px/)[1]);
   ok('obra maior produz lombada maior', lombada(grossa.saida) > lombada(r.saida));
+  // O texto da quarta capa vem do plano diretor, que e markdown. Sem tirar a
+  // marcacao, o asterisco vai IMPRESSO: a contracapa de "Os Oito Modelos" saiu
+  // com `**o que a transicao quebra no sistema**` literal.
+  const pdDir2 = join(p.dir, 'docs', 'plano-diretor');
+  const pdArq2 = join(pdDir2, readdirSync(pdDir2)[0]);
+  writeFileSync(pdArq2, readFileSync(pdArq2, 'utf8').replace(
+    'Relato honesto de quem chegou ao fundo e voltou.',
+    'Relato **honesto** de quem chegou ao _fundo_ e voltou, com `codigo` junto.'), 'utf8');
+  p.rodar('capa', '--formato', 'impressao');
+  const verso = readFileSync(join(p.dir, 'capa', 'capa-impressao-impressao.svg'), 'utf8');
+  ok('a quarta capa nao leva marcacao de markdown',
+    !verso.includes('**') && !verso.includes('`codigo`'));
+  ok('mas leva o texto todo', verso.includes('honesto') && verso.includes('fundo') && verso.includes('codigo'));
+
   // a capa de impressao e a que mais precisa de ajuste fino: tem de ter SVG
   ok('a capa de impressao tambem sai em SVG',
     existsSync(join(p.dir, 'capa', 'capa-impressao-impressao.svg')));
