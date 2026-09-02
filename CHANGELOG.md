@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.3 — 2026-09-02
+
+### Adicionado
+
+- **`capa_escurecer` no `livro.yaml`.** A calibragem do veu e da OBRA, nao da
+  linha de comando. Sem lugar para grava-la, os arquivos compostos deixavam de
+  ser regeneraveis: quem clonasse o repositorio e rodasse `bookfw capa` receberia
+  os 42% de padrao e uma capa diferente da que o autor aprovou — o que impede
+  trata-los como derivados e mante-los fora do git. Medido na `metamorfose`: com
+  a chave gravada, a capa regenera com o mesmo hash sem nenhum flag.
+  `--escurecer` continua valendo e tem precedencia; a saida diz de onde a
+  calibragem veio, e valor invalido aponta a fonte certa.
+
 ## 0.4.2 — 2026-08-31
 
 ### Corrigido

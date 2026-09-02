@@ -240,7 +240,12 @@ capa espalhada com verso em branco não é entregável.
 
 Sobre a arte entra um véu escuro, para o título ler. Ele é calibrado para foto
 clara e **apaga arte que já nasce escura** — `--escurecer 0.05` quase não
-escurece, `--escurecer 0` não põe véu nenhum. A saída diz quanto aplicou.
+escurece, `--escurecer 0` não põe véu nenhum. A saída diz quanto aplicou e de onde.
+
+Grave a calibragem em `capa_escurecer`, no `livro.yaml`: ela é **da obra**, não do
+comando. É o que torna as capas compostas descartáveis — com a chave no lugar,
+`bookfw capa` sem flag nenhum regenera a mesma capa, e os arquivos gerados podem
+ficar no `.gitignore` ao lado do DOCX.
 
 O PNG precisa de `@resvg/resvg-js`, dependência **opcional**. Sem ele o comando
 entrega o SVG, avisa e diz o que instalar.
