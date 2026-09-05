@@ -886,6 +886,66 @@ function comAmostra(p, repeticoes = 40) {
     readFileSync(join(p.dir, 'capa', 'briefing.md'), 'utf8').includes('rotulo, antigo, preservado'));
 }
 
+{
+  // bookfw revisao — a historia de leitura da obra. O DOCX saia sempre com o
+  // mesmo nome, e o leitor externo nao sabia qual revisao estava lendo.
+  const p = projeto('Obra Revisada');
+  const r0 = p.rodar('revisao');
+  ok('revisao sem nota recusa', r0.codigo !== 0 && r0.saida.includes('precisa de uma nota'));
+  ok('e nao cria o registro ao recusar', !existsSync(join(p.dir, 'docs', 'revisoes.md')));
+
+  const r1 = p.rodar('revisao', 'primeira leitura interna');
+  ok('primeira revisao registra e numera 1', r1.codigo === 0 && r1.saida.includes('revisao 1 registrada'));
+  const reg1 = readFileSync(join(p.dir, 'docs', 'revisoes.md'), 'utf8');
+  ok('o registro nasce com cabecalho e a linha 1', reg1.includes('| # | Data |') && /^\| 1 \| \d{4}-\d{2}-\d{2} \|/m.test(reg1));
+
+  const r2 = p.rodar('revisao', 'aplica a leitura; cap. 1 reescrito');
+  ok('segunda revisao numera 2', r2.saida.includes('revisao 2 registrada'));
+  const reg2 = readFileSync(join(p.dir, 'docs', 'revisoes.md'), 'utf8');
+  ok('o registro e append-only: a linha 1 continua la', reg2.includes('| 1 |') && reg2.includes('| 2 |') && reg2.includes('primeira leitura interna'));
+
+  // Buraco no registro nao pode colidir numero: o proximo e o MAIOR + 1.
+  writeFileSync(join(p.dir, 'docs', 'revisoes.md'), reg2.replace(/^\| 2 \|.*\n/m, ''), 'utf8');
+  const r3 = p.rodar('revisao', 'terceira, depois de apagar a segunda a mao');
+  ok('numero e o maior existente mais um, nao a contagem de linhas', r3.saida.includes('revisao 2 registrada'));
+
+  ok('status mostra a revisao corrente', p.rodar('status').saida.includes('revisao 2 —'));
+  ok('context lista o registro', p.rodar('context').saida.includes('## Revisoes (docs/revisoes.md)'));
+
+  // build carimba sob o titulo — precisa de um capitulo com prosa em revisao.
+  p.rodar('cap', 'new', 'Um Capitulo');
+  const arq = readdirSync(join(p.dir, 'capitulos', 'backlog')).find((f) => f.endsWith('.md'));
+  const cam = join(p.dir, 'capitulos', 'backlog', arq);
+  writeFileSync(cam, readFileSync(cam, 'utf8') + '\n\nUma frase de prosa para o manuscrito ter corpo.\n', 'utf8');
+  p.rodar('cap', 'move', arq, 'revisao');
+  const b = p.rodar('build');
+  const ms = readdirSync(join(p.dir, 'manuscrito')).find((f) => f.endsWith('.md'));
+  ok('build carimba a revisao sob o titulo', b.codigo === 0 && readFileSync(join(p.dir, 'manuscrito', ms), 'utf8').includes('_Revisao 2 —'));
+
+  // Sem revisao registrada o build avisa — e o aviso e o que muda o habito.
+  const q = projeto('Obra Sem Revisao');
+  q.rodar('cap', 'new', 'Cap');
+  const arqQ = readdirSync(join(q.dir, 'capitulos', 'backlog')).find((f) => f.endsWith('.md'));
+  const camQ = join(q.dir, 'capitulos', 'backlog', arqQ);
+  writeFileSync(camQ, readFileSync(camQ, 'utf8') + '\n\nProsa.\n', 'utf8');
+  q.rodar('cap', 'move', arqQ, 'revisao');
+  ok('build sem revisao avisa', q.rodar('build').saida.includes('sem revisao registrada'));
+
+  let temDocx = true;
+  try { await import('docx'); } catch { temDocx = false; }
+  if (temDocx) {
+    const d = p.rodar('docx');
+    const nomes = readdirSync(join(p.dir, 'manuscrito'));
+    ok('o nome do docx carrega o numero da revisao', d.codigo === 0 && nomes.some((f) => f.includes('— revisao 2.docx')));
+    ok('e o console diz a revisao', d.saida.includes('revisao 2 —'));
+    ok('docx sem revisao sai com o nome antigo e avisa',
+      q.rodar('docx').saida.includes('sem revisao registrada')
+      && readdirSync(join(q.dir, 'manuscrito')).some((f) => f.includes('versao de leitura.docx')));
+  } else {
+    console.log('  PULADO  nome do docx com revisao — pacote `docx` ausente');
+  }
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);

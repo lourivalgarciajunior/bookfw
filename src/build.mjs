@@ -4,6 +4,7 @@
  */
 import { join } from 'node:path';
 import { ESTADOS_ATIVOS, Erro, acharProjeto, c, capitulos, escrever, hoje, lerConfig, palavras, prosaDe, rel } from './core.mjs';
+import { carimbo, revisaoAtual } from './revisao.mjs';
 
 /** O corte que produz o manuscrito de trabalho — tudo que ja tem prosa completa. */
 export const CORTE_PADRAO = 'revisao';
@@ -59,6 +60,11 @@ export function build(args) {
 
   const partes = [`# ${cfg.titulo}\n`];
   if (cfg.autor && cfg.autor !== 'a definir') partes.push(`_${cfg.autor}_\n`);
+  // O carimbo LE o registro; nunca calcula. Sem revisao registrada o
+  // manuscrito sai sem a linha — e o build avisa, porque e assim que duas
+  // leituras acabam com o mesmo nome.
+  const rev = revisaoAtual(raiz);
+  if (rev) partes.push(`_${carimbo(rev)}_\n`);
   for (const cap of caps) {
     partes.push(`\n\n## ${String(cap.numero).padStart(2, '0')} — ${cap.fm.titulo || ''}\n`);
     const prosa = prosaFinal(cap);
@@ -81,5 +87,7 @@ export function build(args) {
   for (const cap of bloqueados) {
     console.log(`  ${c.yellow('fora do manuscrito')} ${rel(raiz, cap.caminho)} — ${cap.palavras} palavras em ${cap.estado}`);
   }
+  if (rev) console.log(c.dim(`  ${carimbo(rev).toLowerCase()} — ${rev.nota}`));
+  else console.log(c.yellow('  sem revisao registrada — bookfw revisao "o que mudou" antes de mandar a alguem'));
   console.log(c.dim('  versao de leitura em DOCX: bookfw docx'));
 }

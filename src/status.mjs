@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ESTADOS_ATIVOS, acharProjeto, artefatos, c, canon, capitulos, lerConfig, planoDiretor, promessas, rel, sumario } from './core.mjs';
+import { ARQUIVO as ARQ_REVISOES, carimbo, lerRevisoes, revisaoAtual } from './revisao.mjs';
 
 export function status() {
   const raiz = acharProjeto();
@@ -12,6 +13,13 @@ export function status() {
 
   console.log(c.b(`${cfg.titulo || 'sem titulo'}`) + c.dim(`  ${cfg.genero || ''}`));
   console.log(c.dim(`PD ${artefatos(raiz, 'plano-diretor').length ? 'sim' : 'NAO'} | SUM ${artefatos(raiz, 'sumario').length ? 'sim' : 'NAO'} | DEC ${artefatos(raiz, 'dec').length} | personagens no canon ${cn.personagens.length}`));
+  // A revisao e o que o leitor externo recebe; sem ela o DOCX sai sem numero e
+  // duas leituras ficam com o mesmo nome. Por isso aparece aqui, e nao so no
+  // arquivo de registro.
+  const rev = revisaoAtual(raiz);
+  console.log(rev
+    ? c.dim(`${carimbo(rev).toLowerCase()} — ${rev.nota}`)
+    : c.dim('revisao: nenhuma registrada (bookfw revisao "o que mudou")'));
   console.log('');
 
   for (const estado of ESTADOS_ATIVOS) {
@@ -89,6 +97,14 @@ export function context() {
       const estado = pagas.has(p.id) ? 'paga' : plantadas.has(p.id) ? 'plantada, nao paga' : 'nao plantada';
       out.push(`- ${p.id} [${estado}] ${p.texto}`);
     }
+  }
+
+  // A revisao corrente e a primeira coisa que um agente precisa saber ao
+  // retomar: e o que diz em que estado o livro FOI LIDO por alguem de fora.
+  const revs = lerRevisoes(raiz);
+  if (revs.length) {
+    out.push(`\n## Revisoes (${ARQ_REVISOES})`);
+    for (const r of revs) out.push(`- ${r.numero} [${r.data}] ${r.palavras} palavras, ${r.capitulos}${r.commit ? `, commit ${r.commit}` : ''} — ${r.nota}`);
   }
 
   out.push(`\n## Kanban`);

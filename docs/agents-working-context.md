@@ -52,3 +52,29 @@ deste repo: os hooks globais em `~/.claude`, `~/.codex`, `~/.gemini`,
 `~/.cursor`, `~/.copilot` e `~/.kiro` apontam para scripts em
 `~/.trackfw/scripts` sem bit de execucao (Windows). O remedio e global —
 `trackfw update harness` —, e por isso nao foi rodado dentro desta frente.
+
+## 2026-09-05 — `bookfw revisao`: a historia de leitura da obra (0.5.0)
+
+**O que mudou.** Comando novo `bookfw revisao "o que mudou"` grava uma linha em
+`docs/revisoes.md` (numero sequencial, data, capitulos por estado, palavras,
+capitulos com `verificar:`, commit curto quando ha git, nota obrigatoria). O
+registro e append-only; o proximo numero e o MAIOR existente + 1. `status`,
+`build`, `docx` e `context` leem o registro e carimbam: rosto e rodape do DOCX,
+`_Revisao N — data_` sob o titulo do manuscrito, e o nome do arquivo passa a
+`<titulo> — revisao N.docx`. Sem revisao, `build` e `docx` avisam e seguem.
+
+**Por que.** "Os Oito Modelos" foi ao revisor duas vezes em tres dias e os dois
+DOCX tinham o mesmo nome. O commit nao e unidade de leitura e o `livro.yaml` e
+invariante por decisao de obra — dai um registro proprio, e nao um campo nem uma
+tag de git.
+
+**Governanca.** ADR-2026-09-05-revisao-da-obra-…, REQ-2026-09-05-bookfw-revisao-…,
+ROADMAP-2026-09-05-bookfw-revisao. Smoke cobre recusa sem nota, numeracao,
+append-only com buraco, status, context, carimbo do build, aviso sem revisao,
+e o nome do DOCX (quando o pacote `docx` esta instalado).
+
+**Armadilha encontrada.** O `trackfw validate` deste repo reconhece a
+referencia REQ→ADR pela linha do CORPO no formato `ADR: \`docs/adr/<arq>.md\``,
+nao pelo frontmatter `adr:` — REQ com o frontmatter certo e o corpo em nome puro
+gera "adr is not referenced by any REQ". O formato do corpo e caminho completo
+em crase, como nos REQs de 2026-08-31.
