@@ -271,6 +271,69 @@ export function linhasDoSumario(corpo) {
   return { linhas, ignoradas, temTabela: true };
 }
 
+/**
+ * As Partes da obra, da tabela de Partes do plano diretor.
+ *
+ * O `ato:` do capitulo diz A QUE Parte ele pertence; o PD diz o NOME dela. As
+ * duas coisas existiam e nao se encontravam: obra com quatro Partes declaradas
+ * e vinte e tres capitulos com `ato` preenchido saia com zero divisores.
+ *
+ * ⚠ A TABELA E ACHADA PELO CABECALHO DA PRIMEIRA COLUNA, e nao pela secao.
+ * O template de plano diretor ja traz um `## Estrutura` com coluna **Ato** —
+ * a estrutura de tres atos da ficcao, cujas celulas sao `1`, `2a`, `2b`, `3`.
+ * Procurar por secao fazia o leitor ler "2a" como titulo de Parte e emitir um
+ * divisor chamado "Parte II — 2a". Coluna `Parte` e a declaracao de que aquela
+ * tabela nomeia Partes; coluna `Ato` nao e.
+ *
+ * Casamento por algarismo romano no inicio da primeira celula
+ * (`I — A natureza do problema` e o ato 1). Sem romano em NENHUMA linha, vale a
+ * ordem: a primeira e o ato 1. Duas regras porque a tabela e escrita a mao, e
+ * romano e convencao — nao obrigacao.
+ *
+ * Devolve Map<ato, { romano, titulo }>. Vazio quando nao ha tabela de Partes, e
+ * isso nao e erro: obra sem Parte e o caso comum.
+ */
+const ROMANO_DE = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII', 8: 'VIII', 9: 'IX', 10: 'X' };
+const DE_ROMANO = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10 };
+
+export function partes(raiz) {
+  const fora = new Map();
+  const pd = planoDiretor(raiz);
+  if (!pd) return fora;
+
+  const celulas = (l) => l.replace(/^\||\|$/g, '').split('|').map((x) => x.trim());
+  const separador = (l) => /^\|[\s|:-]*\|?$/.test(l);
+
+  // Blocos contiguos de linha com barra, como em `linhasDoSumario`.
+  const blocos = [];
+  let atual = null;
+  for (const l of pd.corpo.split('\n').map((x) => x.trim())) {
+    if (l.startsWith('|')) (atual ??= blocos[blocos.push([]) - 1]).push(l);
+    else atual = null;
+  }
+  const bloco = blocos.find((b) => /^partes?$/i.test(celulas(b[0])[0].replace(/\*\*/g, '').trim()));
+  if (!bloco) return fora;
+
+  const lidas = bloco.slice(1).filter((l) => !separador(l)).map((l) => {
+    const primeira = celulas(l)[0].replace(/\*\*/g, '').trim();
+    const m = primeira.match(/^([ivx]+)\b\s*[—–-]?\s*(.*)$/i);
+    return {
+      ato: m ? DE_ROMANO[m[1].toLowerCase()] : undefined,
+      romano: m ? m[1].toUpperCase() : '',
+      titulo: (m ? m[2] : primeira).trim(),
+    };
+    // Linha sem titulo e linha de gabarito ainda por preencher: nao vira Parte.
+  }).filter((x) => x.titulo && !/^[\d\s]*$/.test(x.titulo));
+
+  const comRomano = lidas.some((x) => x.ato);
+  lidas.forEach((x, i) => {
+    const ato = comRomano ? x.ato : i + 1;
+    if (!ato) return;
+    fora.set(ato, { romano: x.romano || ROMANO_DE[ato] || String(ato), titulo: x.titulo });
+  });
+  return fora;
+}
+
 /** Promessas do PD: linhas `- P1 — texto` na seção Promessas. */
 export function promessas(raiz) {
   const pd = planoDiretor(raiz);

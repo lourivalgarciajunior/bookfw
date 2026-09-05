@@ -200,6 +200,35 @@ dependência nenhuma, e quem só governa texto não precisa carregar um gerador 
 OOXML para rodar `status` ou `validate`. Sem ele, só este comando falha, e a
 mensagem diz o que instalar.
 
+## As Partes
+
+O `ato:` do frontmatter diz a que Parte um capítulo pertence. O plano diretor,
+numa tabela cuja **primeira coluna se chama `Parte`**, diz o nome dela:
+
+```markdown
+| Parte | Capitulos | Funcao |
+|---|---|---|
+| I — A natureza do problema | 01–04 | mostrar que a travessia é o problema |
+| II — A linha do tempo | 05–09 | o que muda no sistema em cada virada |
+```
+
+`build` e `docx` casam as duas coisas e emitem o divisor quando o ato muda: uma
+linha `## Parte I — A natureza do problema` no manuscrito, uma **página própria**
+no DOCX. A saída diz quantas Partes emitiu.
+
+O casamento é pelo algarismo romano no início da célula; sem romano em nenhuma
+linha, vale a ordem das linhas. Ato que não tem linha na tabela **não inventa
+título** — fica sem divisor, e o `build` avisa, porque ato errado no frontmatter
+é o tipo de coisa que só aparece quando alguém procura.
+
+Nada disso é obrigatório: obra sem tabela de Partes, ou sem `ato`, sai como
+sempre saiu.
+
+> A tabela é achada pelo **cabeçalho da coluna**, não pela seção. O template de
+> plano diretor já traz um `## Estrutura` com coluna `Ato` — a estrutura de três
+> atos da ficção, cujas células são `1`, `2a`, `2b`. Procurar por seção fazia o
+> leitor emitir "Parte II — 2a".
+
 ## A revisão
 
 Um livro vai a leitores externos várias vezes antes de fechar, e o arquivo saía

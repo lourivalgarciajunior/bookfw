@@ -12,7 +12,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
-import { Erro, acharProjeto, c, lerConfig, rel } from './core.mjs';
+import { Erro, acharProjeto, c, lerConfig, partes, rel } from './core.mjs';
 import { carimbo, revisaoAtual } from './revisao.mjs';
 import { CORTE_PADRAO, prosaFinal, selecao } from './build.mjs';
 
@@ -155,8 +155,31 @@ export async function docx(args) {
 
   // ------------------------------------------------------------- capitulos
   let comNota = 0;
+  // A estrutura do plano diretor chegando ao papel: uma pagina por Parte,
+  // antes do primeiro capitulo do ato. Ato sem linha na tabela nao inventa
+  // titulo — fica sem divisor, e o build e quem avisa.
+  const mapaPartes = partes(raiz);
+  let atoAnterior = null;
+  let divisores = 0;
   caps.forEach((cap, i) => {
     if (i > 0) filhos.push(quebra());
+    const ato = Number(cap.fm.ato) || null;
+    const parte = ato && ato !== atoAnterior ? mapaPartes.get(ato) : null;
+    if (ato && ato !== atoAnterior) atoAnterior = ato;
+    if (parte) {
+      if (i > 0) filhos.push(quebra());
+      filhos.push(new Paragraph({ spacing: { before: 3200 }, children: [] }));
+      filhos.push(new Paragraph({
+        alignment: AlignmentType.CENTER, spacing: { after: 260 },
+        children: [new TextRun({ text: `PARTE ${texto(parte.romano)}`, font: SERIF, size: 20, characterSpacing: 120, color: '888888' })],
+      }));
+      filhos.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: texto(parte.titulo), font: SERIF, size: 40 })],
+      }));
+      filhos.push(quebra());
+      divisores++;
+    }
     const nota = ressalva(cap.fm, cfg);
     if (nota) comNota++;
 
@@ -249,6 +272,7 @@ export async function docx(args) {
   // numero em vez de descoberta na leitura do arquivo pronto.
   console.log(`${c.green('docx gerado')}  ${rel(raiz, alvo)}`);
   console.log(c.dim(`  corte: ${minimo} ou adiante | ${caps.length} capitulos, ${comNota} com ressalva`));
+  if (divisores) console.log(c.dim(`  ${divisores} divisor(es) de Parte, do plano diretor`));
   if (rev) console.log(c.dim(`  ${carimbo(rev).toLowerCase()} — ${rev.nota}`));
   else console.log(c.yellow('  sem revisao registrada — o arquivo saiu sem numero. bookfw revisao "o que mudou" antes de mandar a alguem'));
 }

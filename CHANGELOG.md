@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.6.0 — 2026-09-05
+
+### Adicionado
+
+- **O divisor de Parte, derivado do plano diretor.** O `ato:` do capitulo dizia a
+  que Parte ele pertence e o PD dizia o nome dela, e as duas coisas nunca se
+  encontravam: "Os Oito Modelos" anuncia quatro Partes no capitulo 1, declara as
+  quatro no PD, tem `ato` nos 23 capitulos — e o manuscrito saia com ZERO
+  divisores. Agora `build` emite `## Parte I — <titulo>` e `docx` emite uma
+  pagina propria, quando o ato muda. As duas saidas dizem quantas Partes
+  emitiram.
+- Casamento por algarismo romano no inicio da celula; sem romano em nenhuma
+  linha, pela ordem. Ato sem linha na tabela **nao inventa titulo**: fica sem
+  divisor e o `build` avisa. Obra sem tabela de Partes ou sem `ato` segue igual.
+
+### Corrigido
+
+- **A tabela de Partes e achada pelo CABECALHO DA COLUNA, nao pela secao.** A
+  primeira versao procurava a secao `## Estrutura` — e o proprio template de
+  plano diretor ja traz uma, com coluna `Ato` e celulas `1`, `2a`, `2b`, `3`.
+  O resultado era um divisor chamado "Parte II — 2a" em toda obra recem-criada.
+  O smoke pegou antes de sair. Coluna `Parte` e a declaracao de que aquela
+  tabela nomeia Partes; coluna `Ato` nao e.
+
 ## 0.5.0 — 2026-09-05
 
 ### Adicionado
