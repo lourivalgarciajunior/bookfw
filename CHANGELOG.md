@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.0 — 2026-09-05
+
+### Adicionado
+
+- **`bookfw revisao "o que mudou"` — a historia de leitura da obra.** Um livro
+  vai a leitores externos varias vezes antes de fechar, e o DOCX saia sempre com
+  o mesmo nome: "Os Oito Modelos" foi ao revisor duas vezes em tres dias e ele
+  nao tinha como saber qual arquivo era qual. O comando registra uma revisao em
+  `docs/revisoes.md` — numero sequencial, data, capitulos por estado, palavras,
+  capitulos com ressalva, commit curto quando ha git, e a nota do autor, que e
+  obrigatoria. O registro e append-only e o proximo numero e o maior existente
+  mais um, entao linha apagada a mao nao faz duas revisoes colidirem.
+- **Quem le o registro carimba.** `status` mostra a revisao corrente ou avisa
+  que nao ha; `build` escreve `_Revisao N — data_` sob o titulo; `docx` poe
+  revisao e nota no rosto, o numero no rodape, e o arquivo passa a chamar-se
+  `<titulo> — revisao N.docx`; `context` lista o registro. Sem revisao, `build`
+  e `docx` AVISAM e seguem — rascunho para uso proprio nao exige cerimonia.
+- O que nao e, de proposito: nao e versao semantica, nao e tag de git, nao mora
+  no `livro.yaml` (invariante por decisao de obra). ADR de 2026-09-05.
+
 ## 0.4.4 — 2026-09-02
 
 Tres defeitos achados compondo a capa de "Os Oito Modelos da Reforma

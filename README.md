@@ -53,6 +53,7 @@ bookfw cap move 1 revisao
 bookfw cap move 1 pronto
 bookfw build
 bookfw docx                        # a versao que vai para a mao do leitor
+bookfw revisao "o que mudou"       # numera a leitura: rosto, rodape e nome do DOCX
 bookfw capa brief                  # o briefing que vai para o gerador de imagem
 bookfw capa --formato ebook,impressao
 ```
@@ -198,6 +199,40 @@ O pacote `docx` é dependência **opcional**: o resto do bookfw não tem
 dependência nenhuma, e quem só governa texto não precisa carregar um gerador de
 OOXML para rodar `status` ou `validate`. Sem ele, só este comando falha, e a
 mensagem diz o que instalar.
+
+## A revisão
+
+Um livro vai a leitores externos várias vezes antes de fechar, e o arquivo saía
+sempre com o mesmo nome. Quem recebia não sabia qual estava lendo; quem mandava
+não tinha como dizer "a versão que você leu" sem descrever o conteúdo. O commit
+não serve de unidade de leitura — houve dezesseis entre duas leituras do mesmo
+livro —, e o `livro.yaml` é invariante por decisão de obra, então não pode
+carregar um contador.
+
+`bookfw revisao "o que mudou"` registra uma revisão da obra em
+`docs/revisoes.md`: número sequencial, data, capítulos por estado, palavras,
+capítulos com ressalva, o commit curto quando a obra está num repositório git, e
+a nota. **A nota é obrigatória** — revisão sem motivo escrito é revisão que
+ninguém distingue da anterior.
+
+O registro é **append-only**. Uma revisão nunca se edita; registra-se a próxima.
+O número é sempre o maior existente mais um, então uma linha apagada à mão não
+faz duas revisões colidirem.
+
+Quem lê o registro carimba a revisão no que sai:
+
+- `status` mostra a revisão corrente, ou avisa que não há nenhuma;
+- `build` escreve `_Revisao N — data_` sob o título do manuscrito;
+- `docx` põe a revisão e a nota na página de rosto, o número no rodapé, e o
+  arquivo passa a chamar-se `<titulo> — revisao N.docx`. Sem revisão registrada
+  o arquivo sai com o nome antigo e a saída **avisa** — não bloqueia, porque
+  rascunho para uso próprio não deveria exigir cerimônia;
+- `context` inclui o registro, para um agente saber em que revisão a obra foi
+  lida por alguém de fora.
+
+O que a revisão **não** é: não é versão semântica (prosa não tem API), não é tag
+de git (o bookfw não escreve no git de ninguém — só lê o commit corrente), e não
+mora no manifesto. É a história de leitura da obra, e só isso.
 
 ## A capa
 

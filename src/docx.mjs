@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { Erro, acharProjeto, c, lerConfig, rel } from './core.mjs';
+import { carimbo, revisaoAtual } from './revisao.mjs';
 import { CORTE_PADRAO, prosaFinal, selecao } from './build.mjs';
 
 const A5 = { width: 8391, height: 11906 };
@@ -126,6 +127,19 @@ export async function docx(args) {
     alignment: AlignmentType.CENTER,
     children: [new TextRun({ text: texto(cfg.autor), font: SERIF, size: 24 })],
   }));
+  // A revisao no rosto e a resposta a pergunta que o leitor externo faz
+  // primeiro: "e este que eu ja li?". Le o registro; nunca calcula.
+  const rev = revisaoAtual(raiz);
+  if (rev) {
+    filhos.push(new Paragraph({
+      alignment: AlignmentType.CENTER, spacing: { before: 400 },
+      children: [new TextRun({ text: texto(carimbo(rev)), font: SERIF, size: 19, color: '888888', characterSpacing: 30 })],
+    }));
+    filhos.push(new Paragraph({
+      alignment: AlignmentType.CENTER, spacing: { before: 80 },
+      children: [new TextRun({ text: texto(rev.nota), font: SERIF, size: 17, italics: true, color: '888888' })],
+    }));
+  }
   filhos.push(quebra());
 
   // ------------------------------------------- front matter editorial
@@ -197,7 +211,10 @@ export async function docx(args) {
         default: new Footer({
           children: [new Paragraph({
             alignment: AlignmentType.CENTER,
-            children: [new TextRun({ children: [PageNumber.CURRENT], font: SERIF, size: 18, color: '888888' })],
+            children: [
+              ...(rev ? [new TextRun({ text: `revisao ${rev.numero}  ·  `, font: SERIF, size: 16, color: 'AAAAAA' })] : []),
+              new TextRun({ children: [PageNumber.CURRENT], font: SERIF, size: 18, color: '888888' }),
+            ],
           })],
         }),
       },
@@ -205,7 +222,12 @@ export async function docx(args) {
     }],
   });
 
-  const nome = `${texto(cfg.titulo) || 'manuscrito'} — versao de leitura.docx`;
+  // O nome carrega a revisao: dois DOCX de revisoes diferentes nunca mais tem
+  // o mesmo nome. Sem revisao registrada, sai com o nome antigo e AVISA — nao
+  // bloqueia, porque rascunho para uso proprio nao deveria exigir cerimonia.
+  const nome = rev
+    ? `${texto(cfg.titulo) || 'manuscrito'} — revisao ${rev.numero}.docx`
+    : `${texto(cfg.titulo) || 'manuscrito'} — versao de leitura.docx`;
   const alvo = join(raiz, 'manuscrito', nome);
   mkdirSync(join(raiz, 'manuscrito'), { recursive: true });
   // O leitor costuma estar com o arquivo anterior aberto no Word quando pede
@@ -227,4 +249,6 @@ export async function docx(args) {
   // numero em vez de descoberta na leitura do arquivo pronto.
   console.log(`${c.green('docx gerado')}  ${rel(raiz, alvo)}`);
   console.log(c.dim(`  corte: ${minimo} ou adiante | ${caps.length} capitulos, ${comNota} com ressalva`));
+  if (rev) console.log(c.dim(`  ${carimbo(rev).toLowerCase()} — ${rev.nota}`));
+  else console.log(c.yellow('  sem revisao registrada — o arquivo saiu sem numero. bookfw revisao "o que mudou" antes de mandar a alguem'));
 }

@@ -1,6 +1,6 @@
 {
   "name": "bookfw",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "description": "Governanca de escrita de livros — DEC -> PD -> SUM -> kanban de capitulos -> manuscrito.",
   "type": "module",
   "bin": {
