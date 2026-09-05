@@ -1,5 +1,5 @@
 ---
-status: wip
+status: done
 date: 2026-09-05
 req: "REQ-2026-09-05-bookfw-build-e-docx-emitem-o-divisor-de-parte-a-partir-do-ato"
 branch: "feat/divisor-de-parte"
@@ -8,7 +8,7 @@ squad: ""
 
 # Roadmap: o divisor de Parte, derivado do plano diretor
 
-> Created: 2026-09-05 | Status: wip
+> Created: 2026-09-05 | Status: done
 
 ## Context
 

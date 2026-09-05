@@ -1,5 +1,5 @@
 ---
-status: Open
+status: Done
 date: 2026-09-05
 author: "Lourival Garcia"
 adr: "ADR-2026-09-05-o-divisor-de-parte-sai-da-tabela-estrutura-do-plano-diretor-casado-pelo-ato-do-capitulo"
@@ -8,7 +8,7 @@ roadmap: "ROADMAP-2026-09-05-divisor-de-parte"
 
 # REQ: bookfw build e docx emitem o divisor de Parte a partir do ato
 
-> Date: 2026-09-05 | Status: Open
+> Date: 2026-09-05 | Status: Done
 | Linear Issue:
 | Jira Issue:
 
@@ -24,21 +24,21 @@ outro. Decisao de desenho no ADR vinculado.
 
 ## Acceptance Criteria
 
-- [ ] `partes(raiz)` em `core.mjs` le a tabela `## Estrutura` do plano diretor e
+- [x] `partes(raiz)` em `core.mjs` le a tabela `## Estrutura` do plano diretor e
       devolve, por numero de ato, o titulo da Parte.
-- [ ] O casamento e por algarismo romano no inicio da primeira celula; sem
+- [x] O casamento e por algarismo romano no inicio da primeira celula; sem
       romano, pela ordem das linhas.
-- [ ] `build` emite `## Parte <romano> — <titulo>` antes do primeiro capitulo de
+- [x] `build` emite `## Parte <romano> — <titulo>` antes do primeiro capitulo de
       cada ato, e a saida diz quantas Partes emitiu.
-- [ ] `docx` emite uma **pagina propria** por Parte, com o romano e o titulo,
+- [x] `docx` emite uma **pagina propria** por Parte, com o romano e o titulo,
       antes do primeiro capitulo do ato.
-- [ ] Sem `## Estrutura` no PD, ou sem `ato` nos capitulos, nada muda e nao ha
+- [x] Sem `## Estrutura` no PD, ou sem `ato` nos capitulos, nada muda e nao ha
       erro.
-- [ ] Ato sem linha correspondente na tabela nao emite divisor e **avisa** —
+- [x] Ato sem linha correspondente na tabela nao emite divisor e **avisa** —
       silencio ali esconde ato errado no frontmatter.
-- [ ] Smoke cobre: divisor no manuscrito, contagem na saida, obra sem Estrutura
+- [x] Smoke cobre: divisor no manuscrito, contagem na saida, obra sem Estrutura
       segue igual, ato orfao avisa.
-- [ ] README e CHANGELOG documentam; versao sobe para 0.6.0.
+- [x] README e CHANGELOG documentam; versao sobe para 0.6.0.
 
 ### Escopo negativo
 
@@ -55,4 +55,4 @@ ADR: `docs/adr/ADR-2026-09-05-o-divisor-de-parte-sai-da-tabela-estrutura-do-plan
 
 ## Linked Roadmap
 
-Roadmap: `docs/roadmaps/wip/ROADMAP-2026-09-05-divisor-de-parte.md`
+Roadmap: `docs/roadmaps/done/ROADMAP-2026-09-05-divisor-de-parte.md`
