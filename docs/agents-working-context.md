@@ -78,3 +78,24 @@ referencia REQ→ADR pela linha do CORPO no formato `ADR: \`docs/adr/<arq>.md\``
 nao pelo frontmatter `adr:` — REQ com o frontmatter certo e o corpo em nome puro
 gera "adr is not referenced by any REQ". O formato do corpo e caminho completo
 em crase, como nos REQs de 2026-08-31.
+
+## 2026-09-05 — o divisor de Parte, derivado do plano diretor (0.6.0)
+
+**O que mudou.** `partes(raiz)` em `core.mjs` le a tabela de Partes do PD e
+devolve `Map<ato, {romano, titulo}>`. `build` emite `## Parte I — <titulo>` e
+`docx` emite uma pagina propria, quando o `ato` do capitulo muda. As duas saidas
+contam os divisores; ato sem linha na tabela avisa e nao emite.
+
+**Por que.** "Os Oito Modelos" anuncia quatro Partes, declara as quatro no PD,
+tem `ato` nos 23 capitulos — e o manuscrito saia com zero divisores. A estrutura
+existia dos dois lados e nao se encontrava.
+
+**Armadilha achada pelo smoke, e vale para quem mexer nisso.** A primeira versao
+procurava a SECAO `## Estrutura`. O template de plano diretor ja traz uma, com
+coluna `Ato` e celulas `1`, `2a`, `2b`, `3` — entao toda obra recem-criada
+ganhava um divisor "Parte II — 2a". A tabela passou a ser achada pelo
+**cabecalho da primeira coluna** (`Parte`), que e a declaracao de que aquela
+tabela nomeia Partes.
+
+**Governanca.** ADR-2026-09-05-o-divisor-de-parte-…, REQ-2026-09-05-bookfw-build-e-docx-…,
+ROADMAP-2026-09-05-divisor-de-parte.

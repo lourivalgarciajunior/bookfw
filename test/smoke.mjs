@@ -946,6 +946,54 @@ function comAmostra(p, repeticoes = 40) {
   }
 }
 
+{
+  // O divisor de Parte: a estrutura declarada no plano diretor chegando ao
+  // leitor. Antes disto, obra com quatro Partes saia com zero divisores.
+  const p = projeto('Obra Com Partes');
+  const pd = join(p.dir, 'docs', 'plano-diretor');
+  const arqPd = join(pd, readdirSync(pd).find((f) => f.endsWith('.md')));
+  writeFileSync(arqPd, readFileSync(arqPd, 'utf8') + [
+    '', '## Estrutura', '',
+    '| Parte | Capitulos | Funcao |', '|---|---|---|',
+    '| I — O comeco | 01 | abrir |', '| II — O meio | 02 | virar |', '',
+  ].join('\n'), 'utf8');
+
+  const capitulo = (titulo, ato) => {
+    p.rodar('cap', 'new', titulo);
+    const arq = readdirSync(join(p.dir, 'capitulos', 'backlog')).find((f) => f.endsWith('.md'));
+    const cam = join(p.dir, 'capitulos', 'backlog', arq);
+    writeFileSync(cam, readFileSync(cam, 'utf8').replace(/^ato:.*$/m, `ato: ${ato}`) + '\n\nProsa deste capitulo.\n', 'utf8');
+    p.rodar('cap', 'move', arq, 'revisao');
+  };
+  capitulo('Um', 1);
+  capitulo('Dois', 2);
+
+  const b = p.rodar('build');
+  const ms = readdirSync(join(p.dir, 'manuscrito')).find((f) => f.endsWith('.md'));
+  const texto = readFileSync(join(p.dir, 'manuscrito', ms), 'utf8');
+  ok('o divisor de Parte sai no manuscrito', texto.includes('## Parte I — O comeco') && texto.includes('## Parte II — O meio'));
+  ok('e a saida conta as Partes', b.saida.includes('2 divisor(es) de Parte'));
+  ok('o divisor vem ANTES do capitulo da Parte', texto.indexOf('## Parte I') < texto.indexOf('## 01 —'));
+
+  // Ato que a tabela nao tem: nao inventa titulo, avisa.
+  capitulo('Tres', 7);
+  ok('ato fora da tabela avisa e nao inventa divisor',
+    p.rodar('build').saida.includes('ato 7 nao esta na tabela Estrutura'));
+
+  // Obra sem `## Estrutura` segue exatamente como antes.
+  const q = projeto('Obra Sem Partes');
+  q.rodar('cap', 'new', 'Cap');
+  const arqQ = readdirSync(join(q.dir, 'capitulos', 'backlog')).find((f) => f.endsWith('.md'));
+  const camQ = join(q.dir, 'capitulos', 'backlog', arqQ);
+  writeFileSync(camQ, readFileSync(camQ, 'utf8') + '\n\nProsa.\n', 'utf8');
+  q.rodar('cap', 'move', arqQ, 'revisao');
+  const bq = q.rodar('build');
+  const msQ = readdirSync(join(q.dir, 'manuscrito')).find((f) => f.endsWith('.md'));
+  ok('obra sem tabela Estrutura nao ganha divisor nem erro',
+    bq.codigo === 0 && !bq.saida.includes('divisor(es) de Parte')
+    && !readFileSync(join(q.dir, 'manuscrito', msQ), 'utf8').includes('## Parte'));
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);

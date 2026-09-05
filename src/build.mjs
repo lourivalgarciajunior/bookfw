@@ -3,7 +3,7 @@
  * prosa — contrato de cena e comentario nao entram no livro.
  */
 import { join } from 'node:path';
-import { ESTADOS_ATIVOS, Erro, acharProjeto, c, capitulos, escrever, hoje, lerConfig, palavras, prosaDe, rel } from './core.mjs';
+import { ESTADOS_ATIVOS, Erro, acharProjeto, c, capitulos, escrever, hoje, lerConfig, palavras, partes, prosaDe, rel } from './core.mjs';
 import { carimbo, revisaoAtual } from './revisao.mjs';
 
 /** O corte que produz o manuscrito de trabalho — tudo que ja tem prosa completa. */
@@ -58,22 +58,35 @@ export function build(args) {
   const minimo = args.desde || CORTE_PADRAO;
   const { todos, caps, bloqueados, abaixoDoCorte } = selecao(raiz, minimo);
 
-  const partes = [`# ${cfg.titulo}\n`];
-  if (cfg.autor && cfg.autor !== 'a definir') partes.push(`_${cfg.autor}_\n`);
+  const saida = [`# ${cfg.titulo}\n`];
+  if (cfg.autor && cfg.autor !== 'a definir') saida.push(`_${cfg.autor}_\n`);
   // O carimbo LE o registro; nunca calcula. Sem revisao registrada o
   // manuscrito sai sem a linha — e o build avisa, porque e assim que duas
   // leituras acabam com o mesmo nome.
   const rev = revisaoAtual(raiz);
-  if (rev) partes.push(`_${carimbo(rev)}_\n`);
+  if (rev) saida.push(`_${carimbo(rev)}_\n`);
+  // A estrutura declarada no plano diretor chegando ao leitor: o divisor sai
+  // quando o ato muda. Ato sem linha na tabela nao inventa titulo — avisa.
+  const mapaPartes = partes(raiz);
+  const orfaos = new Set();
+  let atoAnterior = null;
+  let divisores = 0;
   for (const cap of caps) {
-    partes.push(`\n\n## ${String(cap.numero).padStart(2, '0')} — ${cap.fm.titulo || ''}\n`);
+    const ato = Number(cap.fm.ato) || null;
+    if (ato && ato !== atoAnterior) {
+      const parte = mapaPartes.get(ato);
+      if (parte) { saida.push(`\n\n## Parte ${parte.romano} — ${parte.titulo}\n`); divisores++; }
+      else if (mapaPartes.size) orfaos.add(ato);
+      atoAnterior = ato;
+    }
+    saida.push(`\n\n## ${String(cap.numero).padStart(2, '0')} — ${cap.fm.titulo || ''}\n`);
     const prosa = prosaFinal(cap);
-    partes.push(prosa || `> _[capitulo ainda sem prosa — ${cap.cenas.length} cenas planejadas]_`);
+    saida.push(prosa || `> _[capitulo ainda sem prosa — ${cap.cenas.length} cenas planejadas]_`);
   }
   // Um arquivo por corte. O corte padrao fica com o nome limpo, e e o que as
   // ferramentas de exportacao leem; os outros ganham sufixo para nunca
   // sobrescrever o manuscrito de trabalho com uma versao parcial.
-  const texto = partes.join('\n');
+  const texto = saida.join('\n');
   const sufixo = minimo === CORTE_PADRAO ? '' : `-${minimo}`;
   const alvo = join(raiz, 'manuscrito', `${cfg.slug || 'manuscrito'}${sufixo}.md`);
   escrever(alvo, texto);
@@ -89,5 +102,7 @@ export function build(args) {
   }
   if (rev) console.log(c.dim(`  ${carimbo(rev).toLowerCase()} — ${rev.nota}`));
   else console.log(c.yellow('  sem revisao registrada — bookfw revisao "o que mudou" antes de mandar a alguem'));
+  if (divisores) console.log(c.dim(`  ${divisores} divisor(es) de Parte, do plano diretor`));
+  for (const a of orfaos) console.log(c.yellow(`  ato ${a} nao esta na tabela Estrutura do plano diretor — sem divisor`));
   console.log(c.dim('  versao de leitura em DOCX: bookfw docx'));
 }
