@@ -1,5 +1,5 @@
 ---
-status: wip
+status: done
 date: 2026-09-05
 req: "REQ-2026-09-05-bookfw-revisao-versionar-cada-livro-com-numero-data-e-nota-e-carimbar-a-revisao-no-que-sai-para-leitura"
 branch: "feat/bookfw-revisao"
@@ -8,7 +8,7 @@ squad: ""
 
 # Roadmap: bookfw revisao — a historia de leitura da obra
 
-> Created: 2026-09-05 | Status: wip
+> Created: 2026-09-05 | Status: done
 
 ## Context
 
