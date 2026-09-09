@@ -95,6 +95,12 @@ export function validate(args) {
   for (const cap of caps) {
     const onde = rel(raiz, cap.caminho);
     if (cap.estado === 'abandonado') continue;
+    // Texto que o leitor de contrato nao soube a quem entregar. Ate 2026-09-08
+    // ele sumia calado e o gate ficava verde; agora reprova, porque contrato
+    // truncado que passa no gate e pior do que contrato que nem existe.
+    for (const p of cap.problemas || []) {
+      erro(`${onde}:${p.linha}`, `linha solta ${p.onde} — o texto nao pertence a nenhum campo: "${p.texto}"`);
+    }
     if (cap.fm.estado && cap.fm.estado !== cap.estado) {
       erro(onde, `frontmatter diz estado "${cap.fm.estado}" mas o arquivo esta em ${cap.estado}/`);
     }

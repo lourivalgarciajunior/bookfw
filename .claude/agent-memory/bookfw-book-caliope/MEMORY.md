@@ -1,0 +1,1 @@
+- [Contrato de cena e de linha unica](project_cena_parser_linha_unica.md) — o parser do bloco ```cena trunca valor quebrado em duas linhas, e o validate nao acusa

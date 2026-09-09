@@ -35,33 +35,80 @@ export function acharProjeto(from = process.cwd()) {
 }
 
 /** YAML raso — chave: valor, listas inline [a, b] e listas com hífen. */
-export function yamlRaso(texto) {
+export function yamlRaso(texto, problemas = []) {
   const campos = {};
-  let chaveLista = null;
-  for (const linha of texto.replace(/\r\n/g, '\n').split('\n')) {
+  // `pendente` e a chave declarada sem valor, que ainda pode virar lista ou
+  // escalar dobrado. `escalar` e a ultima chave que guarda texto e por isso
+  // aceita continuacao. So uma das duas vale por vez.
+  let pendente = null;
+  let escalar = null;
+  const linhas = texto.replace(/\r\n/g, '\n').split('\n');
+  for (let i = 0; i < linhas.length; i++) {
+    const linha = linhas[i];
     if (/^\s*#/.test(linha) || !linha.trim()) continue;
+
     const item = linha.match(/^\s+-\s+(.*)$/);
-    if (item && chaveLista) { campos[chaveLista].push(limpa(item[1])); continue; }
+    if (item && pendente) { campos[pendente].push(limpa(item[1])); continue; }
+
     const m = linha.match(/^([A-Za-zÀ-ÿ0-9_-]+):\s*(.*)$/);
-    if (!m) continue;
-    const valor = m[2].trim();
-    if (valor === '') { chaveLista = m[1]; campos[m[1]] = []; continue; }
-    chaveLista = null;
-    campos[m[1]] = valor.startsWith('[')
-      ? valor.replace(/^\[(.*)\]$/s, '$1').split(',').map(limpa).filter(Boolean)
-      : limpa(valor);
+    if (m) {
+      const valor = m[2].trim();
+      if (valor === '') { pendente = m[1]; escalar = null; campos[m[1]] = []; continue; }
+      pendente = null;
+      if (valor.startsWith('[')) {
+        escalar = null;
+        campos[m[1]] = valor.replace(/^\[(.*)\]$/s, '$1').split(',').map(limpa).filter(Boolean);
+      } else {
+        escalar = m[1];
+        campos[m[1]] = limpa(valor);
+      }
+      continue;
+    }
+
+    // Linha que nao e chave nem item. Ate 2026-09-08 caia num `continue` mudo:
+    // o texto sumia, o gate ficava verde e ninguem era avisado. Como o arquivo
+    // e quebrado em 79 colunas e contrato de cena chega a 114, quebrar a linha
+    // longa e o movimento natural — e era ele que apagava o dado.
+    const solta = linha.trim();
+    if (pendente && campos[pendente].length === 0) {
+      // Chave declarada vazia seguida de texto: e escalar dobrado, nao lista.
+      // So vale enquanto a lista esta vazia — depois do primeiro `- item` a
+      // chave ja e lista, e dobrar texto nela apagaria os itens.
+      escalar = pendente;
+      pendente = null;
+      campos[escalar] = limpa(solta);
+    } else if (escalar && typeof campos[escalar] === 'string') {
+      campos[escalar] = `${campos[escalar]} ${solta}`.trim();
+    } else {
+      // Sem chave escalar para receber, ou logo depois de uma lista: nao da
+      // para adivinhar de quem e o texto. Recusar barulhento custa uma
+      // correcao; aceitar em silencio custa a confianca no resto.
+      problemas.push({ linha: i + 1, texto: solta });
+    }
   }
   return campos;
 }
 const limpa = (v) => v.trim().replace(/^["'](.*)["']$/s, '$1');
 
-/** Separa frontmatter YAML do corpo do markdown. */
-export function frontmatter(raw) {
+/**
+ * Separa frontmatter YAML do corpo do markdown. `linhaCorpo` e a linha do
+ * arquivo em que o corpo comeca — e o que permite dizer, la na frente, em que
+ * linha do arquivo estava o texto que nao deu para interpretar.
+ */
+export function frontmatter(raw, problemas = []) {
   const t = raw.replace(/^﻿/, '').replace(/\r\n/g, '\n');
-  if (!t.startsWith('---\n')) return { fm: {}, corpo: t };
+  if (!t.startsWith('---\n')) return { fm: {}, corpo: t, linhaCorpo: 1 };
   const fim = t.indexOf('\n---', 3);
-  if (fim === -1) return { fm: {}, corpo: t };
-  return { fm: yamlRaso(t.slice(4, fim)), corpo: t.slice(fim + 4).replace(/^\n/, '') };
+  if (fim === -1) return { fm: {}, corpo: t, linhaCorpo: 1 };
+  const dentro = [];
+  const fm = yamlRaso(t.slice(4, fim), dentro);
+  // O bloco comeca na linha 2: a 1 e o `---` de abertura.
+  for (const p of dentro) problemas.push({ ...p, linha: p.linha + 1, onde: 'no frontmatter' });
+  return {
+    fm,
+    corpo: t.slice(fim + 4).replace(/^\n/, ''),
+    linhaCorpo: t.slice(0, fim + 4).split('\n').length + 1,
+  };
 }
 
 export function lerConfig(raiz) {
@@ -97,11 +144,16 @@ export function capitulos(raiz) {
     for (const arq of readdirSync(dir).filter((f) => f.endsWith('.md')).sort()) {
       const caminho = join(dir, arq);
       const raw = readFileSync(caminho, 'utf8');
-      const { fm, corpo } = frontmatter(raw);
+      const problemas = [];
+      const { fm, corpo, linhaCorpo } = frontmatter(raw, problemas);
+      const doCorpo = [];
+      const cenas = cenasDe(corpo, doCorpo);
+      // A linha vinha relativa ao corpo; aqui vira linha do arquivo.
+      for (const p of doCorpo) problemas.push({ ...p, linha: p.linha + linhaCorpo - 1 });
       out.push({
-        arquivo: arq, caminho, estado, fm, corpo, raw,
+        arquivo: arq, caminho, estado, fm, corpo, raw, problemas,
         numero: Number(fm.numero ?? (arq.match(/cap-(\d+)/)?.[1] ?? 0)),
-        cenas: cenasDe(corpo),
+        cenas,
         palavras: palavras(prosaDe(corpo)),
       });
     }
@@ -114,11 +166,18 @@ export function capitulos(raiz) {
  * um roteiro pede depois — local, tempo, personagens, objetivo, conflito,
  * virada — então a adaptação lê daqui sem reler a prosa.
  */
-export function cenasDe(corpo) {
+export function cenasDe(corpo, problemas = []) {
   const blocos = [];
   const re = /```cena\n([\s\S]*?)```/g;
   let m;
-  while ((m = re.exec(corpo))) blocos.push({ dados: yamlRaso(m[1]), inicio: m.index, fim: m.index + m[0].length });
+  while ((m = re.exec(corpo))) {
+    const dentro = [];
+    const dados = yamlRaso(m[1], dentro);
+    // Linha da cerca de abertura; o conteudo comeca na seguinte.
+    const linhaCerca = corpo.slice(0, m.index).split('\n').length;
+    for (const p of dentro) problemas.push({ ...p, linha: p.linha + linhaCerca, onde: `na cena ${dados.id || '?'}` });
+    blocos.push({ dados, inicio: m.index, fim: m.index + m[0].length });
+  }
 
   // A prosa de uma cena vai do fim do contrato dela ate o contrato seguinte.
   // Cortar no proximo `## ` engolia em silencio tudo que viesse depois de um

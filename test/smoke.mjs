@@ -994,6 +994,73 @@ function comAmostra(p, repeticoes = 40) {
     && !readFileSync(join(q.dir, 'manuscrito', msQ), 'utf8').includes('## Parte'));
 }
 
+// ---------------------------------------------------------------------------
+// Contrato de cena: linha de continuacao dobra, e o que nao dobra reprova.
+//
+// O parser lia chave e valor linha a linha e descartava calado o que nao
+// casasse `chave:`. Como o arquivo e quebrado em 79 colunas e contrato de cena
+// chega a 114, quebrar a linha longa era o movimento natural — e apagava o
+// dado sem que o gate percebesse. Cada `ok` abaixo cobre um caminho de perda
+// medido em 2026-09-08.
+{
+  const { yamlRaso } = await import('../src/core.mjs');
+  const campos = (t) => yamlRaso(t);
+  const queixas = (t) => { const p = []; yamlRaso(t, p); return p; };
+
+  ok('continuacao indentada dobra na chave anterior',
+    campos('virada: a lista mostra o que falta\n  e que a pendencia e de calendario\n').virada
+    === 'a lista mostra o que falta e que a pendencia e de calendario');
+
+  ok('continuacao sem indentacao tambem dobra',
+    campos('virada: a lista mostra o que falta\ne que a pendencia e de calendario\n').virada
+    === 'a lista mostra o que falta e que a pendencia e de calendario');
+
+  ok('continuacao com dois-pontos dentro nao vira chave nova',
+    campos('virada: o seguinte\n  o problema e este: calendario\n').virada
+    === 'o seguinte o problema e este: calendario');
+
+  ok('chave vazia seguida de texto vira escalar, nao lista vazia',
+    campos('virada:\n  a pendencia e de calendario\n').virada === 'a pendencia e de calendario');
+
+  ok('tres linhas dobram na ordem', campos('virada: um\n  dois\n  tres\n').virada === 'um dois tres');
+
+  // Nao regressao: o que ja funcionava tem de continuar igual.
+  const lista = campos('personagens:\n  - A apuracao\n  - O contas a pagar\npaga: [P5, P3]\ntitulo: "O credito"\n');
+  ok('lista em bloco sem regressao',
+    Array.isArray(lista.personagens) && lista.personagens.join('|') === 'A apuracao|O contas a pagar');
+  ok('lista em linha e aspas sem regressao',
+    lista.paga.join('|') === 'P5|P3' && lista.titulo === 'O credito');
+
+  // O caso que quase virou defeito novo: texto solto depois de uma lista ja
+  // iniciada nao pode dobrar, senao apaga os itens.
+  const depois = 'personagens:\n  - A apuracao\n  texto orfao\n';
+  ok('texto solto depois de lista nao apaga a lista',
+    Array.isArray(campos(depois).personagens) && campos(depois).personagens.join('|') === 'A apuracao');
+  ok('e vira queixa, com a linha certa',
+    queixas(depois).length === 1 && queixas(depois)[0].linha === 3 && queixas(depois)[0].texto === 'texto orfao');
+
+  ok('linha solta sem chave anterior vira queixa',
+    queixas('texto solto no comeco\nid: 1.1\n').length === 1);
+  ok('comentario e linha em branco nao viram queixa',
+    queixas('# nota\n\nid: 1.1\n').length === 0);
+
+  // Ponta a ponta: o gate reprova, nomeando a linha do arquivo.
+  const s = projeto('Obra Com Contrato Quebrado');
+  s.rodar('cap', 'new', 'Sonda');
+  const arqS = readdirSync(join(s.dir, 'capitulos', 'backlog')).find((f) => f.endsWith('.md'));
+  const camS = join(s.dir, 'capitulos', 'backlog', arqS);
+  writeFileSync(camS, [
+    '---', 'id: cap-01-sonda', 'numero: 1', 'titulo: Sonda', 'estado: backlog', '---', '',
+    '# Sonda', '',
+    '```cena', 'id: 1.1', 'objetivo: mostrar', 'conflito: nenhum', 'virada: nenhuma',
+    'personagens:', '  - A apuracao', '  texto orfao', '```', '', 'Prosa.', '',
+  ].join('\n'), 'utf8');
+  const vs = s.rodar('validate');
+  ok('validate reprova a linha solta', vs.saida.includes('linha solta na cena 1.1'));
+  ok('e diz a linha do arquivo', vs.saida.includes(`${arqS}:17`));
+  ok('e o texto perdido', vs.saida.includes('texto orfao'));
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);
