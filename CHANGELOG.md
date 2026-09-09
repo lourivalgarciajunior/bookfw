@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.7.0 — 2026-09-08
+
+### Corrigido
+
+- **O `docx` imprimia o marcador de markdown em vez de aplicar a formatacao.** O
+  bloco inteiro ia para um `TextRun` so, com `bloco.replace(/\n/g, ' ')`, e nada
+  interpretava markdown. Medido no arquivo que foi para um revisor tecnico
+  externo, `Os Oito Modelos da Reforma Tributaria — revisao 2.docx`: **952**
+  asteriscos de negrito a vista (476 pares), **106** de italico, **26** crases,
+  **16** linhas de tabela em tubos, **16** de lista em hifen — e **zero**
+  `<w:b/>`, zero `<w:tbl>`. O revisor apagou varios a mao antes de devolver.
+- **A citacao perdia o marcador so da primeira linha.** Trocar a quebra por
+  espaco juntava o hard-wrap com o `>` das linhas de continuacao no meio da
+  frase. Agora o marcador sai de todas as linhas, e so entao elas se juntam.
+- O front matter e o apendice sofriam da mesma linha: o apendice de "Os Oito
+  Modelos", que e feito de tabela e de lista, saia como paragrafo justificado de
+  tubos. As tres chamadas passam pelo mesmo renderizador.
+
+### Adicionado
+
+- **`src/markdown.mjs`** — o markdown lido como estrutura, sem OOXML e sem
+  dependencia nova. `trechos()` para negrito, italico e codigo; `blocos()` para
+  paragrafo, citacao, lista, numerada, codigo cercado, tabela, titulo e
+  separador. Puro, entao o smoke o cobre mesmo sem o pacote `docx` instalado.
+- No papel: codigo em fonte monoespacada, citacao com recuo dos dois lados e
+  corpo menor, lista com marca e recuo pendente, tabela como `<w:tbl>` com
+  cabecalho em negrito, e bloco cercado com as quebras e os espacos preservados.
+  O separador `* * *` continua virando `❧`.
+- A varredura por linha substitui o corte por linha em branco: bloco de codigo
+  cercado tem linha em branco dentro, e o corte antigo o partia no meio.
+
+### Verificado
+
+- As duas obras reais regeradas: marcador remanescente **zero** nas duas, com
+  534 `<w:b/>`, 55 `<w:i/>`, 24 trechos monoespacados e 16 tabelas em "Os Oito
+  Modelos". A sequencia de palavras do DOCX e **identica** a de antes nas duas —
+  a marcacao virou formatacao, e nenhum caractere do autor foi comido.
+- O smoke confere os dois lados: marcador ausente **e** formatacao presente no
+  trecho que o autor marcou. So o primeiro passaria com um `replace` que apaga o
+  marcador e entrega o texto sem enfase.
+
+### Tambem nesta versao, de outra mudanca
+
+- Tres casos de promessa no plano diretor casavam por string crua com `\n`, e no
+  Windows o PD nasce com CRLF: o `replace` nao acontecia e o teste media um PD
+  nunca editado. Corrigido em mudanca propria, por ser bug de teste e nao do
+  `docx` — sem ela `npm test` estava vermelho antes desta versao.
+
 ## 0.6.0 — 2026-09-05
 
 ### Adicionado

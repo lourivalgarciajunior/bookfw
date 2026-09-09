@@ -1,5 +1,5 @@
 ---
-status: wip
+status: done
 date: 2026-09-08
 req: "REQ-2026-09-08-bookfw-docx-aplica-a-formatacao-do-markdown-em-vez-de-imprimir-o-marcador"
 branch: "claude/adoring-feistel-db7193"
@@ -8,7 +8,7 @@ squad: ""
 
 # Roadmap: o docx aplica o markdown em vez de imprimir o marcador
 
-> Created: 2026-09-08 | Status: wip
+> Created: 2026-09-08 | Status: done
 
 ## Context
 
@@ -21,12 +21,12 @@ ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-renderizador-proprio-
 
 ## Acceptance Criteria
 
-- [ ] `src/markdown.mjs` puro, com `trechos()` e `blocos()`; zero dependencia nova.
-- [ ] `docx.mjs` renderiza negrito, italico, monoespacado, citacao recuada,
+- [x] `src/markdown.mjs` puro, com `trechos()` e `blocos()`; zero dependencia nova.
+- [x] `docx.mjs` renderiza negrito, italico, monoespacado, citacao recuada,
       lista, tabela `<w:tbl>` e codigo cercado, em capitulo, front matter e apendice.
-- [ ] Separador `* * *` segue virando `❧`; marcador de citacao sai de todas as linhas.
-- [ ] Regressao que falha sem a correcao, conferida no XML.
-- [ ] `npm run check` verde; as duas obras reais regeradas com marcador zero e
+- [x] Separador `* * *` segue virando `❧`; marcador de citacao sai de todas as linhas.
+- [x] Regressao que falha sem a correcao, conferida no XML.
+- [x] `npm run check` verde; as duas obras reais regeradas com marcador zero e
       `<w:b/>` maior que zero; README, CHANGELOG e versao 0.7.0.
 
 ## Status Legend
@@ -72,7 +72,7 @@ ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-renderizador-proprio-
 > Dependencies: ML-0A.
 
 ### ML-1A — `src/markdown.mjs`, puro e sem OOXML
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Files affected:** `src/markdown.mjs` (novo)
 **Actions:**
 1. `trechos(texto)` devolve `[{ texto, negrito, italico, codigo }]`. Codigo
@@ -89,12 +89,12 @@ ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-renderizador-proprio-
    funcao existe.
 
 **Acceptance criteria:**
-- [ ] `node -e` sobre as duas funcoes devolve a estrutura esperada
-- [ ] Nenhum `import` de `docx` no modulo
+- [x] `node -e` sobre as duas funcoes devolve a estrutura esperada
+- [x] Nenhum `import` de `docx` no modulo
 **Validation:** `npm run lint`
 
 ### ML-1B — Cobertura de `markdown.mjs` no smoke
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Files affected:** `test/smoke.mjs`
 **Actions:**
 1. Casos de `trechos`: negrito, italico, codigo, negrito com italico dentro,
@@ -106,7 +106,7 @@ ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-renderizador-proprio-
 3. Estes casos rodam **sem** o pacote `docx` — sao funcao pura.
 
 **Acceptance criteria:**
-- [ ] `npm test` verde, com os casos novos listados na saida
+- [x] `npm test` verde, com os casos novos listados na saida
 **Validation:** `npm test`
 
 ---
@@ -115,7 +115,7 @@ ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-renderizador-proprio-
 > Dependencies: ML-1A. Toca `src/docx.mjs`, que o ML-1A nao toca.
 
 ### ML-2A — `docx.mjs` renderiza os blocos e os trechos
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Files affected:** `src/docx.mjs`
 **Actions:**
 1. `runs(texto, base)` traduz `trechos()` em `TextRun`, com `bold`, `italics` e
@@ -131,12 +131,12 @@ ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-renderizador-proprio-
    sem mudar o que aparece no papel.
 
 **Acceptance criteria:**
-- [ ] `grep -c "replace(/\\n/g, ' ')" src/docx.mjs` devolve zero
-- [ ] O rosto, o divisor de Parte, a ressalva e o rodape ficam como estao
+- [x] `grep -c "replace(/\\n/g, ' ')" src/docx.mjs` devolve zero
+- [x] O rosto, o divisor de Parte, a ressalva e o rodape ficam como estao
 **Validation:** `npm run lint && npm test`
 
 ### ML-2B — Regressao no XML gerado
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Files affected:** `test/smoke.mjs`
 **Actions:**
 1. Projeto descartavel com um capitulo que tem negrito, italico, codigo,
@@ -148,7 +148,7 @@ ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-renderizador-proprio-
    passaria com um `replace` que so apaga marcador.
 
 **Acceptance criteria:**
-- [ ] O caso falha com o `docx.mjs` anterior e passa com o novo
+- [x] O caso falha com o `docx.mjs` anterior e passa com o novo
 **Validation:** `npm test`
 
 ---
@@ -157,7 +157,7 @@ ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-renderizador-proprio-
 > Dependencies: ML-2A, ML-2B.
 
 ### ML-3A — Regerar os dois livros e contar
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Files affected:** nenhum do repositorio — e medicao
 **Actions:**
 1. `bookfw docx` em `C:\dev\pessoal\book\os-oito-modelos` e em
@@ -168,13 +168,47 @@ ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-renderizador-proprio-
    zero onde a obra tem a marcacao correspondente.
 4. Registrar os numeros de antes e de depois neste roadmap.
 
+**Medicao registrada.** Mesma fonte, gerada com o `docx.mjs` anterior e com o
+novo, e contada no texto extraido do `word/document.xml`:
+
+| Marcador | Os Oito Modelos antes | depois | Metamorfose antes | depois |
+|---|---|---|---|---|
+| `**` de negrito | 970 | **0** | 12 | **0** |
+| `*` de italico | 108 | **0** | 2 | **0** |
+| crase de codigo | 26 | **0** | 0 | 0 |
+| `>` de citacao | 10 linhas | **0** | 0 | 0 |
+| `\|` de tabela | 17 linhas | **3** | 0 | 0 |
+| `-` de lista | 16 linhas | **0** | 0 | 0 |
+| `#` de titulo | 6 linhas | **0** | 0 | 0 |
+
+Os 3 tubos que sobram nao sao marcador: sao o desenho do diagrama ASCII do
+capitulo 10, e as tres corridas estao em Consolas — conferido no XML.
+
+E a formatacao existe, que e a outra metade da prova:
+
+| Formatacao aplicada | Os Oito Modelos antes | depois | Metamorfose antes | depois |
+|---|---|---|---|---|
+| `<w:b/>` | 0 | **544** | 0 | **6** |
+| `<w:i/>` | 2 | **56** | 11 | **12** |
+| corrida em Consolas | 0 | **25** | 0 | 0 |
+| `<w:tbl>` | 0 | **17** | 0 | 0 |
+
+**Nada foi comido no caminho.** A sequencia de palavras do DOCX, ignorando os
+marcadores, e IDENTICA antes e depois nas duas obras — 38.257 palavras em "Os
+Oito Modelos" e 22.209 em "Metamorfose".
+
+**Ressalva.** "Os Oito Modelos" esta sendo editado agora: sete capitulos e o
+apendice com alteracao nao commitada, da revisao 3. O DOCX regerado carrega esse
+texto em andamento, e nao o congelado da revisao 2 — o nome do arquivo continua
+sendo o da revisao registrada.
+
 **Acceptance criteria:**
-- [ ] Marcador remanescente zero nas duas obras
-- [ ] Formatacao aplicada, e nao apenas marcador ausente
+- [x] Marcador remanescente zero nas duas obras
+- [x] Formatacao aplicada, e nao apenas marcador ausente
 **Validation:** contagem sobre o XML, registrada aqui
 
 ### ML-3B — README, CHANGELOG e versao
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Files affected:** `README.md`, `CHANGELOG.md`, `package.json`
 **Actions:**
 1. README: uma linha sobre o que o `docx` entende de markdown, e o que nao
@@ -183,5 +217,5 @@ ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-renderizador-proprio-
 3. `package.json` para `0.7.0`.
 
 **Acceptance criteria:**
-- [ ] `npm run lint` passa a regra do changelog
+- [x] `npm run lint` passa a regra do changelog
 **Validation:** `npm run check`

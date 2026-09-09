@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Done
 date: 2026-09-08
 author: "Lourival Garcia"
 adr: "ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-renderizador-proprio-de-bloco-e-de-trecho"
@@ -8,7 +8,7 @@ roadmap: "ROADMAP-2026-09-08-docx-markdown"
 
 # REQ: bookfw docx aplica a formatacao do markdown em vez de imprimir o marcador
 
-> Date: 2026-09-08 | Status: In Progress
+> Date: 2026-09-08 | Status: Done
 | Linear Issue:
 | Jira Issue:
 
@@ -29,32 +29,32 @@ Decisao de desenho no ADR vinculado.
 
 ## Acceptance Criteria
 
-- [ ] `src/markdown.mjs` expoe `trechos(texto)` — negrito, italico e codigo, com
+- [x] `src/markdown.mjs` expoe `trechos(texto)` — negrito, italico e codigo, com
       aninhamento de negrito com italico dentro — e `blocos(texto)` — paragrafo,
       citacao, lista, numerada, codigo cercado, tabela, titulo e separador.
-- [ ] `blocos` parte por linha e nao por linha em branco: bloco de codigo
+- [x] `blocos` parte por linha e nao por linha em branco: bloco de codigo
       cercado com linha em branco dentro sai inteiro.
-- [ ] O marcador `>` sai de **todas** as linhas do bloco de citacao antes de as
+- [x] O marcador `>` sai de **todas** as linhas do bloco de citacao antes de as
       linhas serem juntadas, e nao so da primeira.
-- [ ] O separador de cena `* * *` continua virando `❧` centralizado, e nao e
+- [x] O separador de cena `* * *` continua virando `❧` centralizado, e nao e
       lido como italico nem como lista.
-- [ ] `docx.mjs` renderiza: negrito, italico, codigo em fonte monoespacada,
+- [x] `docx.mjs` renderiza: negrito, italico, codigo em fonte monoespacada,
       citacao com recuo e corpo proprio, lista com marca e recuo, tabela como
       `<w:tbl>` de verdade, e bloco de codigo com as quebras preservadas.
-- [ ] O mesmo renderizador serve front matter, capitulos e apendice — as tres
+- [x] O mesmo renderizador serve front matter, capitulos e apendice — as tres
       chamadas de `bloco.replace(/\n/g, ' ')` somem.
-- [ ] Smoke cobre `trechos` e `blocos` sem depender do pacote `docx`, e cobre o
+- [x] Smoke cobre `trechos` e `blocos` sem depender do pacote `docx`, e cobre o
       XML gerado quando o pacote existe.
-- [ ] Teste de regressao que **falha sem a correcao**: um capitulo com negrito,
+- [x] Teste de regressao que **falha sem a correcao**: um capitulo com negrito,
       italico, codigo e citacao de duas linhas, conferido no texto extraido do
       `word/document.xml` — zero marcador e `<w:b/>` presente.
-- [ ] Zero dependencia nova: `docx` segue como unica dependencia opcional usada
+- [x] Zero dependencia nova: `docx` segue como unica dependencia opcional usada
       aqui.
-- [ ] `npm run lint` e `npm test` verdes.
-- [ ] Verificacao nas duas obras reais — `os-oito-modelos` e `metamorfose` —
+- [x] `npm run lint` e `npm test` verdes.
+- [x] Verificacao nas duas obras reais — `os-oito-modelos` e `metamorfose` —
       regeradas com `bookfw docx`, com contagem de marcador remanescente igual a
       zero e contagem de `<w:b/>` e `<w:i/>` maior que zero.
-- [ ] README e CHANGELOG documentam; versao sobe para 0.7.0.
+- [x] README e CHANGELOG documentam; versao sobe para 0.7.0.
 
 ### Escopo negativo
 
@@ -74,4 +74,4 @@ ADR: `docs/adr/ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-com-um-render
 
 ## Linked Roadmap
 
-Roadmap: `docs/roadmaps/wip/ROADMAP-2026-09-08-docx-markdown.md`
+Roadmap: `docs/roadmaps/done/ROADMAP-2026-09-08-docx-markdown.md`
