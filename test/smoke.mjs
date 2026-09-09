@@ -138,8 +138,14 @@ ok('mover para pronto segue livre', run('cap', 'move', '1', 'pronto').codigo ===
   const pd = join(dirPd, readdirSync(dirPd)[0]);
   // ancorado na linha: o texto de instrucao do template cita `- P1 — texto`
   // como exemplo, e um replace solto acertaria a citacao em vez da promessa.
-  writeFileSync(pd, readFileSync(pd, 'utf8')
-    .replace('\n- P1 — \n', '\n- P1 — o `arquivo` que nao apaga volta no fim\n'), 'utf8');
+  //
+  // O `\r?` nao e enfeite. No Windows o PD nasce com CRLF, o casamento por
+  // string crua nao acontece, e o teste passa a medir um plano diretor que
+  // nunca foi editado — verde por engano nos tres casos que dependem dele.
+  const antesPd = readFileSync(pd, 'utf8');
+  const depoisPd = antesPd.replace(/^- P1 — *\r?$/m, '- P1 — o `arquivo` que nao apaga volta no fim');
+  if (depoisPd === antesPd) throw new Error('o replace da promessa P1 nao achou a linha no plano diretor');
+  writeFileSync(pd, depoisPd, 'utf8');
   ok('promessa com crase e contada', JSON.parse(p.rodar('validate', '--json').saida).promessas === 1);
   ok('promessa com crase aparece no status', p.rodar('status').saida.includes('nao apaga volta no fim'));
 }
@@ -499,8 +505,12 @@ function preencheSumario(dir, tabela) {
   p.rodar('sum', '--materializar');
   const pdDir = join(p.dir, 'docs', 'plano-diretor');
   const pdArq = join(pdDir, readdirSync(pdDir)[0]);
-  writeFileSync(pdArq, readFileSync(pdArq, 'utf8')
-    .replace('\n- P1 — \n', '\n- P1 — o fio que o desfecho paga\n'), 'utf8');
+  // `\r?` pelo mesmo motivo do caso da promessa com crase: no Windows o PD
+  // nasce com CRLF e o casamento por string crua nao acontece.
+  const pdAntes = readFileSync(pdArq, 'utf8');
+  const pdDepois = pdAntes.replace(/^- P1 — *\r?$/m, '- P1 — o fio que o desfecho paga');
+  if (pdDepois === pdAntes) throw new Error('o replace da promessa P1 nao achou a linha no plano diretor');
+  writeFileSync(pdArq, pdDepois, 'utf8');
   writeFileSync(join(p.dir, 'docs', 'canon', 'cronologia.md'),
     '# Cronologia\n\n- dia 1: MARCO TEMPORAL DE TESTE\n', 'utf8');
   writeFileSync(join(p.dir, 'docs', 'canon', 'regras.md'),
