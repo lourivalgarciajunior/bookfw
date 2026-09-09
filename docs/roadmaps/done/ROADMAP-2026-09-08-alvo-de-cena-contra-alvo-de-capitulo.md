@@ -1,13 +1,13 @@
 ---
 req: "REQ-2026-09-08-validate-compara-a-soma-dos-alvos-de-cena-com-o-alvo-do-capitulo-e-avisa-a-divergencia"
-status: wip
+status: done
 date: 2026-09-08
 branch: "fix/alvo-de-cena-contra-alvo-de-capitulo"
 ---
 
 # Roadmap: alvo de cena contra alvo de capitulo
 
-> Created: 2026-09-08 | Status: wip
+> Created: 2026-09-08 | Status: done
 
 ## Context
 

@@ -3,7 +3,7 @@ status: Done
 date: 2026-09-08
 author: "Lourival Garcia"
 adr: "ADR-2026-09-08-o-gate-avisa-quando-os-alvos-de-cena-e-o-alvo-do-capitulo-divergem-e-nao-escolhe-lado"
-roadmap: "docs/roadmaps/wip/ROADMAP-2026-09-08-alvo-de-cena-contra-alvo-de-capitulo.md"
+roadmap: "docs/roadmaps/done/ROADMAP-2026-09-08-alvo-de-cena-contra-alvo-de-capitulo.md"
 ---
 
 # REQ: validate compara a soma dos alvos de cena com o alvo do capitulo e avisa a divergencia
@@ -53,4 +53,4 @@ ADR: `docs/adr/ADR-2026-09-08-o-gate-avisa-quando-os-alvos-de-cena-e-o-alvo-do-c
 
 ## Linked Roadmap
 
-Roadmap: `docs/roadmaps/backlog/docs/roadmaps/wip/ROADMAP-2026-09-08-alvo-de-cena-contra-alvo-de-capitulo.md`
+Roadmap: `docs/roadmaps/backlog/docs/roadmaps/done/ROADMAP-2026-09-08-alvo-de-cena-contra-alvo-de-capitulo.md`
