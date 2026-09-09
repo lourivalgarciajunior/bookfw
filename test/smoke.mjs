@@ -1004,6 +1004,138 @@ function comAmostra(p, repeticoes = 40) {
     && !readFileSync(join(q.dir, 'manuscrito', msQ), 'utf8').includes('## Parte'));
 }
 
+// ---------------------------------------------------------------------------
+// O markdown lido como estrutura. Funcao pura: roda sem o pacote `docx`.
+//
+// O que quebrou: o DOCX que foi para um revisor tecnico externo saiu com 952
+// asteriscos de negrito a vista, 106 de italico, 26 crases e o `>` de citacao
+// no meio de frase — porque o bloco inteiro virava um `TextRun` so.
+// ---------------------------------------------------------------------------
+{
+  const { trechos, blocos } = await import('../src/markdown.mjs');
+  const so = (t) => trechos(t).map((x) => `${x.negrito ? 'N' : ''}${x.italico ? 'I' : ''}${x.codigo ? 'C' : ''}:${x.texto}`).join('|');
+  const tipos = (t) => blocos(t).map((b) => b.tipo).join(',');
+
+  ok('negrito, italico e codigo viram estilo',
+    so('a **forte** b *fraco* c `cod` d') === ':a |N:forte|: b |I:fraco|: c |C:cod|: d');
+  ok('negrito com italico dentro acumula os dois',
+    so('**forte com *fraco* dentro**') === 'N:forte com |NI:fraco|N: dentro');
+  ok('multiplicacao e marcador solto ficam como texto',
+    so('3 * 4 = 12 e um ** solto') === ':3 * 4 = 12 e um ** solto');
+  ok('nao ha enfase dentro de crase', so('`a ** b`') === 'C:a ** b');
+  // O texto sem os marcadores tem de sobreviver inteiro: apagar caractere do
+  // autor seria pior do que imprimir o marcador.
+  ok('o texto sobrevive a viagem',
+    trechos('um **dois** tres *quatro* `cinco`').map((x) => x.texto).join('') === 'um dois tres quatro cinco');
+
+  // O marcador de citacao sai de TODAS as linhas. Juntar antes de remover era
+  // o que levava o `>` para o meio da frase.
+  const cit = blocos('> primeira linha do bloco\n> segunda linha do bloco');
+  ok('citacao de duas linhas nao guarda o marcador no meio',
+    cit.length === 1 && cit[0].tipo === 'citacao'
+    && cit[0].blocos[0].texto === 'primeira linha do bloco segunda linha do bloco');
+
+  ok('o separador de cena continua sendo separador', tipos('* * *') === 'separador');
+  ok('cerca de codigo com linha em branco dentro sai inteira',
+    blocos('```\num\n\ntres\n```')[0].linhas.join('|') === 'um||tres');
+  ok('tabela vira cabecalho e linhas', (() => {
+    const [t] = blocos('| A | B |\n|---|---|\n| 1 | 2 |');
+    return t.tipo === 'tabela' && t.cabecalho.join() === 'A,B' && t.linhas[0].join() === '1,2';
+  })());
+  ok('lista com hard-wrap junta a continuacao no item',
+    blocos('- um item\n  que continua\n- dois').map((b) => b.itens.map((i) => i.texto).join('/')).join('')
+    === 'um item que continua/dois');
+  ok('lista numerada guarda o numero do autor',
+    blocos('1. um\n2. dois')[0].itens.map((i) => i.marca).join() === '1.,2.');
+  ok('titulo tem nivel', (() => { const [t] = blocos('### Assim'); return t.tipo === 'titulo' && t.nivel === 3; })());
+  // Livro sobre reforma tributaria tem hard-wrap comecando com "2033. O ...".
+  ok('linha de continuacao com ano nao vira lista numerada',
+    tipos('O prazo vence em 2033.\n2026. Foi quando comecou.') === 'paragrafo');
+}
+
+// ---------------------------------------------------------------------------
+// E o mesmo markdown no papel. Dois numeros, e nao um: marcador remanescente
+// ZERO e formatacao aplicada MAIOR QUE ZERO. So o primeiro passaria com um
+// `replace` que apaga o marcador e entrega o texto sem a enfase do autor.
+// ---------------------------------------------------------------------------
+{
+  let Zip = null;
+  try { await import('docx'); Zip = (await import('jszip')).default; } catch { /* ausente */ }
+
+  if (!Zip) {
+    console.log('  PULADO  markdown no docx — pacote `docx` ausente (npm i docx para cobrir)');
+  } else {
+    const p = projeto('Marcacao');
+    p.rodar('cap', 'new', 'O capitulo marcado');
+    const arq = readdirSync(join(p.dir, 'capitulos', 'backlog')).find((f) => f.endsWith('.md'));
+    const cam = join(p.dir, 'capitulos', 'backlog', arq);
+    writeFileSync(cam, `${readFileSync(cam, 'utf8')}\n${[
+      '',
+      'Um paragrafo com **negrito**, com *italico* e com `codigo` no meio.',
+      '',
+      '> A citacao ocupa duas linhas no fonte e nao pode levar o marcador',
+      '> para o meio da frase quando as linhas se juntarem.',
+      '',
+      '* * *',
+      '',
+      '| Coluna A | Coluna B |',
+      '|---|---|',
+      '| valor um | valor dois |',
+      '',
+      '- primeiro item da lista',
+      '- segundo item da lista',
+      '',
+      '```',
+      'diagrama --> com espaco',
+      '',
+      '   e linha em branco dentro',
+      '```',
+      '',
+      'Fim do capitulo.',
+      '',
+    ].join('\n')}`, 'utf8');
+    p.rodar('cap', 'move', arq, 'revisao');
+    ok('docx roda com o capitulo marcado', p.rodar('docx').codigo === 0);
+
+    const z = await Zip.loadAsync(readFileSync(join(p.dir, 'manuscrito', 'Marcacao — versao de leitura.docx')));
+    const xml = await z.file('word/document.xml').async('string');
+    // As entidades voltam ao caractere: `&gt;` escondido no XML e um marcador
+    // de citacao que a contagem nao veria.
+    const texto = xml
+      .replace(/<w:br\s*\/>/g, '\n').replace(/<w:p[ >]/g, '\n<w:p ').replace(/<[^>]+>/g, '')
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+
+    // 1. O marcador nao chega ao papel.
+    ok('nenhum asterisco de negrito no texto', !texto.includes('**'));
+    ok('nenhuma crase de codigo no texto', !texto.includes('`'));
+    ok('nenhum marcador de citacao no texto', !/(^|\s)>\s/.test(texto));
+    ok('nenhum tubo de tabela no texto', !texto.split('\n').some((l) => /^\s*\|/.test(l)));
+    ok('nenhum hifen de lista no texto', !texto.split('\n').some((l) => /^\s*-\s/.test(l)));
+    ok('nenhuma cerca de codigo no texto', !texto.includes('```'));
+
+    // 2. E a formatacao existe, no trecho certo. Conferir `<w:i/>` no documento
+    // inteiro nao serve: o genero no rosto e a ressalva de capitulo ja saem em
+    // italico, e o teste ficaria verde com a prosa toda em texto reto.
+    const corridas = xml.split('<w:r>').slice(1);
+    const corridaCom = (t) => corridas.find((r) => r.includes(`>${t}<`)) || '';
+    ok('o negrito foi aplicado no trecho que o autor marcou', /<w:b\s*\/>/.test(corridaCom('negrito')));
+    ok('o italico foi aplicado no trecho que o autor marcou', /<w:i\s*\/>/.test(corridaCom('italico')));
+    ok('o codigo saiu em fonte monoespacada', corridaCom('codigo').includes('w:ascii="Consolas"'));
+    ok('a tabela saiu como tabela', xml.includes('<w:tbl>'));
+    ok('a lista saiu com marca', texto.includes('•  primeiro item da lista'));
+    ok('o separador de cena continua virando o ornamento', texto.includes('❧'));
+
+    // 3. Nada foi comido no caminho.
+    ok('o texto da citacao saiu inteiro e numa frase so',
+      texto.includes('A citacao ocupa duas linhas no fonte e nao pode levar o marcador para o meio da frase quando as linhas se juntarem.'));
+    ok('o diagrama guardou a quebra e o espaco de recuo',
+      texto.includes('diagrama --> com espaco') && texto.includes('   e linha em branco dentro'));
+    ok('a celula da tabela guardou o conteudo', texto.includes('valor dois'));
+    ok('paragrafo sem marcacao nenhuma segue paragrafo', texto.includes('Fim do capitulo.'));
+  }
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);

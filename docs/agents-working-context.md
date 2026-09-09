@@ -99,3 +99,41 @@ tabela nomeia Partes.
 
 **Governanca.** ADR-2026-09-05-o-divisor-de-parte-…, REQ-2026-09-05-bookfw-build-e-docx-…,
 ROADMAP-2026-09-05-divisor-de-parte.
+
+## 2026-09-08 — o docx aplica o markdown em vez de imprimir o marcador (0.7.0)
+
+**O que mudou.** Novo `src/markdown.mjs`, puro e sem OOXML: `trechos()` parte a
+linha em negrito, italico e codigo; `blocos()` parte o texto em paragrafo,
+citacao, lista, numerada, codigo cercado, tabela, titulo e separador. O
+`docx.mjs` traduz isso em `Paragraph`, `TextRun` e `Table`. As tres chamadas de
+`bloco.replace(/\n/g, ' ')` — front matter, capitulo e apendice — sumiram.
+
+**Por que.** O DOCX que foi para um revisor tecnico externo saiu com 970
+asteriscos de negrito a vista, 108 de italico, 26 crases, 17 linhas de tabela em
+tubos — e zero `<w:b/>`. E a citacao com hard-wrap levava o `>` das linhas de
+continuacao para o meio da frase, porque as linhas eram juntadas ANTES de o
+marcador ser removido. O revisor apagou varios a mao.
+
+**A verificacao conta duas coisas, e nao uma.** Marcador remanescente zero E
+formatacao aplicada maior que zero, no trecho que o autor marcou. So o primeiro
+criterio passaria com um `replace` que apaga o marcador e entrega o texto sem a
+enfase — que e a correcao errada, e a tentadora.
+
+**Duas armadilhas achadas medindo.**
+
+1. `blocos()` varre por LINHA, e nao por `split(/\n{2,}/)`: bloco de codigo
+   cercado tem linha em branco dentro, e o corte por linha em branco partia o
+   diagrama ASCII em tres pedacos com as cercas a vista.
+2. O tipo do bloco sai da PRIMEIRA linha, nunca de uma linha de continuacao.
+   Num livro sobre reforma tributaria o hard-wrap comeca com "2033. O sistema…"
+   com frequencia, e ler isso como item de lista numerada partiria o paragrafo.
+
+**Bug de teste achado no caminho, corrigido a parte.** Tres casos de promessa no
+plano diretor casavam por string crua com `\n`; no Windows o PD nasce com CRLF,
+o `replace` nao acontecia e o teste media um PD nunca editado. Estavam vermelhos
+no `main`. Foi para mudanca propria — `test(smoke): a promessa P1 casa com CRLF`
+—, porque bug de teste nao viaja de carona em correcao de produto.
+
+**Governanca.** ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-…,
+REQ-2026-09-08-bookfw-docx-aplica-a-formatacao-do-markdown-…,
+ROADMAP-2026-09-08-docx-markdown.

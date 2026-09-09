@@ -180,6 +180,17 @@ Duas páginas editoriais entram se existirem, uma página por seção `## `:
 último. O texto é da obra — aviso de conteúdo, nota de versão, glossário,
 fontes.
 
+**A marcação vira formatação, e não texto.** O `docx` interpreta o markdown que
+a prosa usa: `**negrito**`, `*itálico*`, `` `código` `` em fonte monoespaçada,
+`> citação` com recuo e corpo menor, lista com marca, lista numerada, tabela em
+tubos como tabela de verdade, bloco cercado por ``` ``` `` com as quebras e os
+espaços onde estão, e `* * *` como ornamento de cena. Marcador de citação sai de
+**todas** as linhas do bloco, não só da primeira.
+
+Fora dessa lista — link, imagem, riscado, nota de rodapé, HTML, lista aninhada —
+o texto sai como está escrito. O escopo é o markdown que as obras usam, não o
+que a especificação permite.
+
 **Capítulo não confirmado sai carimbado.** Se o frontmatter tem `verificar:`
 preenchido — na mesma linha ou em lista abaixo —, o capítulo abre com uma
 ressalva em itálico, para que suposição não passe por apuração. O texto do
