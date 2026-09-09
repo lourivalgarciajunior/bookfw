@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.6.1 — 2026-09-08
+
+### Corrigido
+
+- **O contrato de cena parava de perder texto em silencio.** `yamlRaso` lia
+  chave e valor linha a linha e descartava calado tudo o que nao casasse
+  `chave:`. Quebrar uma linha longa em duas apagava a segunda: o campo ficava
+  pela metade, `bookfw validate` continuava verde e `bookfw status` contava as
+  cenas normalmente. Ninguem era avisado.
+- O formato empurrava para o defeito, e e isso que fazia dele armadilha e nao
+  aspereza. Os capitulos sao quebrados em 79 colunas e as linhas de contrato de
+  cena das obras reais chegam a **114** — quebrar a linha e o movimento natural
+  de quem edita o arquivo, e era ele que destruia o dado. Apareceu assim: uma
+  agente escrevendo o capitulo 4 de "Os Oito Modelos" quebrou a `virada` de uma
+  cena, perdeu metade do valor, e so descobriu porque foi reler o arquivo.
+- Agora **a continuacao dobra** na chave escalar anterior, indentada ou nao, e
+  chave declarada sem valor seguida de texto vira escalar em vez de lista
+  vazia. Lista em bloco, lista em linha `[a, b]`, aspas e comentario seguem
+  como estavam.
+- E **o que nao da para dobrar reprova**: linha solta sem chave anterior, ou
+  logo depois de uma lista ja iniciada, vira erro no `bookfw validate`, com o
+  arquivo, a linha e o texto que estava se perdendo. Em ferramenta de
+  governanca, o custo de recusar barulhento e sempre menor que o de aceitar em
+  silencio — um erro que aparece custa uma correcao; um dado que some custa a
+  confianca em tudo o que a ferramenta afirma depois.
+- Decisao em `ADR-2026-09-08-o-contrato-de-cena-dobra-a-linha-de-continuacao-e-o-que-nao-dobra-reprova-no-gate-em-vez-de-sumir`.
+- Varredura nas tres obras reais no dia da correcao: nenhuma linha perdida, e
+  contagem de capitulos, cenas e palavras identica antes e depois.
+
 ## 0.6.0 — 2026-09-05
 
 ### Adicionado

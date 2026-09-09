@@ -1,0 +1,3 @@
+- [Obra: Os Oito Modelos](obra-os-oito-modelos.md) — nao-ficcao tecnica fora do repo, style card medido e sem samples/: nao ha nota de aderencia
+- [Marca de revisor entra pela substancia](revisor-tecnico-substancia-na-voz-do-autor.md) — aceitar o conteudo, reescrever a prosa na voz do autor
+- [Camadas sem declaracao de autoridade](feedback-camadas-sem-declaracao-de-autoridade.md) — em Os Oito Modelos, so lei, lacuna e leitura; imprensa e entrevista nao entram
