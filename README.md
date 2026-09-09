@@ -378,3 +378,7 @@ alguma coisa que já quebrou.
 
 O CI roda os dois em Linux e Windows. O autor escreve no Windows, e é lá que
 aparecem os bugs de CRLF e de nome de arquivo.
+
+## Licença
+
+MIT — veja [LICENSE](LICENSE). Copyright (c) 2026 Lourival Garcia — IndieExpert.

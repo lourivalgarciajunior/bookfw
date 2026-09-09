@@ -7,9 +7,9 @@
 - **O `docx` imprimia o marcador de markdown em vez de aplicar a formatacao.** O
   bloco inteiro ia para um `TextRun` so, com `bloco.replace(/\n/g, ' ')`, e nada
   interpretava markdown. Medido no arquivo que foi para um revisor tecnico
-  externo, `Os Oito Modelos da Reforma Tributaria — revisao 2.docx`: **952**
-  asteriscos de negrito a vista (476 pares), **106** de italico, **26** crases,
-  **16** linhas de tabela em tubos, **16** de lista em hifen — e **zero**
+  externo, `Os Oito Modelos da Reforma Tributaria — revisao 2.docx`: **970**
+  asteriscos de negrito a vista (485 pares), **108** de italico, **26** crases,
+  **17** linhas de tabela em tubos, **16** de lista em hifen — e **zero**
   `<w:b/>`, zero `<w:tbl>`. O revisor apagou varios a mao antes de devolver.
 - **A citacao perdia o marcador so da primeira linha.** Trocar a quebra por
   espaco juntava o hard-wrap com o `>` das linhas de continuacao no meio da
@@ -33,13 +33,24 @@
 
 ### Verificado
 
-- As duas obras reais regeradas: marcador remanescente **zero** nas duas, com
-  534 `<w:b/>`, 55 `<w:i/>`, 24 trechos monoespacados e 16 tabelas em "Os Oito
-  Modelos". A sequencia de palavras do DOCX e **identica** a de antes nas duas —
-  a marcacao virou formatacao, e nenhum caractere do autor foi comido.
+- As duas obras reais regeradas da MESMA fonte, com o codigo anterior e com o
+  novo: marcador remanescente **zero** nas duas, com 544 `<w:b/>`, 56 `<w:i/>`,
+  25 trechos monoespacados e 17 tabelas em "Os Oito Modelos". Os 3 tubos que
+  sobram sao o desenho do diagrama ASCII do capitulo 10, e as tres corridas
+  estao em Consolas. A sequencia de palavras do DOCX e **identica** antes e
+  depois nas duas — 38.257 e 22.209 palavras —, entao a marcacao virou
+  formatacao sem comer nenhum caractere do autor.
 - O smoke confere os dois lados: marcador ausente **e** formatacao presente no
   trecho que o autor marcou. So o primeiro passaria com um `replace` que apaga o
   marcador e entrega o texto sem enfase.
+
+### Empacotamento
+
+- **Licenca MIT.** O `package.json` dizia `UNLICENSED`, que no registry publico
+  significa "ninguem pode usar isto" — e o README ja documentava
+  `npm install -g bookfw`. Agora ha `LICENSE` no repositorio e no tarball.
+- `repository`, `bugs`, `homepage` e `keywords` no manifesto: sem eles a pagina
+  do pacote no npm nao tem como apontar para o codigo.
 
 ### Tambem nesta versao, de outra mudanca
 
