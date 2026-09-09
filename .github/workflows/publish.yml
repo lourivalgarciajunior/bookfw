@@ -1,0 +1,83 @@
+name: publish
+
+# Publicacao no npm sem token guardado em lugar nenhum.
+#
+# O GitHub emite um token OIDC de vida curta para esta execucao, e a npm o
+# aceita porque a pagina do pacote declara ESTE repositorio e ESTE arquivo de
+# workflow como publicador confiavel. Nao ha secret para vazar, para rotacionar
+# ou para esquecer expirado — e e o caminho que a propria npm esta empurrando:
+# token que contorna 2FA passa a ser restrito em publicacao direta a partir de
+# janeiro de 2027.
+#
+# Antes de a primeira execucao funcionar, configure em
+# npmjs.com/package/bookfw/access -> Trusted Publisher -> GitHub Actions:
+#
+#   Organization or user   lourivalgarciajunior
+#   Repository             bookfw
+#   Workflow filename      publish.yml        (so o nome, sem o caminho)
+#   Environment            (em branco)
+#
+# O disparo e a publicacao de uma release no GitHub. A tag manda: ela tem de
+# casar com a `version` do package.json, e o job reprova alto quando nao casa —
+# release com tag errada publica versao errada, e no npm isso nao se desfaz.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # o token OIDC que substitui o NODE_AUTH_TOKEN
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22 # >= 22.14.0, exigencia do publish confiavel
+          registry-url: https://registry.npmjs.org
+
+      # O npm que vem com o Node 22 e da linha 10 e nao sabe falar OIDC. A
+      # exigencia e 11.5.1 ou mais novo, e a falha sem isto e um 404 obscuro
+      # no lugar de "sua versao nao suporta".
+      - name: npm recente o bastante para OIDC
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - run: npm install --no-audit --no-fund
+
+      # O mesmo gate do CI. Release quebrada nao sai: no npm, versao publicada
+      # nao volta atras depois de 72 horas, e o nome fica queimado.
+      - run: npm run lint
+      - run: npm test
+
+      - name: a tag casa com a version do package.json
+        if: github.event_name == 'release'
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::a tag e $tag e o package.json diz $pkg — corrija um dos dois antes de publicar"
+            exit 1
+          fi
+          echo "publicando bookfw@$pkg"
+
+      # Falhar aqui e melhor do que colher um 403 no fim: a mensagem diz o que
+      # fazer, e nao "Forbidden".
+      - name: a versao ainda nao existe no registry
+        run: |
+          pkg="$(node -p "require('./package.json').version")"
+          if npm view "bookfw@$pkg" version > /dev/null 2>&1; then
+            echo "::error::bookfw@$pkg ja esta publicado — suba a version no package.json e no CHANGELOG"
+            exit 1
+          fi
+
+      # Sem NODE_AUTH_TOKEN, de proposito. A procedencia sai assinada por conta
+      # da publicacao confiavel, sem nenhum flag.
+      - run: npm publish --access public

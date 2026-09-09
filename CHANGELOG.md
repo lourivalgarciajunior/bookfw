@@ -51,6 +51,10 @@
   `npm install -g bookfw`. Agora ha `LICENSE` no repositorio e no tarball.
 - `repository`, `bugs`, `homepage` e `keywords` no manifesto: sem eles a pagina
   do pacote no npm nao tem como apontar para o codigo.
+- **`.github/workflows/publish.yml`** — publicacao por release do GitHub, com
+  publicacao confiavel via OIDC: sem token guardado, sem secret para rotacionar
+  e sem OTP no meio. Reprova quando a tag nao casa com a `version`, quando a
+  versao ja existe no registry, ou quando o gate falha.
 
 ### Tambem nesta versao, de outra mudanca
 

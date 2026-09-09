@@ -379,6 +379,26 @@ alguma coisa que já quebrou.
 O CI roda os dois em Linux e Windows. O autor escreve no Windows, e é lá que
 aparecem os bugs de CRLF e de nome de arquivo.
 
+## Publicação
+
+Versão nova sai de uma release do GitHub, e o `.github/workflows/publish.yml`
+publica sozinho — sem token guardado em lugar nenhum. O GitHub emite um token
+OIDC de vida curta para aquela execução, e a npm o aceita porque a página do
+pacote declara este repositório e este arquivo de workflow como publicador
+confiável.
+
+```bash
+# 1. version no package.json e seção no CHANGELOG, no mesmo commit
+# 2. tag e release
+git tag v0.8.0 && git push origin v0.8.0
+gh release create v0.8.0 --generate-notes
+```
+
+O workflow reprova alto quando a tag não casa com a `version` do `package.json`,
+quando a versão já existe no registry, ou quando `npm run lint` ou `npm test`
+falham. Versão publicada no npm não volta atrás depois de 72 horas — o gate
+existe por isso.
+
 ## Licença
 
 MIT — veja [LICENSE](LICENSE). Copyright (c) 2026 Lourival Garcia — IndieExpert.
