@@ -1,1 +1,2 @@
 - [Contrato de cena e de linha unica](project_cena_parser_linha_unica.md) — o parser do bloco ```cena trunca valor quebrado em duas linhas, e o validate nao acusa
+- [Mapa de promessas sem gate](project_mapa_promessas_sem_gate.md) — o validate nao confere o mapa do sumario contra os contratos; levante os campos antes de escrever
