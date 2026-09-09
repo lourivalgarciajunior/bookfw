@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.2 — 2026-09-08
+## 0.7.1 — 2026-09-09
 
 ### Adicionado
 
@@ -26,6 +26,69 @@
   medindo contra o alvo do capitulo: trocar a base em silencio esconderia
   justamente a divergencia que esta regra existe para mostrar.
 - Decisao em `ADR-2026-09-08-o-gate-avisa-quando-os-alvos-de-cena-e-o-alvo-do-capitulo-divergem-e-nao-escolhe-lado`.
+
+## 0.7.0 — 2026-09-08
+
+### Corrigido
+
+- **O `docx` imprimia o marcador de markdown em vez de aplicar a formatacao.** O
+  bloco inteiro ia para um `TextRun` so, com `bloco.replace(/\n/g, ' ')`, e nada
+  interpretava markdown. Medido no arquivo que foi para um revisor tecnico
+  externo, `Os Oito Modelos da Reforma Tributaria — revisao 2.docx`: **970**
+  asteriscos de negrito a vista (485 pares), **108** de italico, **26** crases,
+  **17** linhas de tabela em tubos, **16** de lista em hifen — e **zero**
+  `<w:b/>`, zero `<w:tbl>`. O revisor apagou varios a mao antes de devolver.
+- **A citacao perdia o marcador so da primeira linha.** Trocar a quebra por
+  espaco juntava o hard-wrap com o `>` das linhas de continuacao no meio da
+  frase. Agora o marcador sai de todas as linhas, e so entao elas se juntam.
+- O front matter e o apendice sofriam da mesma linha: o apendice de "Os Oito
+  Modelos", que e feito de tabela e de lista, saia como paragrafo justificado de
+  tubos. As tres chamadas passam pelo mesmo renderizador.
+
+### Adicionado
+
+- **`src/markdown.mjs`** — o markdown lido como estrutura, sem OOXML e sem
+  dependencia nova. `trechos()` para negrito, italico e codigo; `blocos()` para
+  paragrafo, citacao, lista, numerada, codigo cercado, tabela, titulo e
+  separador. Puro, entao o smoke o cobre mesmo sem o pacote `docx` instalado.
+- No papel: codigo em fonte monoespacada, citacao com recuo dos dois lados e
+  corpo menor, lista com marca e recuo pendente, tabela como `<w:tbl>` com
+  cabecalho em negrito, e bloco cercado com as quebras e os espacos preservados.
+  O separador `* * *` continua virando `❧`.
+- A varredura por linha substitui o corte por linha em branco: bloco de codigo
+  cercado tem linha em branco dentro, e o corte antigo o partia no meio.
+
+### Verificado
+
+- As duas obras reais regeradas da MESMA fonte, com o codigo anterior e com o
+  novo: marcador remanescente **zero** nas duas, com 544 `<w:b/>`, 56 `<w:i/>`,
+  25 trechos monoespacados e 17 tabelas em "Os Oito Modelos". Os 3 tubos que
+  sobram sao o desenho do diagrama ASCII do capitulo 10, e as tres corridas
+  estao em Consolas. A sequencia de palavras do DOCX e **identica** antes e
+  depois nas duas — 38.257 e 22.209 palavras —, entao a marcacao virou
+  formatacao sem comer nenhum caractere do autor.
+- O smoke confere os dois lados: marcador ausente **e** formatacao presente no
+  trecho que o autor marcou. So o primeiro passaria com um `replace` que apaga o
+  marcador e entrega o texto sem enfase.
+
+### Empacotamento
+
+- **Licenca MIT.** O `package.json` dizia `UNLICENSED`, que no registry publico
+  significa "ninguem pode usar isto" — e o README ja documentava
+  `npm install -g bookfw`. Agora ha `LICENSE` no repositorio e no tarball.
+- `repository`, `bugs`, `homepage` e `keywords` no manifesto: sem eles a pagina
+  do pacote no npm nao tem como apontar para o codigo.
+- **`.github/workflows/publish.yml`** — publicacao por release do GitHub, com
+  publicacao confiavel via OIDC: sem token guardado, sem secret para rotacionar
+  e sem OTP no meio. Reprova quando a tag nao casa com a `version`, quando a
+  versao ja existe no registry, ou quando o gate falha.
+
+### Tambem nesta versao, de outra mudanca
+
+- Tres casos de promessa no plano diretor casavam por string crua com `\n`, e no
+  Windows o PD nasce com CRLF: o `replace` nao acontecia e o teste media um PD
+  nunca editado. Corrigido em mudanca propria, por ser bug de teste e nao do
+  `docx` — sem ela `npm test` estava vermelho antes desta versao.
 
 ## 0.6.1 — 2026-09-08
 
@@ -55,7 +118,6 @@
 - Decisao em `ADR-2026-09-08-o-contrato-de-cena-dobra-a-linha-de-continuacao-e-o-que-nao-dobra-reprova-no-gate-em-vez-de-sumir`.
 - Varredura nas tres obras reais no dia da correcao: nenhuma linha perdida, e
   contagem de capitulos, cenas e palavras identica antes e depois.
-
 ## 0.6.0 — 2026-09-05
 
 ### Adicionado

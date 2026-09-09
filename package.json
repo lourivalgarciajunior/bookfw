@@ -1,6 +1,6 @@
 {
   "name": "bookfw",
-  "version": "0.6.2",
+  "version": "0.7.1",
   "description": "Governanca de escrita de livros — DEC -> PD -> SUM -> kanban de capitulos -> manuscrito.",
   "type": "module",
   "bin": {
@@ -19,12 +19,29 @@
     "node": ">=22"
   },
   "author": "Lourival Garcia <lourival.garcia@indieexpert.com.br>",
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lourivalgarciajunior/bookfw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lourivalgarciajunior/bookfw/issues"
+  },
+  "homepage": "https://github.com/lourivalgarciajunior/bookfw#readme",
+  "keywords": [
+    "livro",
+    "escrita",
+    "manuscrito",
+    "governanca",
+    "cli",
+    "docx"
+  ],
   "files": [
     "bin",
     "src",
     "templates",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "LICENSE"
   ]
 }
