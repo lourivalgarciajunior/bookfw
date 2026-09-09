@@ -11,10 +11,12 @@ Ao editar `C:\dev\pessoal\book\os-oito-modelos`:
   autoridade, entrevista ou imprensa. Decisão do autor, firme.
 - **Não tocar em `docs/dec/`** — é registro histórico; renumerar ou reescrever
   ali falsifica o que foi decidido e quando.
-- **Preservar a terminação de linha arquivo a arquivo.** O repositório é
-  genuinamente misto: `cap-04`, `cap-05`, `cap-13`, `docs/apendice.md` e o
-  sumário são LF; `cap-16`, `cap-22`, `cap-23`, `regras.md` e `cronologia.md`
-  são CRLF. Nenhum arquivo é misto por dentro.
+- **Preservar a terminação de linha arquivo a arquivo.** Em 2026-09-08, no
+  branch `revisao-4`, todo o repositório está **uniformemente CRLF** —
+  capítulos, canon, apêndice, sem um único LF solto e sem `.gitattributes`.
+  Isso mudou: até `revisao-3` o repo era misto (`cap-04`, `cap-05`, `cap-13`,
+  `apendice.md` e o sumário eram LF). Confira antes de editar em vez de
+  assumir, e grave com `newline=''` em Python para não converter nada.
 - **Hard-wrap de prosa em 79–80 colunas de caractere.** Medir com Python, não
   com `awk length()`: em git-bash o awk conta bytes, e cada acento vira 2 —
   gera dezenas de falsos positivos.

@@ -1,0 +1,1 @@
+- [Os Oito Modelos da Reforma Tributária](projeto-os-oito-modelos.md) — obra tecnica em pessoal/book, revisor externo no circuito, veredito da revisao 3 e as decisoes ja tomadas

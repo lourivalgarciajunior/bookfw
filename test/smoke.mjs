@@ -1061,6 +1061,60 @@ function comAmostra(p, repeticoes = 40) {
   ok('e o texto perdido', vs.saida.includes('texto orfao'));
 }
 
+// ---------------------------------------------------------------------------
+// Os dois orcamentos do capitulo: o alvo do frontmatter e a soma das cenas.
+//
+// Eram independentes e ninguem conferia um contra o outro. Numa obra real, 22
+// de 23 capitulos tinham os dois divergindo — mediana 1,54 — e o gate passava
+// em silencio, enquanto a faixa de "fora do alvo" media contra um numero que o
+// proprio arquivo desmentia.
+{
+  const { divergenciaDeAlvo, FOLGA_ALVO } = await import('../src/core.mjs');
+  const cap = (alvo, ...cenas) => ({
+    fm: alvo ? { palavras_alvo: alvo } : {},
+    cenas: cenas.map((n) => (n === null ? {} : { palavras_alvo: n })),
+  });
+
+  ok('divergencia acima da folga e detectada',
+    divergenciaDeAlvo(cap(1250, 850, 850, 650))?.cenas === 2350);
+  ok('e traz os dois numeros',
+    divergenciaDeAlvo(cap(1250, 850, 850, 650))?.capitulo === 1250);
+  ok('obra sa nao acusa nada', divergenciaDeAlvo(cap(1500, 500, 500, 500)) === null);
+  ok('dentro da folga nao acusa', divergenciaDeAlvo(cap(1000, 350, 350, 350)) === null);
+  ok('divergencia para baixo tambem acusa', divergenciaDeAlvo(cap(2400, 700, 700)) !== null);
+
+  // Falta de declaracao nao e divergencia — os tres guardas.
+  ok('capitulo sem alvo nao acusa', divergenciaDeAlvo(cap(0, 850, 850)) === null);
+  ok('capitulo sem cena nao acusa', divergenciaDeAlvo(cap(1250)) === null);
+  ok('cena sem alvo nao acusa', divergenciaDeAlvo(cap(1250, null, null)) === null);
+
+  ok('a folga e a calibrada nas obras reais', FOLGA_ALVO === 0.10);
+
+  // Ponta a ponta: o gate avisa, e a faixa da prosa NAO mudou de base.
+  const t = projeto('Obra Com Alvos Discordantes');
+  t.rodar('cap', 'new', 'Sonda');
+  const arqT = readdirSync(join(t.dir, 'capitulos', 'backlog')).find((f) => f.endsWith('.md'));
+  const camT = join(t.dir, 'capitulos', 'backlog', arqT);
+  writeFileSync(camT, [
+    '---', 'id: cap-01-sonda', 'numero: 1', 'titulo: Sonda', 'estado: backlog',
+    'palavras_alvo: 1250', '---', '', '# Sonda', '',
+    '```cena', 'id: 1.1', 'objetivo: um', 'conflito: dois', 'virada: tres',
+    'palavras_alvo: 850', '```', '', 'Prosa.', '',
+    '```cena', 'id: 1.2', 'objetivo: um', 'conflito: dois', 'virada: tres',
+    'palavras_alvo: 850', '```', '', 'Mais prosa.', '',
+  ].join('\n'), 'utf8');
+  const vt = t.rodar('validate');
+  ok('validate avisa os dois orcamentos', vt.saida.includes('os dois orcamentos discordam'));
+  ok('e diz o alvo do capitulo e a soma das cenas',
+    vt.saida.includes('alvo do capitulo 1250 contra 1700'));
+  ok('e o status marca o capitulo', t.rodar('status').saida.includes('alvo ?'));
+
+  // A faixa da prosa continua medindo contra o alvo do CAPITULO, nao contra a
+  // soma das cenas: trocar a base em silencio esconderia a divergencia.
+  ok('a faixa da prosa nao passou a usar a soma das cenas',
+    !vt.saida.includes('palavras contra alvo 1700'));
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);

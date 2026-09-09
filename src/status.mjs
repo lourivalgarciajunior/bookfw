@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ESTADOS_ATIVOS, acharProjeto, artefatos, c, canon, capitulos, lerConfig, planoDiretor, promessas, rel, sumario } from './core.mjs';
+import { ESTADOS_ATIVOS, acharProjeto, artefatos, c, canon, capitulos, lerConfig, planoDiretor, promessas, rel, sumario, divergenciaDeAlvo } from './core.mjs';
 import { ARQUIVO as ARQ_REVISOES, carimbo, lerRevisoes, revisaoAtual } from './revisao.mjs';
 
 export function status() {
@@ -27,7 +27,13 @@ export function status() {
     const cor = estado === 'escrita' ? c.cyan : estado === 'pronto' ? c.green : c.dim;
     console.log(cor(`${estado.padEnd(9)}`) + ` ${doEstado.length}`);
     for (const cap of doEstado) {
-      console.log(`  ${String(cap.numero).padStart(2, '0')} ${(cap.fm.titulo || cap.arquivo).padEnd(40)} ${String(cap.cenas.length).padStart(2)} cenas  ${String(cap.palavras).padStart(5)} pal`);
+      // O painel e onde o autor le o progresso, e onde o alvo enganava: com os
+      // dois orcamentos discordando, "x de y palavras" mede contra um numero
+      // que as cenas do proprio capitulo desmentem. A marca fica curta de
+      // proposito — quem quiser os dois numeros roda o validate.
+      const discorda = divergenciaDeAlvo(cap);
+      console.log(`  ${String(cap.numero).padStart(2, '0')} ${(cap.fm.titulo || cap.arquivo).padEnd(40)} ${String(cap.cenas.length).padStart(2)} cenas  ${String(cap.palavras).padStart(5)} pal`
+        + (discorda ? c.yellow('  alvo ?') : ''));
     }
   }
 

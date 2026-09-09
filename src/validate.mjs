@@ -6,7 +6,7 @@
  */
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { acharProjeto, artefatos, c, canon, capitulos, lerConfig, linhasDoSumario, promessas, rel, slug, sumario } from './core.mjs';
+import { acharProjeto, artefatos, c, canon, capitulos, divergenciaDeAlvo, lerConfig, linhasDoSumario, promessas, rel, slug, sumario } from './core.mjs';
 
 const OBRIGATORIOS = ['objetivo', 'conflito', 'virada'];
 
@@ -137,6 +137,17 @@ export function validate(args) {
         }
       }
     });
+
+    // Os dois orcamentos do capitulo tem de falar o mesmo. O alvo do
+    // frontmatter e o que o autor decidiu; a soma das cenas e o que o capitulo
+    // declara escrever. Quando divergem, a faixa abaixo mede contra um numero
+    // que o proprio arquivo desmente — e foi assim que uma obra passou duas
+    // revisoes discutindo percentual sobre um alvo que ninguem conferia.
+    // Aviso, e nao erro: qual dos dois cede e do autor, como no kanban x sumario.
+    const divergencia = divergenciaDeAlvo(cap);
+    if (divergencia) {
+      aviso(onde, `alvo do capitulo ${divergencia.capitulo} contra ${divergencia.cenas} somados nas ${cap.cenas.length} cenas — os dois orcamentos discordam; ajuste um dos lados`);
+    }
 
     if (['revisao', 'pronto'].includes(cap.estado)) {
       const alvo = Number(cap.fm.palavras_alvo || 0);

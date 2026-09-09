@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.6.2 — 2026-09-08
+
+### Adicionado
+
+- **O gate passa a ver que os dois orcamentos do capitulo discordam.** O
+  frontmatter tem `palavras_alvo` e cada bloco de cena tem o seu. Eram
+  independentes, ninguem conferia um contra o outro, e a faixa de "fora do
+  alvo" media a prosa contra um numero que as cenas do proprio arquivo
+  desmentiam. `validate` agora avisa quando a soma das cenas se afasta mais de
+  10% do alvo do capitulo, dizendo os dois numeros, e o `status` marca a linha
+  do capitulo com `alvo ?`.
+- **A folga saiu da medida, nao do gosto.** Nas tres obras reais em 2026-09-08:
+  `metamorfose` e `cris-e-cristina` ficam em 1,00, com maximo de 1,033;
+  `os-oito-modelos` tem 22 dos 23 capitulos acima de 10%, mediana 1,54 e maximo
+  1,96. Nenhuma folga entre 5% e 25% produz falso positivo nas obras sas — o
+  que a folga escolhe e sensibilidade, e 10% e cerca de tres vezes a maior
+  divergencia ja vista numa obra sa.
+- Nao e defeito do formato: e defasagem de uma obra so. A DEC daquele livro
+  reescreveu os alvos de capitulo um a um e deixou os das cenas onde estavam.
+  Ninguem notou por quatro dias, e o custo apareceu quando uma revisao mandou
+  encolher um capitulo que nunca esteve inchado.
+- **E aviso, e o gate nao escolhe lado.** Qual dos dois numeros cede e do
+  autor, como ja acontece entre kanban e sumario. A faixa da prosa continua
+  medindo contra o alvo do capitulo: trocar a base em silencio esconderia
+  justamente a divergencia que esta regra existe para mostrar.
+- Decisao em `ADR-2026-09-08-o-gate-avisa-quando-os-alvos-de-cena-e-o-alvo-do-capitulo-divergem-e-nao-escolhe-lado`.
+
 ## 0.6.1 — 2026-09-08
 
 ### Corrigido

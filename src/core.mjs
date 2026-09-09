@@ -204,6 +204,31 @@ export function prosaDe(corpo) {
 
 export const palavras = (t) => (t.trim().match(/[\p{L}\p{N}'’-]+/gu) || []).length;
 
+/**
+ * Quanto a soma dos alvos de cena pode se afastar do alvo do capitulo.
+ * Calibrado nas obras reais em 2026-09-08: obra sa fica em 1,00, com maximo
+ * medido de 1,033. Dez por cento e cerca de tres vezes isso — quem distribui
+ * cena a mao arredonda em centenas e nunca chega la.
+ */
+export const FOLGA_ALVO = 0.10;
+
+/**
+ * Os dois orcamentos de palavras de um capitulo: o que o autor declarou no
+ * frontmatter e o que as cenas dele somam. Quando discordam, a faixa de "fora
+ * do alvo" mede contra um numero que o proprio arquivo desmente. Devolve null
+ * quando falta declaracao — ausencia nao e divergencia.
+ *
+ * Mora aqui, e nao no validate, porque o status precisa da mesma conta: duas
+ * copias de uma constante de calibragem sao a proxima defasagem silenciosa.
+ */
+export function divergenciaDeAlvo(cap) {
+  const capitulo = Number(cap.fm?.palavras_alvo || 0);
+  const cenas = (cap.cenas || []).reduce((a, s) => a + Number(s.palavras_alvo || 0), 0);
+  if (!capitulo || !cenas) return null;
+  const razao = cenas / capitulo;
+  return Math.abs(razao - 1) > FOLGA_ALVO ? { capitulo, cenas, razao } : null;
+}
+
 export function moverCapitulo(raiz, nome, destino, opts = {}) {
   if (!ESTADOS.includes(destino)) throw new Erro(`Estado "${destino}" nao existe. Use: ${ESTADOS.join(', ')}`);
   const alvo = capitulos(raiz).find((cap) =>
