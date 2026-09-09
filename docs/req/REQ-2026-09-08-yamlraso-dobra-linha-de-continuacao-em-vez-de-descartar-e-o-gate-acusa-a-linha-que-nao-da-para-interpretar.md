@@ -1,14 +1,14 @@
 ---
-status: Open
+status: Done
 date: 2026-09-08
 author: "Lourival Garcia"
 adr: "ADR-2026-09-08-o-contrato-de-cena-dobra-a-linha-de-continuacao-e-o-que-nao-dobra-reprova-no-gate-em-vez-de-sumir"
-roadmap: "docs/roadmaps/wip/ROADMAP-2026-09-08-yamlraso-dobra-continuacao.md"
+roadmap: "docs/roadmaps/done/ROADMAP-2026-09-08-yamlraso-dobra-continuacao.md"
 ---
 
 # REQ: yamlRaso dobra linha de continuacao em vez de descartar, e o gate acusa a linha que nao da para interpretar
 
-> Date: 2026-09-08 | Status: Open
+> Date: 2026-09-08 | Status: Done
 
 ## Motivation
 
@@ -42,22 +42,22 @@ capitulo e de DEC), `lerConfig` (`livro.yaml`) e `cenasDe` (contrato de cena).
 
 ## Acceptance Criteria
 
-- [ ] Linha de continuacao — indentada ou nao — que siga uma chave escalar e
+- [x] Linha de continuacao — indentada ou nao — que siga uma chave escalar e
       **dobrada** no valor dessa chave, separada por um espaco.
-- [ ] Chave declarada sem valor, seguida de linha que **nao** e `- item`, produz
+- [x] Chave declarada sem valor, seguida de linha que **nao** e `- item`, produz
       escalar dobrado, e nao lista vazia.
-- [ ] Chave declarada sem valor, seguida de `- item`, continua produzindo lista.
+- [x] Chave declarada sem valor, seguida de `- item`, continua produzindo lista.
       Sem regressao: lista em bloco, lista em linha `[a, b, c]`, valor entre
       aspas e comentario `#` seguem como estao.
-- [ ] Linha que nao da para interpretar — bare line sem chave escalar anterior,
+- [x] Linha que nao da para interpretar — bare line sem chave escalar anterior,
       ou bare line depois de uma lista ja iniciada — nao e mais descartada em
       silencio: vira problema reportado, com numero da linha e o texto.
-- [ ] `bookfw validate` **acusa** esse problema e falha. O gate que existe para
+- [x] `bookfw validate` **acusa** esse problema e falha. O gate que existe para
       pegar contrato quebrado passa a pegar contrato quebrado.
-- [ ] Teste de regressao em `test/smoke.mjs` para cada um dos quatro caminhos
+- [x] Teste de regressao em `test/smoke.mjs` para cada um dos quatro caminhos
       da tabela acima, provado por mutacao: com a correcao revertida, vermelho.
-- [ ] `npm run lint` e `npm test` verdes.
-- [ ] Nas tres obras reais, `bookfw validate` e `bookfw status` antes e depois:
+- [x] `npm run lint` e `npm test` verdes.
+- [x] Nas tres obras reais, `bookfw validate` e `bookfw status` antes e depois:
       contagem de capitulos, cenas e palavras **identica**. Diferenca significa
       contrato que ja estava truncado, e ai o achado e outro e precisa ser dito.
 
@@ -77,4 +77,4 @@ ADR: `docs/adr/ADR-2026-09-08-o-contrato-de-cena-dobra-a-linha-de-continuacao-e-
 
 ## Linked Roadmap
 
-Roadmap: docs/roadmaps/wip/ROADMAP-2026-09-08-yamlraso-dobra-continuacao.md
+Roadmap: docs/roadmaps/done/ROADMAP-2026-09-08-yamlraso-dobra-continuacao.md

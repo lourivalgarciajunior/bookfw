@@ -1,12 +1,12 @@
 ---
 req: REQ-2026-09-08-yamlraso-dobra-linha-de-continuacao-em-vez-de-descartar-e-o-gate-acusa-a-linha-que-nao-da-para-interpretar
-status: wip
+status: done
 date: 2026-09-08
 ---
 
 # Roadmap: yamlRaso dobra continuacao, e o gate acusa o que sobra
 
-> Created: 2026-09-08 | Status: wip
+> Created: 2026-09-08 | Status: done
 
 ## Context
 
