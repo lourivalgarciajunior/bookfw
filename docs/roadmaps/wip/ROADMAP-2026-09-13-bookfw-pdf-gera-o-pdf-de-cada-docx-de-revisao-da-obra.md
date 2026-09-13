@@ -148,7 +148,7 @@ npm run check && trackfw validate
 > Dependencies: Wave 2.
 
 ### ML-3A — tentativa de quebrar
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** nenhum (verificacao)
 **Acoes:** DOCX aberto no Word durante a conversao; DOCX corrompido (conversor falha) e conferir que nao sobra `WINWORD.EXE`; caminho com aspas e `&`; `BOOKFW_PDF_CONVERSOR` apontando para arquivo inexistente.
 **Aceite:** nenhum caso deixa processo pendurado, PDF parcial contado como gerado ou erro sem mensagem.

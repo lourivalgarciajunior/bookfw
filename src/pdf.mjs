@@ -129,9 +129,19 @@ function converterSoffice(conv, lote) {
  * LEITURA — o autor pode estar com ele aberto — e o Word fecha em `finally`.
  * A resposta volta por indice, porque o stdout do PowerShell 5.1 nao e UTF-8.
  */
+// Os opcionais do `Documents.Open` e do `Close` vao por `[ref]`: passados por
+// valor, o PowerShell 5.1 recusa com "nao e possivel converter o valor False do
+// tipo bool em tipo Object" — medido no Word 16 em 2026-09-13, na primeira
+// conversao real, que o smoke com conversor proprio nao tinha como pegar.
 const SCRIPT_WORD = [
+  '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8',
   "$ErrorActionPreference = 'Stop'",
-  '$lote = @($env:BOOKFW_PDF_LOTE | ConvertFrom-Json)',
+  // No PowerShell 5.1 o ConvertFrom-Json devolve o array JSON como UM objeto no
+  // pipeline: `@(... | ConvertFrom-Json)` virava lista de um item cujo `.docx`
+  // era a lista inteira de caminhos, e so a primeira revisao tinha resposta.
+  '$lote = ConvertFrom-Json -InputObject $env:BOOKFW_PDF_LOTE',
+  'if ($lote -isnot [array]) { $lote = @($lote) }',
+  '$naoConfirmar = $false; $soLeitura = $true; $foraDosRecentes = $false; $naoSalvar = $false',
   '$word = $null',
   'try {',
   '  $word = New-Object -ComObject Word.Application',
@@ -140,13 +150,13 @@ const SCRIPT_WORD = [
   '  for ($i = 0; $i -lt $lote.Count; $i++) {',
   '    $doc = $null',
   '    try {',
-  '      $doc = $word.Documents.Open($lote[$i].docx, $false, $true, $false)',
+  '      $doc = $word.Documents.Open($lote[$i].docx, [ref]$naoConfirmar, [ref]$soLeitura, [ref]$foraDosRecentes)',
   '      $doc.ExportAsFixedFormat($lote[$i].pdf, 17)',
   "      Write-Output ('ok|' + $i)",
   '    } catch {',
-  "      Write-Output ('erro|' + $i + '|' + $_.Exception.Message)",
+  "      Write-Output ('erro|' + $i + '|' + ($_.Exception.Message -replace '[\\r\\n]+', ' '))",
   '    } finally {',
-  '      if ($doc) { $doc.Close($false) }',
+  '      if ($doc) { $doc.Close([ref]$naoSalvar) }',
   '    }',
   '  }',
   '} finally {',
