@@ -732,6 +732,59 @@ function preenchePd(dir, extra = '') {
 }
 
 {
+  // 0.7.2 — o subtitulo nao quebrava linha. "o que Maria, José, Pedro, Paulo e
+  // outros fizeram quando a vida apertou" vazou das duas bordas do ebook e
+  // atravessou a lombada da impressao, com o comando saindo 0 e sem aviso.
+  const p = projeto('Ninguem nasce santo');
+  preenchePd(p.dir);
+  const yaml = join(p.dir, 'livro.yaml');
+  const base = readFileSync(yaml, 'utf8');
+  const SUB = 'o que Maria, José, Pedro, Paulo e outros fizeram quando a vida apertou';
+  const comSub = (s) => writeFileSync(yaml, base.replace(/^titulo: .*$/m, (l) => `${l}\nsubtitulo: ${s}`), 'utf8');
+  const ler = (f) => readFileSync(join(p.dir, 'capa', `ninguem-nasce-santo-${f}.svg`), 'utf8');
+  const textos = (svg) => [...svg.matchAll(/<text x="([\d.]+)" y="([\d.]+)"[^>]*font-size="(\d+)"[^>]*>([^<]*)<\/text>/g)]
+    .map((m) => ({ x: Number(m[1]), y: Number(m[2]), corpo: Number(m[3]), texto: m[4] }));
+  const linhasSub = (svg) => textos(svg).filter((t) => t.texto && SUB.includes(t.texto));
+
+  comSub(SUB);
+  const r = p.rodar('capa', '--formato', 'ebook,impressao,miniatura');
+  ok('capa com subtitulo longo roda', r.codigo === 0);
+  for (const [f, largura, altura] of [['ebook', 1600, 2560], ['impressao', 1800, 2700], ['miniatura', 400, 640]]) {
+    const svg = ler(f);
+    const ls = linhasSub(svg);
+    ok(`${f}: o subtitulo longo sai em mais de uma linha`, ls.length > 1);
+    ok(`${f}: nenhuma palavra do subtitulo se perde`, ls.map((l) => l.texto).join(' ') === SUB);
+    ok(`${f}: nenhuma linha estimada passa da largura util`,
+      ls.length > 0 && ls.every((l) => l.texto.length * l.corpo * 0.52 <= largura * 0.8));
+    ok(`${f}: o bloco do subtitulo para acima do fio inferior`, ls.every((l) => l.y < altura * 0.72));
+    if (f === 'impressao') {
+      // A frente comeca onde a lombada termina, e o fundo dela e o rect de 1800
+      // de largura fora da origem. A lombada pode nem ter texto (obra fina).
+      const xFrente = Math.max(0, ...[...svg.matchAll(/<rect x="([\d.]+)" y="0" width="1800"/g)].map((m) => Number(m[1])));
+      ok('impressao: nenhuma linha do subtitulo invade a lombada',
+        xFrente > 0 && ls.length > 0 && ls.every((l) => l.x - (l.texto.length * l.corpo * 0.52) / 2 > xFrente));
+    }
+  }
+  ok('o comando avisa que quebrou o subtitulo', r.saida.includes('subtitulo em') && r.saida.includes('confira o SVG'));
+  ok('e nao acusa longo demais quando cabe', !r.saida.includes('subtitulo longo demais'));
+
+  // subtitulo que ja cabia nao pode mudar: capa aprovada continua a mesma
+  comSub('um subtitulo curto');
+  p.rodar('capa', '--formato', 'ebook');
+  const curto = textos(ler('ebook'));
+  const corpoTitulo = Math.max(...curto.map((t) => t.corpo));
+  const sub = curto.filter((t) => t.texto === 'um subtitulo curto');
+  ok('subtitulo curto continua em uma linha, no corpo de antes',
+    sub.length === 1 && sub[0].corpo === Math.round(corpoTitulo * 0.34));
+
+  comSub(`${'palavra'.repeat(12)} ${'mais '.repeat(60)}`);
+  const absurdo = p.rodar('capa', '--formato', 'ebook');
+  ok('subtitulo que nem no piso cabe e avisado, sem mudar o codigo de saida',
+    absurdo.codigo === 0 && absurdo.saida.includes('subtitulo longo demais'));
+  writeFileSync(yaml, base, 'utf8');
+}
+
+{
   const p = projeto('Capa Impressao');
   preenchePd(p.dir);
   const r = p.rodar('capa', '--formato', 'impressao');
