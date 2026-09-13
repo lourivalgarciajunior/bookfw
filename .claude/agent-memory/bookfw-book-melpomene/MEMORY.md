@@ -1,0 +1,1 @@
+- [Revisao paralela](feedback_revisao_paralela.md) — em leitura com varias Musas, nao editar; relatorio R<n>-melpomene.md com trecho exato, proposta e deve/pode
