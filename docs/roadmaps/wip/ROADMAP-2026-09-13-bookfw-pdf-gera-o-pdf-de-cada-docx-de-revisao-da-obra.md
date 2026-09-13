@@ -96,7 +96,7 @@ test -z "$(grep -rln '\.pdf' src bin)" && echo "nenhum emissor de PDF no CLI ant
 > Dependencies: Wave 0. Sequencial (1B importa 1A; 1C exercita os dois).
 
 ### ML-1A — `src/pdf.mjs`
-**Status:** 🔄 Em andamento
+**Status:** ✅ Concluído
 **Arquivos:** `src/pdf.mjs` (novo)
 **Acoes:**
 1. `revisoesComDocx(raiz)`: lista `manuscrito/`, casa `/^(?!~\$)(.+) — revisao (\d+)\.docx$/`, devolve `{ numero, docx, pdf }` ordenado por numero.
@@ -107,13 +107,13 @@ test -z "$(grep -rln '\.pdf' src bin)" && echo "nenhum emissor de PDF no CLI ant
 **Aceite:** `node -e "import('./src/pdf.mjs')"` carrega; nenhum `shell: true` nem template com caminho em string de comando.
 
 ### ML-1B — rota e ajuda
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `bin/bookfw.mjs`
 **Acoes:** `import { pdf }`, `case 'pdf': await pdf(args)`, linhas na AJUDA para `bookfw pdf [--revisao N] [--forcar]` e `--conversor`.
 **Aceite:** `npm run lint` verde (regra comando-sem-ajuda).
 
 ### ML-1C — regressao no smoke
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `test/smoke.mjs`
 **Acoes:** projeto com titulo acentuado e travessao, `manuscrito/` com DOCX de revisao 1 e 2, uma trava `~$` e um `— versao de leitura.docx`; conversor de teste `.mjs` que escreve `%PDF-1.4`. Conferir: dois PDFs e nenhum a mais; segunda execucao pula dois; `--revisao 1 --forcar` converte um; `--revisao 9` erro; sem DOCX de revisao erro; conversor que escreve lixo faz o comando falhar; `--conversor` inexistente erro.
 **Aceite:** verde; com a validacao `%PDF` removida ou com a trava liberada, reprova (mutacao registrada no commit).
@@ -127,13 +127,13 @@ npm run check && trackfw validate
 > Dependencies: Wave 1. 2A e 2B em repositorios diferentes, independentes; 2C depois de 2A no main.
 
 ### ML-2A — README, CHANGELOG, versao e contexto
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `README.md`, `CHANGELOG.md`, `package.json`, `package-lock.json`, `docs/agents-working-context.md`
 **Acoes:** secao "O PDF das revisoes" no README e linha no Uso; `## 0.8.0 — 2026-09-13` em Adicionado; 0.7.2 → 0.8.0; entrada no contexto.
 **Aceite:** lint (changelog da versao) verde.
 
 ### ML-2B — plugin `bookfw`
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `plugin-skill/plugins/bookfw/commands/pdf.md` (novo), `plugin-skill/plugins/bookfw/skills/bookfw/SKILL.md`, `plugin-skill/plugins/bookfw/.claude-plugin/plugin.json`
 **Acoes:** comando `/bookfw:pdf` delegando a Hermes; fluxo da skill com `bookfw pdf` depois do `docx`; versao 0.6.0 → 0.7.0; `npm run lint`, `claude plugin validate .`, `trackfw validate` no plugin-skill; commit e push; `claude plugin marketplace update indieexpert` e `claude plugin update bookfw@indieexpert`.
 **Aceite:** gates verdes e cache com a versao nova.

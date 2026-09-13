@@ -1309,6 +1309,54 @@ function comAmostra(p, repeticoes = 40) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// 0.8.0 — pdf. Cada DOCX de revisao vira PDF por um conversor externo. O CI
+// nao tem Word nem LibreOffice: o teste usa um conversor proprio, que e a
+// mesma porta que o autor tem para plugar outro conversor.
+// ---------------------------------------------------------------------------
+
+{
+  const p = projeto('Ágape — Obra');
+  const man = join(p.dir, 'manuscrito');
+  mkdirSync(man, { recursive: true });
+  const docx = (nome) => { writeFileSync(join(man, nome), 'docx de mentira', 'utf8'); return join(man, nome); };
+  docx('Ágape — Obra — revisao 1.docx');
+  docx('Ágape — Obra — revisao 2.docx');
+  docx('~$ape — Obra — revisao 2.docx');
+  docx('Ágape — Obra — versao de leitura.docx');
+
+  const conversores = mkdtempSync(join(tmpdir(), 'bookfw-conv-'));
+  descartar.push(conversores);
+  const bom = join(conversores, 'bom.mjs');
+  writeFileSync(bom, "import { writeFileSync } from 'node:fs';\nconst [, , entrada, saida] = process.argv;\nwriteFileSync(saida, `%PDF-1.4\\n% de ${entrada}\\n`);\n", 'utf8');
+  const lixo = join(conversores, 'lixo.mjs');
+  writeFileSync(lixo, "import { writeFileSync } from 'node:fs';\nwriteFileSync(process.argv[3], 'isto nao e pdf');\n", 'utf8');
+  const pdfs = () => readdirSync(man).filter((f) => f.endsWith('.pdf')).sort();
+
+  const r = p.rodar('pdf', '--conversor', bom);
+  ok('pdf converte cada DOCX de revisao', r.codigo === 0
+    && JSON.stringify(pdfs()) === JSON.stringify(['Ágape — Obra — revisao 1.pdf', 'Ágape — Obra — revisao 2.pdf']));
+  ok('a trava do Word e o DOCX sem numero de revisao ficam fora', !pdfs().some((f) => f.startsWith('~$') || f.includes('versao de leitura')));
+  ok('a saida diz quantos converteu e com qual conversor', r.saida.includes('2 convertido(s)') && r.saida.includes('conversor'));
+
+  const denovo = p.rodar('pdf', '--conversor', lixo);
+  ok('PDF mais novo que o DOCX e pulado, sem chamar o conversor', denovo.codigo === 0 && denovo.saida.includes('2 ja atualizado(s)'));
+
+  const uma = p.rodar('pdf', '--revisao', '1', '--forcar', '--conversor', bom);
+  ok('--revisao 1 --forcar converte so aquela', uma.codigo === 0 && uma.saida.includes('1 convertido(s)') && uma.saida.includes('revisao 1.pdf'));
+  ok('--revisao sem DOCX e erro que diz quais existem', p.rodar('pdf', '--revisao', '9', '--conversor', bom).codigo === 1);
+
+  const ruim = p.rodar('pdf', '--forcar', '--conversor', lixo);
+  ok('conversor que nao produz PDF faz o comando falhar', ruim.codigo === 1 && !ruim.saida.includes('pdf gerado'));
+  ok('conversor inexistente e erro', p.rodar('pdf', '--forcar', '--conversor', join(conversores, 'nao-existe.mjs')).codigo === 1);
+
+  const vazio = projeto('Sem Revisao');
+  ok('sem DOCX de revisao o pdf recusa e diz o caminho', (() => {
+    const v = vazio.rodar('pdf', '--conversor', bom);
+    return v.codigo === 1 && v.saida.includes('bookfw docx');
+  })());
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);
