@@ -236,8 +236,11 @@ export function quebrar(titulo, tamanho, larguraUtil) {
 export const SUBTITULO = { entrelinha: 1.4, maxLinhas: 3 };
 
 export function ajustarSubtitulo(subtitulo, corpoInicial, larguraUtil, espaco, piso) {
+  // Palavra unica mais larga que a util nao se quebra: tambem e "nao cabe", e o
+  // corpo cede por ela como cede pela altura do bloco.
   const cabe = (linhas, corpo) => linhas.length <= SUBTITULO.maxLinhas
-    && linhas.length * corpo * SUBTITULO.entrelinha <= espaco;
+    && linhas.length * corpo * SUBTITULO.entrelinha <= espaco
+    && linhas.every((l) => l.length * corpo * 0.52 <= larguraUtil);
   let corpo = corpoInicial;
   let linhas = quebrar(subtitulo, corpo, larguraUtil);
   while (!cabe(linhas, corpo) && corpo > piso) {
@@ -245,9 +248,7 @@ export function ajustarSubtitulo(subtitulo, corpoInicial, larguraUtil, espaco, p
     corpo = Math.max(piso, Math.min(corpo - 1, Math.round(corpo * 0.94)));
     linhas = quebrar(subtitulo, corpo, larguraUtil);
   }
-  // palavra unica mais larga que a util nao se quebra: tambem e "nao cabe"
-  const larga = linhas.some((l) => l.length * corpo * 0.52 > larguraUtil);
-  return { corpo, linhas, reduzido: corpo < corpoInicial, apertado: !cabe(linhas, corpo) || larga };
+  return { corpo, linhas, reduzido: corpo < corpoInicial, apertado: !cabe(linhas, corpo) };
 }
 
 /** Paginas estimadas do corte — o mesmo calculo que o `build` ja imprime. */

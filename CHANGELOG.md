@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.7.2 — 2026-09-13
+
+### Corrigido
+
+- **O subtitulo da capa saia numa linha so e vazava.** O titulo ja passava pela
+  quebra por estimativa e cedia o corpo para caber; o subtitulo ia inteiro num
+  `<text>`, com corpo fixo em 34% do titulo, sem quebra, sem reducao e sem
+  aviso. Medido na obra `ninguem-nasce-santo`, subtitulo "o que Maria, José,
+  Pedro, Paulo e outros fizeram quando a vida apertou" (70 caracteres): no
+  `ebook` a linha estimada tinha ~2290px contra 1280px uteis e saiu cortada nas
+  duas bordas; na `impressao` atravessou a lombada e cobriu o titulo dela; o
+  comando saiu 0. A capa so foi salva porque os PNGs foram abertos antes da
+  entrega, e os SVGs tiveram de ser corrigidos a mao.
+- **Agora o subtitulo passa pela mesma quebra do titulo**, na largura util do
+  formato, um `<text>` por linha, com entrelinha de 1,4 corpo. O corpo cede 6%
+  por passo, ate 2,5% da largura, quando o bloco nao cabe entre o fim do titulo
+  e o fio inferior (72% da altura), passa de tres linhas ou tem palavra mais
+  larga que a util. O caso real sai em duas linhas no corpo original.
+- **O comando avisa.** `subtitulo em N linhas — a largura e estimada, nao medida
+  na fonte; confira o SVG` quando quebra ou reduz, e `subtitulo longo demais`
+  em amarelo quando nem no piso cabe. O codigo de saida nao muda.
+- **Capa aprovada nao muda.** Subtitulo curto e capa sem subtitulo saem byte a
+  byte iguais ao 0.7.1 nos tres formatos, conferido contra SVGs gerados da
+  versao anterior. Arte, veu, lombada e quarta capa nao foram tocados.
+- A largura continua estimada (0.52 em por glifo), como a do titulo: residual ja
+  declarado em `ADR-2026-08-31-capa-como-svg-governado-pela-obra-com-resvg-como-dependencia-opcional`.
+
 ## 0.7.1 — 2026-09-09
 
 ### Adicionado

@@ -3,6 +3,21 @@
 Estado de trabalho do bookfw para quem chegar depois. Uma entrada por frente,
 a mais recente no topo.
 
+## 2026-09-13 — subtitulo da capa em linhas (0.7.2)
+
+**O que mudou.** `src/capa.mjs` ganhou `ajustarSubtitulo` (exportado, com a
+constante `SUBTITULO`): o subtitulo usa `quebrar` na largura util do formato e
+cede o corpo ate o piso de 2,5% da largura. `svgFrente` passou a devolver
+`{ svg, subtitulo }`, e `svgDaCapa` repassa `subtitulo` — quem consumir
+`svgDaCapa` direto continua lendo `.svg`. O aviso sai do que cada formato de
+fato compos, e nao de simulacao no ebook como o do titulo.
+
+**O que vigiar.** Tudo e estimativa de glifo: a prova do smoke e contra a
+mesma estimativa, entao Georgia com muita letra larga ainda pode vazar alguns
+pixels sem o teste perceber. O que pega isso e abrir o PNG. Autor, titulo da
+lombada e quarta capa continuam sem reducao propria. Validado na capa real de
+`pessoal/book/ninguem-nasce-santo`, que antes precisou de SVG corrigido a mao.
+
 ## 2026-08-31 — `bookfw docx` (0.2.0)
 
 **O que mudou.** A exportacao de versao de leitura em DOCX saiu de dentro dos
