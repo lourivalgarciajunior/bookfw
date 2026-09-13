@@ -1,14 +1,14 @@
 ---
-status: wip
+status: done
 date: 2026-09-13
 req: "docs/req/REQ-2026-09-13-capa-quebra-o-subtitulo-em-linhas-e-reduz-o-corpo-como-faz-com-o-titulo.md"
-branch: "fix/subtitulo-da-capa"
+branch: "fix/capa-quebra-o-subtitulo-em-linhas"
 squad: ""
 ---
 
 # Roadmap: Capa quebra o subtitulo em linhas e reduz o corpo como faz com o titulo
 
-> Created: 2026-09-13 | Status: wip
+> Created: 2026-09-13 | Status: done
 
 ## Context
 
@@ -93,7 +93,7 @@ test "$(grep -rl '<text' src | wc -l)" -eq 1 && grep -c '<text' src/capa.mjs
 > Dependencies: Wave 0. MLs sequenciais: 1A e 1B dividem `src/capa.mjs`.
 
 ### ML-1A — composicao do subtitulo em linhas
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `src/capa.mjs`
 **Acoes:**
 1. Criar e exportar `ajustarSubtitulo(subtitulo, corpoInicial, larguraUtil, espaco, piso)`:
@@ -110,7 +110,7 @@ test "$(grep -rl '<text' src | wc -l)" -eq 1 && grep -c '<text' src/capa.mjs
 duas ou mais linhas dentro da util.
 
 ### ML-1B — aviso no comando
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `src/capa.mjs`
 **Acoes:** apos compor, se algum formato devolveu subtitulo com mais de uma
 linha ou reduzido, imprimir em dim `subtitulo em N linhas[, corpo reduzido
@@ -120,7 +120,7 @@ de saida inalterado.
 **Aceite:** saida do caso real traz o aviso dim; subtitulo absurdo traz o amarelo.
 
 ### ML-1C — regressao no smoke
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `test/smoke.mjs`
 **Acoes:** projeto com o subtitulo real no `livro.yaml`, `capa --formato
 ebook,impressao,miniatura`; para cada SVG: linhas do subtitulo reconstroem o
@@ -140,14 +140,14 @@ npm run check && trackfw validate
 > Dependencies: Wave 1.
 
 ### ML-2A — versao, CHANGELOG e contexto
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `package.json`, `package-lock.json`, `CHANGELOG.md`, `docs/agents-working-context.md`
 **Acoes:** 0.7.1 → 0.7.2; entrada `## 0.7.2 — 2026-09-13` em "Corrigido" com o
 caso medido; entrada no contexto de agentes.
 **Aceite:** `node -p "require('./package.json').version"` imprime 0.7.2.
 
 ### ML-2B — capa real regerada
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `pessoal/book/ninguem-nasce-santo/capa/*` (outro repositorio)
 **Acoes:** apos o merge em `main` (o `bookfw` global e link para esta arvore),
 rodar `bookfw capa --tipografica --formato ebook,impressao,miniatura` na obra,
@@ -158,7 +158,7 @@ abrir os tres PNGs e comitar la.
 > Dependencies: Wave 2.
 
 ### ML-3A — tentativa de quebrar a composicao
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** nenhum (verificacao)
 **Acoes:** compor com subtitulo vazio, so espacos, com `&` e `<`, palavra unica
 de 80 letras e 400 caracteres; conferir que nao ha excecao, que o XML continua

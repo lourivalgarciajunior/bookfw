@@ -225,6 +225,32 @@ export function quebrar(titulo, tamanho, larguraUtil) {
   return linhas;
 }
 
+/**
+ * O subtitulo passa pela mesma quebra por estimativa do titulo. Antes ele saia
+ * num `<text>` so, com corpo fixo: "o que Maria, José, Pedro, Paulo e outros
+ * fizeram quando a vida apertou" vazou das duas bordas do ebook e atravessou a
+ * lombada da capa de impressao, com o comando saindo 0 e sem aviso. O corpo
+ * cede ate o piso quando o bloco nao cabe no espaco dado ou passa de tres
+ * linhas; no piso, o comando avisa em vez de disfarcar.
+ */
+export const SUBTITULO = { entrelinha: 1.4, maxLinhas: 3 };
+
+export function ajustarSubtitulo(subtitulo, corpoInicial, larguraUtil, espaco, piso) {
+  // Palavra unica mais larga que a util nao se quebra: tambem e "nao cabe", e o
+  // corpo cede por ela como cede pela altura do bloco.
+  const cabe = (linhas, corpo) => linhas.length <= SUBTITULO.maxLinhas
+    && linhas.length * corpo * SUBTITULO.entrelinha <= espaco
+    && linhas.every((l) => l.length * corpo * 0.52 <= larguraUtil);
+  let corpo = corpoInicial;
+  let linhas = quebrar(subtitulo, corpo, larguraUtil);
+  while (!cabe(linhas, corpo) && corpo > piso) {
+    // `corpo - 1` garante o passo: em corpo pequeno, 6% arredonda para zero
+    corpo = Math.max(piso, Math.min(corpo - 1, Math.round(corpo * 0.94)));
+    linhas = quebrar(subtitulo, corpo, larguraUtil);
+  }
+  return { corpo, linhas, reduzido: corpo < corpoInicial, apertado: !cabe(linhas, corpo) };
+}
+
 /** Paginas estimadas do corte — o mesmo calculo que o `build` ja imprime. */
 export function paginasDe(palavras) {
   return Math.max(24, Math.ceil(palavras / PALAVRAS_POR_PAGINA));
@@ -267,11 +293,21 @@ function svgFrente({ largura, altura, cfg, arte, paleta, escurecer = ESCURECER_P
       + ` font-size="${corpoTitulo}" fill="${paleta.texto}" text-anchor="middle">${escapar(linha)}</text>`);
   });
 
+  let subtitulo = null;
   if (cfg.subtitulo) {
-    const corpo = Math.round(corpoTitulo * 0.34);
-    p.push(`<text x="${x + largura / 2}" y="${topo + linhas.length * corpoTitulo * 1.18 + corpo * 1.6}"`
-      + ` font-family="Georgia, 'Times New Roman', serif" font-size="${corpo}" fill="${paleta.realce}"`
-      + ` text-anchor="middle">${escapar(cfg.subtitulo)}</text>`);
+    const corpoInicial = Math.round(corpoTitulo * 0.34);
+    const inicio = topo + linhas.length * corpoTitulo * 1.18;
+    // Espaco: do fim do titulo ao fio inferior da capa tipografica, a 72% da
+    // altura, que separa o bloco do nome do autor. O meio corpo desconta a
+    // descida da ultima linha e o respiro de 1.6 corpo antes da primeira.
+    const espaco = altura * 0.72 - inicio - corpoInicial * 0.5;
+    subtitulo = ajustarSubtitulo(cfg.subtitulo, corpoInicial, util, espaco, Math.round(largura * 0.025));
+    const { corpo } = subtitulo;
+    subtitulo.linhas.forEach((linha, i) => {
+      p.push(`<text x="${x + largura / 2}" y="${inicio + corpo * 1.6 + i * corpo * SUBTITULO.entrelinha}"`
+        + ` font-family="Georgia, 'Times New Roman', serif" font-size="${corpo}" fill="${paleta.realce}"`
+        + ` text-anchor="middle">${escapar(linha)}</text>`);
+    });
   }
 
   if (cfg.autor && cfg.autor !== 'a definir') {
@@ -280,7 +316,7 @@ function svgFrente({ largura, altura, cfg, arte, paleta, escurecer = ESCURECER_P
       + ` font-size="${corpo}" fill="${paleta.texto}" letter-spacing="${corpo * 0.08}"`
       + ` text-anchor="middle">${escapar(cfg.autor.toUpperCase())}</text>`);
   }
-  return p.join('\n  ');
+  return { svg: p.join('\n  '), subtitulo };
 }
 
 /**
@@ -322,12 +358,13 @@ export function svgDaCapa({ formato, cfg, arte, palavras, blurb, escurecer = ESC
     // 0.62 da largura da lombada: a 0.42 o titulo saia com 25px numa lombada de
     // 59, ilegivel na prateleira. O limite e caber na lombada, nao ser discreto.
     const corpoLombada = Math.round(lombada * 0.62);
-    return { paginas, lombada, largura: w, altura: h, svg: [
+    const frente = svgFrente({ largura: TRIM.largura, altura: TRIM.altura, cfg, arte, paleta, escurecer, x: xFrente });
+    return { paginas, lombada, largura: w, altura: h, subtitulo: frente.subtitulo, svg: [
       abre(w, h),
       `  <rect width="${w}" height="${h}" fill="${paleta.fundo}"/>`,
       `  <g transform="translate(0,${SANGRIA})">`,
       `  <g transform="translate(${SANGRIA},0)">${svgVerso({ largura: TRIM.largura, altura: TRIM.altura, paleta, blurb, autor: cfg.autor })}</g>`,
-      `  ${svgFrente({ largura: TRIM.largura, altura: TRIM.altura, cfg, arte, paleta, escurecer, x: xFrente })}`,
+      `  ${frente.svg}`,
       // lombada: so entra texto se houver espaco de sobra para ele ser legivel
       lombada > 40
         ? `  <text x="${SANGRIA + TRIM.largura + lombada / 2}" y="${TRIM.altura / 2}" font-family="Georgia, serif"`
@@ -340,9 +377,10 @@ export function svgDaCapa({ formato, cfg, arte, palavras, blurb, escurecer = ESC
   }
 
   const dim = formato === 'miniatura' ? MINIATURA : EBOOK;
-  return { largura: dim.largura, altura: dim.altura, svg: [
+  const frente = svgFrente({ largura: dim.largura, altura: dim.altura, cfg, arte, paleta, escurecer });
+  return { largura: dim.largura, altura: dim.altura, subtitulo: frente.subtitulo, svg: [
     abre(dim.largura, dim.altura),
-    `  ${svgFrente({ largura: dim.largura, altura: dim.altura, cfg, arte, paleta, escurecer })}`,
+    `  ${frente.svg}`,
     '</svg>',
   ].join('\n') };
 }
@@ -417,11 +455,13 @@ export async function capa(args) {
   const Resvg = soSvg ? null : await carregarResvg(raiz);
   const gerados = [];
   let avisoLombada = '';
+  const subtitulos = [];
 
   // O SVG sai sempre, em todo formato: e a fonte da verdade, e e a capa de
   // impressao — a que mais precisa de ajuste fino — que antes so tinha PNG.
   for (const formato of pedidos) {
     const r = svgDaCapa({ formato, cfg, arte, palavras, blurb, escurecer });
+    if (r.subtitulo) subtitulos.push(r.subtitulo);
     if (formato === 'impressao') avisoLombada = `${r.paginas} paginas estimadas, lombada de ${r.lombada}px (${(r.lombada / DPI).toFixed(3)}in)`;
     gerados.push(escrever(join(raiz, 'capa', `${base}-${formato}.svg`), r.svg));
     if (!Resvg) continue;
@@ -443,6 +483,18 @@ export async function capa(args) {
   }
   if (t.apertado) {
     console.log(`  ${c.yellow('titulo longo demais')} nem no corpo minimo ele cabe na faixa — encurte o titulo ou ajuste o SVG a mao`);
+  }
+  // O subtitulo depende do formato (a largura util e o espaco abaixo do titulo
+  // mudam), entao o aviso vem do que cada formato de fato compos, e nao de uma
+  // simulacao so no ebook como a do titulo.
+  const maisLinhas = Math.max(0, ...subtitulos.map((s) => s.linhas.length));
+  if (maisLinhas > 1 || subtitulos.some((s) => s.reduzido)) {
+    console.log(c.dim(`  subtitulo em ${maisLinhas} linhas`
+      + `${subtitulos.some((s) => s.reduzido) ? ', corpo reduzido para caber' : ''}`
+      + ' — a largura e estimada, nao medida na fonte; confira o SVG'));
+  }
+  if (subtitulos.some((s) => s.apertado)) {
+    console.log(`  ${c.yellow('subtitulo longo demais')} nem no corpo minimo ele cabe entre o titulo e o fio — encurte o subtitulo ou ajuste o SVG a mao`);
   }
   if (!Resvg && !soSvg) {
     console.log(`  ${c.yellow('sem rasterizador')} o SVG saiu; PNG precisa do pacote opcional.`);

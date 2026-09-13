@@ -3,7 +3,7 @@ status: Open
 date: 2026-09-13
 author: "Lourival Garcia"
 adr: "docs/adr/ADR-2026-08-31-capa-como-svg-governado-pela-obra-com-resvg-como-dependencia-opcional.md"
-roadmap: "docs/roadmaps/wip/ROADMAP-2026-09-13-capa-quebra-o-subtitulo-em-linhas-e-reduz-o-corpo-como-faz-com-o-titulo.md"
+roadmap: "docs/roadmaps/done/ROADMAP-2026-09-13-capa-quebra-o-subtitulo-em-linhas-e-reduz-o-corpo-como-faz-com-o-titulo.md"
 ---
 
 # REQ: Capa quebra o subtitulo em linhas e reduz o corpo como faz com o titulo
@@ -73,4 +73,4 @@ ADR: docs/adr/ADR-2026-08-31-capa-como-svg-governado-pela-obra-com-resvg-como-de
 <!-- none -->
 
 ## Linked Roadmap
-Roadmap: docs/roadmaps/wip/ROADMAP-2026-09-13-capa-quebra-o-subtitulo-em-linhas-e-reduz-o-corpo-como-faz-com-o-titulo.md
+Roadmap: docs/roadmaps/done/ROADMAP-2026-09-13-capa-quebra-o-subtitulo-em-linhas-e-reduz-o-corpo-como-faz-com-o-titulo.md
