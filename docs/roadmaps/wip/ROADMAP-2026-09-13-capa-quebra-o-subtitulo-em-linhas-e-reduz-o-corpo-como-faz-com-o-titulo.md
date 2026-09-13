@@ -2,7 +2,7 @@
 status: wip
 date: 2026-09-13
 req: "docs/req/REQ-2026-09-13-capa-quebra-o-subtitulo-em-linhas-e-reduz-o-corpo-como-faz-com-o-titulo.md"
-branch: "fix/subtitulo-da-capa"
+branch: "fix/capa-quebra-o-subtitulo-em-linhas"
 squad: ""
 ---
 
@@ -93,7 +93,7 @@ test "$(grep -rl '<text' src | wc -l)" -eq 1 && grep -c '<text' src/capa.mjs
 > Dependencies: Wave 0. MLs sequenciais: 1A e 1B dividem `src/capa.mjs`.
 
 ### ML-1A — composicao do subtitulo em linhas
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** `src/capa.mjs`
 **Acoes:**
 1. Criar e exportar `ajustarSubtitulo(subtitulo, corpoInicial, larguraUtil, espaco, piso)`:
