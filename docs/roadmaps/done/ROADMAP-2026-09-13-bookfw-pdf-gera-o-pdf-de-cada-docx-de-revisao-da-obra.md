@@ -1,5 +1,5 @@
 ---
-status: wip
+status: done
 date: 2026-09-13
 req: "docs/req/REQ-2026-09-13-bookfw-pdf-gera-o-pdf-de-cada-docx-de-revisao-da-obra.md"
 branch: "feat/bookfw-pdf-gera-o-pdf"
@@ -8,7 +8,7 @@ squad: ""
 
 # Roadmap: bookfw pdf gera o PDF de cada DOCX de revisao da obra
 
-> Created: 2026-09-13 | Status: wip
+> Created: 2026-09-13 | Status: done
 
 ## Context
 
@@ -29,15 +29,15 @@ dois, entao a onda 1 e sequencial.
 
 ## Acceptance Criteria
 
-- [ ] Todo `<titulo> — revisao N.docx` de `manuscrito/` vira `<titulo> — revisao N.pdf`; trava `~$` e DOCX fora do padrao ficam fora.
-- [ ] `--revisao N`, `--forcar` e pulo do PDF atualizado.
-- [ ] Conversor por `--conversor`, `BOOKFW_PDF_CONVERSOR`, LibreOffice e Word; proprio chamado com `<entrada> <saida>`.
-- [ ] Sem conversor, erro com o que instalar; PDF validado por `%PDF`.
-- [ ] Nenhum caminho por shell; Word somente leitura e fechado em `finally`.
-- [ ] AJUDA, README, CHANGELOG 0.8.0, package.json 0.8.0.
-- [ ] Smoke com conversor de teste, provado por mutacao; `npm run check` verde; `trackfw validate` limpo.
-- [ ] Plugin `bookfw` documenta `/bookfw:pdf`, versao subida, gates verdes.
-- [ ] PDFs das revisoes 1 e 2 da obra gerados pelo comando e abertos.
+- [x] Todo `<titulo> — revisao N.docx` de `manuscrito/` vira `<titulo> — revisao N.pdf`; trava `~$` e DOCX fora do padrao ficam fora.
+- [x] `--revisao N`, `--forcar` e pulo do PDF atualizado.
+- [x] Conversor por `--conversor`, `BOOKFW_PDF_CONVERSOR`, LibreOffice e Word; proprio chamado com `<entrada> <saida>`.
+- [x] Sem conversor, erro com o que instalar; PDF validado por `%PDF`.
+- [x] Nenhum caminho por shell; Word somente leitura e fechado em `finally`.
+- [x] AJUDA, README, CHANGELOG 0.8.0, package.json 0.8.0.
+- [x] Smoke com conversor de teste, provado por mutacao; `npm run check` verde; `trackfw validate` limpo.
+- [x] Plugin `bookfw` documenta `/bookfw:pdf`, versao subida, gates verdes.
+- [x] PDFs das revisoes 1 e 2 da obra gerados pelo comando e abertos.
 
 ## Status Legend
 ⬜ Pendente · 🔄 Em andamento · ✅ Concluído · ❌ Bloqueado
@@ -139,10 +139,11 @@ npm run check && trackfw validate
 **Aceite:** gates verdes e cache com a versao nova.
 
 ### ML-2C — PDFs da obra
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `pessoal/book/ninguem-nasce-santo/manuscrito/*.pdf` (outro repositorio)
 **Acoes:** `bookfw pdf` na obra; abrir os dois PDFs e conferir rosto, carimbo da revisao, divisores de Parte e paginacao; comitar la.
 **Aceite:** `Ninguém nasce santo — revisao 1.pdf` e `— revisao 2.pdf` abertos e corretos.
+**Evidencia:** `bookfw pdf` → `2 convertido(s) | 0 ja atualizado(s) | conversor word`; rerun pula os dois. Revisao 1 com 105 paginas, revisao 2 com 107, A5 (420×595 pt), `%PDF-1.7`. Paginas renderizadas e abertas: rosto com carimbo e nota da revisao, divisor da Parte I, abertura do cap 1 com ressalva, a vinha (p. 99) e a ultima pagina (p. 107). Commit d6b7ef2 no repositorio da obra.
 
 ## Wave 3 — Red team
 > Dependencies: Wave 2.
