@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.8.0 — 2026-09-13
+
+### Adicionado
+
+- **`bookfw pdf` gera o PDF de cada DOCX de revisao.** Todo
+  `<titulo> — revisao N.docx` de `manuscrito/` vira `<titulo> — revisao N.pdf`
+  ao lado. Pedido do autor para a obra `ninguem-nasce-santo`, que tinha as
+  revisoes 1 e 2 so em DOCX.
+- **O PDF sai do DOCX, e nao do manuscrito.** O DOCX e a versao de leitura
+  aprovada, e a revisao antiga so existe como arquivo: gerar da prosa atual
+  entregaria a revisao nova com o nome da velha.
+- **Conversor externo, sem dependencia nova.** `--conversor` ou
+  `BOOKFW_PDF_CONVERSOR`, depois LibreOffice (`soffice`), depois Microsoft Word
+  por COM no Windows. Conversor proprio e qualquer executavel que receba
+  `<entrada.docx> <saida.pdf>`. Medido na maquina do autor: Word 16 presente,
+  LibreOffice e pandoc ausentes.
+- `--revisao N` converte uma so; PDF mais novo que o DOCX e pulado; `--forcar`
+  reconverte. A trava do Word (`~$`) fica fora.
+- **So conta o PDF que nasceu ou mudou nesta execucao e comeca com `%PDF`.** O
+  modo de falha que isto evita e o conversor que nao faz nada e deixa um PDF
+  antigo passar por novo.
+- Nenhum caminho passa por shell: `spawnSync` com lista de argumentos, e o lote
+  do Word vai por variavel de ambiente em JSON com o script em
+  `-EncodedCommand`. O Word abre somente leitura e fecha em `finally`.
+- Decisao em `ADR-2026-09-13-pdf-da-obra-sai-da-conversao-do-docx-de-cada-revisao-por-conversor-externo-detectado`.
+
 ## 0.7.2 — 2026-09-13
 
 ### Corrigido

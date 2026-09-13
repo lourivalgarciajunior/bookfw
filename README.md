@@ -54,6 +54,7 @@ bookfw cap move 1 pronto
 bookfw build
 bookfw docx                        # a versao que vai para a mao do leitor
 bookfw revisao "o que mudou"       # numera a leitura: rosto, rodape e nome do DOCX
+bookfw pdf                         # o PDF de cada DOCX de revisao (LibreOffice ou Word)
 bookfw capa brief                  # o briefing que vai para o gerador de imagem
 bookfw capa --formato ebook,impressao
 ```
@@ -273,6 +274,40 @@ Quem lê o registro carimba a revisão no que sai:
 O que a revisão **não** é: não é versão semântica (prosa não tem API), não é tag
 de git (o bookfw não escreve no git de ninguém — só lê o commit corrente), e não
 mora no manifesto. É a história de leitura da obra, e só isso.
+
+## O PDF das revisões
+
+`bookfw pdf` converte **cada DOCX de revisão** de `manuscrito/` — todo arquivo
+`<titulo> — revisao N.docx` — num PDF de mesmo nome, ao lado dele.
+
+```bash
+bookfw pdf                         # todas as revisoes que ainda nao tem PDF atualizado
+bookfw pdf --revisao 2             # so uma
+bookfw pdf --forcar                # reconverte mesmo o que ja esta atualizado
+bookfw pdf --conversor word        # soffice, word, ou um executavel proprio
+```
+
+**O PDF sai do DOCX, e não do manuscrito.** O DOCX é a versão de leitura já
+aprovada, com rosto, carimbo, Partes e ressalvas; e a revisão antiga só existe
+como DOCX. Gerar da prosa atual daria a revisão nova com o nome da velha.
+
+**A conversão é de um processador de texto do sistema**, porque nenhum motor
+dentro do Node lê DOCX com fidelidade. O comando procura, nesta ordem:
+`--conversor` ou `BOOKFW_PDF_CONVERSOR`; o LibreOffice (`soffice`); e o Microsoft
+Word por automação COM, no Windows. Um conversor próprio é qualquer executável
+que receba `<entrada.docx> <saida.pdf>` — script `.mjs` roda com o Node do CLI.
+
+- A trava do Word (`~$...docx`) e o DOCX sem número de revisão ficam fora.
+- PDF mais novo que o DOCX é pulado; a saída diz quantos converteu, quantos
+  pulou e com qual conversor.
+- Só conta como gerado o arquivo que nasceu ou mudou nesta execução e começa com
+  `%PDF`. Conversor que falha, ou escreve outra coisa, faz o comando falhar
+  dizendo qual DOCX.
+- Nenhum caminho passa por shell. O Word abre o documento **somente leitura** —
+  pode estar aberto na sua tela — e fecha no fim, com ou sem erro.
+- Revisão registrada sem DOCX não ganha PDF, e a saída lista quais.
+
+Decisão em `ADR-2026-09-13-pdf-da-obra-sai-da-conversao-do-docx-de-cada-revisao-por-conversor-externo-detectado`.
 
 ## A capa
 

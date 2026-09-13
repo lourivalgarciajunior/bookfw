@@ -3,6 +3,21 @@
 Estado de trabalho do bookfw para quem chegar depois. Uma entrada por frente,
 a mais recente no topo.
 
+## 2026-09-13 — `bookfw pdf` (0.8.0)
+
+**O que mudou.** `src/pdf.mjs` novo: `revisoesComDocx`, `resolverConversor`,
+`pareceUmPdf` e `pdf(args)`. Le `manuscrito/` pelo nome que o `docx` da
+(`<titulo> — revisao N.docx`, `docx.mjs` linha ~360) e converte por
+LibreOffice, Word COM (Windows) ou conversor proprio. Rota e ajuda em
+`bin/bookfw.mjs`; secao "O PDF das revisoes" no README.
+
+**O que vigiar.** O casamento pelo nome e o contrato com o `docx`: se o nome do
+DOCX mudar, o `pdf` para de achar as revisoes e diz que nao ha nenhuma. A
+conversao real nao roda no CI (sem Word nem LibreOffice); o smoke usa conversor
+proprio e a prova real e abrir o PDF da obra. O Word por COM depende da sessao
+do usuario — em servico sem desktop ele falha, e o erro manda instalar o
+LibreOffice.
+
 ## 2026-09-13 — subtitulo da capa em linhas (0.7.2)
 
 **O que mudou.** `src/capa.mjs` ganhou `ajustarSubtitulo` (exportado, com a
