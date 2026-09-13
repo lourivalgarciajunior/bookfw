@@ -1,0 +1,1 @@
+- [Fontes de verificacao](reference_fontes-verificacao.md) — sites que abrem/bloqueiam (TOB 403, Latin Library ok) e armadilhas de fato ja achadas
