@@ -1,1 +1,2 @@
 - [Os Oito Modelos da Reforma Tributária](projeto-os-oito-modelos.md) — obra tecnica em pessoal/book, revisor externo no circuito, veredito da revisao 3 e as decisoes ja tomadas
+- [Ninguém nasce santo](projeto-ninguem-nasce-santo.md) — nao-ficcao crista juvenil, terreno comum; veredito R1 volta, 3 bloqueios e decisoes do autor pendentes
