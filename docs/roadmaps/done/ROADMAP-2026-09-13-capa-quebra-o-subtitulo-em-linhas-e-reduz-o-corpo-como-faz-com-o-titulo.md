@@ -24,14 +24,14 @@ sao sequenciais.
 
 ## Acceptance Criteria
 
-- [ ] Subtitulo quebrado por `quebrar` na largura util do formato, em um `<text>` por linha, entrelinha 1,4 corpo.
-- [ ] Corpo cede ate o piso quando o bloco nao cabe entre o fim do titulo e o fio inferior, ou passa de tres linhas.
-- [ ] Aviso de quebra/reducao e aviso amarelo quando nem no piso cabe; codigo de saida inalterado.
-- [ ] Subtitulo curto sai identico ao de hoje.
-- [ ] Arte, veu, lombada e quarta capa inalterados.
-- [ ] Regressao no smoke nos tres formatos, provada por mutacao.
-- [ ] `npm run check` verde, `trackfw validate` limpo, versao 0.7.2 no package.json e no CHANGELOG.
-- [ ] Capa de `ninguem-nasce-santo` regerada pelo comando e conferida a olho.
+- [x] Subtitulo quebrado por `quebrar` na largura util do formato, em um `<text>` por linha, entrelinha 1,4 corpo.
+- [x] Corpo cede ate o piso quando o bloco nao cabe entre o fim do titulo e o fio inferior, ou passa de tres linhas.
+- [x] Aviso de quebra/reducao e aviso amarelo quando nem no piso cabe; codigo de saida inalterado.
+- [x] Subtitulo curto sai identico ao de hoje.
+- [x] Arte, veu, lombada e quarta capa inalterados.
+- [x] Regressao no smoke nos tres formatos, provada por mutacao.
+- [x] `npm run check` verde, `trackfw validate` limpo, versao 0.7.2 no package.json e no CHANGELOG.
+- [x] Capa de `ninguem-nasce-santo` regerada pelo comando e conferida a olho.
 
 ## Status Legend
 ⬜ Pendente · 🔄 Em andamento · ✅ Concluído · ❌ Bloqueado
