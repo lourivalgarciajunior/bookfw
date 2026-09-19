@@ -1,5 +1,5 @@
 ---
-status: wip
+status: done
 date: 2026-09-18
 req: "docs/req/REQ-2026-09-18-bookfw-docx-estiliza-a-referencia-biblica-nao-deixa-pagina-em-branco-e-gera-sumario-e-indice.md"
 branch: "feat/bookfw-docx-estiliza-a-referencia-biblica"
@@ -8,7 +8,7 @@ squad: ""
 
 # Roadmap: bookfw docx referencia biblica, sem pagina em branco, sumario e indice
 
-> Created: 2026-09-18 | Status: wip
+> Created: 2026-09-18 | Status: done
 
 ## Context
 
