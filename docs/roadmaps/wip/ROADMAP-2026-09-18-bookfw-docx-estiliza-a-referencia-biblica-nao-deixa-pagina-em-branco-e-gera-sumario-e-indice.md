@@ -88,13 +88,13 @@ Os da REQ.
 > Dependencies: Wave 1.
 
 ### ML-2A — regressao
-**Status:** 🔄 Em andamento
+**Status:** ✅ Concluído
 **Arquivos:** `test/smoke.mjs`
 **Acoes:** casos para o gate, o desenho da referencia, a quebra de pagina, o sumario e o indice, incluindo o homonimo resolvido pela cena. Prova por mutacao: desligar cada ponto derruba o teste dele.
 **Aceite:** `npm run check` verde; cada mutacao produz falha.
 
 ### ML-2B — docs e versao
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** `README.md`, `CHANGELOG.md`, `bin/bookfw.mjs` (AJUDA), `package.json`, `package-lock.json`, `docs/agents-working-context.md`
 **Acoes:** documentar as chaves `referencia_biblica`, `referencia_biblica_corpo`, `sumario`, `indice`, `indice_excluir`; versao 0.9.0.
 **Aceite:** lint verde (README cita as chaves), versao 0.9.0 nos dois lugares.
