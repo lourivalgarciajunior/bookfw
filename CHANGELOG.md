@@ -16,7 +16,8 @@
   TC — Parte no nivel 1 e capitulo no nivel 2.
 - **Indice de nomes** (`indice: personagens`, `indice_excluir`): marca XE para
   cada ficha do canon declarada na cena, e pagina final com campo INDEX. O
-  apelido so vale na cena que declara a ficha, o que resolve homonimos.
+  apelido so vale na cena que declara a ficha, o que resolve homonimos. Sem
+  nenhum nome encontrado, nao ha pagina de indice, e o comando avisa.
 - **Pagina final** (`docs/pagina-final.md`): titulo e linhas a direita, no pe
   de uma pagina propria depois do ultimo capitulo.
 - **`bookfw pdf` com Word atualiza sumario e indice** antes de exportar, e

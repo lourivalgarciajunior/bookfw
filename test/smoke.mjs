@@ -1494,6 +1494,10 @@ function comAmostra(p, repeticoes = 40) {
       && !xs.includes(' TOC ') && !xs.includes(' XE ') && !xs.includes('vAlign')
       && !(xs.split('<w:r>').find((r) => r.includes('>(Mateus 1,24)')) || '').includes('<w:i/>'));
     ok('sem as chaves, tambem sem paragrafo de quebra', !xs.includes('w:type="page"'));
+
+    const vazio = montar('Indice Vazio', 'indice: personagens\nindice_excluir: [José de Nazaré, José do Egito, Marta]', false);
+    const xv = await xmlDe(vazio.p);
+    ok('indice sem nenhum nome nao gera pagina de indice, e avisa', !xv.includes(' INDEX ') && vazio.r.saida.includes('nenhum nome encontrado'));
   }
 }
 

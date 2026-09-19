@@ -448,7 +448,9 @@ export async function docx(args) {
   }
 
   // ---------------------------------------------------------------- indice
-  if (comIndice) {
+  // Sem nenhuma marca, o Word imprimiria "Nenhuma entrada de indice remissivo
+  // foi encontrada" numa pagina propria: melhor nao ter pagina, e avisar.
+  if (comIndice && marcasIndice) {
     fim.push(rubrica('Índice', 1200, quebraFim()));
     fim.push(new Paragraph({ children: campo('INDEX \\h "A" \\c "1" \\z "1046"', { resultado: true }) }));
   }
@@ -529,7 +531,8 @@ export async function docx(args) {
   if (divisores) console.log(c.dim(`  ${divisores} divisor(es) de Parte, do plano diretor`));
   if (refLigada) console.log(c.dim(`  referencia biblica em italico, corpo ${corpoRef / 2} pt`));
   if (comSumario) console.log(c.dim(`  sumario com ${entradas} entrada(s)`));
-  if (comIndice) console.log(c.dim(`  indice com ${marcasIndice} marca(s) de ${fichas.size} ficha(s)`));
+  if (comIndice && marcasIndice) console.log(c.dim(`  indice com ${marcasIndice} marca(s) de ${fichas.size} ficha(s)`));
+  if (comIndice && !marcasIndice) console.log(c.yellow(`  indice ligado e nenhum nome encontrado (${fichas.size} ficha(s) no canon) — saiu sem pagina de indice. As cenas declaram as fichas em personagens:?`));
   if (final) console.log(c.dim(`  pagina final: "${final.titulo}"`));
   if (comSumario || comIndice) console.log(c.dim('  sumario e indice ganham numero de pagina quando o Word atualiza os campos (bookfw pdf faz isso)'));
   if (rev) console.log(c.dim(`  ${carimbo(rev).toLowerCase()} — ${rev.nota}`));

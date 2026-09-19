@@ -100,22 +100,24 @@ Os da REQ.
 **Aceite:** lint verde (README cita as chaves), versao 0.9.0 nos dois lugares.
 
 ### ML-2C — plugin
-**Status:** 🔄 Em andamento
+**Status:** ✅ Concluído
 **Arquivos:** `plugin-skill/plugins/bookfw/agents/book-hermes.md`, `skills/bookfw/SKILL.md`, `.claude-plugin/plugin.json`
 **Acoes:** Hermes e a skill citam as chaves novas; versao 0.7.0 → 0.8.0; gates e publicacao no marketplace.
 **Aceite:** gates verdes e cache com a versao nova.
 
 ### ML-2D — obra
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `pessoal/book/ninguem-nasce-santo/livro.yaml`, `manuscrito/` (outro repositorio)
 **Acoes:** ligar as chaves; `bookfw validate`; `bookfw revisao`; `bookfw docx`; `bookfw pdf`; abrir o PDF.
 **Aceite:** nenhuma pagina vazia; sumario e indice com numero; referencia em italico menor.
+**Evidencia:** revisao 3 registrada (commit 915db66 na obra). `bookfw docx`: 23 entradas de sumario, 242 marcas de indice de 56 fichas. `bookfw pdf` pelo Word: 109 paginas A5; as unicas paginas com pouco texto sao os 4 divisores de Parte e o fim do indice (antes, 4 paginas vazias em 107). Paginas abertas: dedicatoria (2), sumario numerado (3), referencias em italico 9 pt (6), pagina final no pe a direita (106), indice numerado (107). Nenhum WINWORD sobrando.
 
 ## Wave 3 — Red team
 > Dependencies: Wave 2.
 
 ### ML-3A — tentativa de quebrar
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** nenhum (verificacao)
 **Acoes:** nome de ficha com aspas; valor invalido em `referencia_biblica`; capitulo terminando rente ao pe da pagina; obra sem Partes com sumario; indice sem nenhuma ficha declarada.
 **Aceite:** nenhum caso derruba o comando, gera pagina vazia ou campo quebrado.
+**Evidencia:** nome com aspas e barra: saneado (`XE "Ana ab"`, smoke). `referencia_biblica: talvez`: aviso, regra desligada, gate verde. Capitulo 17 rente ao pe (a antiga pagina 102): sem pagina vazia no PDF da revisao 3. Obra sem Partes com sumario: PDF de 4 paginas, sumario com "1. Um ....3". Indice sem nenhuma ficha: **achado** — o Word imprimia "Nenhuma entrada de indice remissivo foi encontrada" numa pagina propria; corrigido (sem marca, sem pagina, com aviso), com teste provado por mutacao.
