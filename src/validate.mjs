@@ -7,6 +7,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { acharProjeto, artefatos, c, canon, capitulos, divergenciaDeAlvo, lerConfig, linhasDoSumario, promessas, rel, slug, sumario } from './core.mjs';
+import { modoDeReferencia, problemasDeReferencia } from './biblia.mjs';
 
 const OBRIGATORIOS = ['objetivo', 'conflito', 'virada'];
 
@@ -155,6 +156,27 @@ export function validate(args) {
         aviso(onde, `${cap.palavras} palavras contra alvo ${alvo} — fora da faixa`);
       }
       if (cap.palavras < 200) erro(onde, `so ${cap.palavras} palavras de prosa — capitulo em ${cap.estado} sem texto escrito`);
+    }
+  }
+
+  // ---- referencia biblica
+  // Liga pela chave `referencia_biblica` do livro.yaml. So a prosa conta:
+  // frontmatter e contrato de cena viram linhas em branco, para o numero da
+  // linha continuar sendo o do arquivo.
+  const modoRef = modoDeReferencia(cfg);
+  if (modoRef === 'invalido') {
+    aviso('livro.yaml', `referencia_biblica "${cfg.referencia_biblica}" nao e romano nem arabico — a regra da referencia biblica ficou desligada`);
+  } else if (modoRef) {
+    const branco = (m) => m.replace(/[^\n]/g, '');
+    for (const cap of caps) {
+      if (cap.estado === 'abandonado') continue;
+      const prosa = cap.raw.replace(/\r\n/g, '\n')
+        .replace(/^---\n[\s\S]*?\n---\n/, branco)
+        .replace(/```cena\n[\s\S]*?```/g, branco)
+        .replace(/<!--[\s\S]*?-->/g, branco);
+      for (const p of problemasDeReferencia(prosa, modoRef)) {
+        erro(`${rel(raiz, cap.caminho)}:${p.linha}`, `${p.motivo}: "${p.trecho}" — o leitor nao tem como adivinhar o livro`);
+      }
     }
   }
 
