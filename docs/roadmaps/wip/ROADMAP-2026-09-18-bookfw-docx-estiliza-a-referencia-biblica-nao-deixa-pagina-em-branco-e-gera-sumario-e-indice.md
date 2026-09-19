@@ -61,13 +61,13 @@ Os da REQ.
 **Aceite:** zero `<w:br w:type="page"/>` no documento; o rosto, cada secao, cada divisor e cada capitulo abrem pagina.
 
 ### ML-1C — referencia estilizada e sumario
-**Status:** 🔄 Em andamento
+**Status:** ✅ Concluído
 **Arquivos:** `src/docx.mjs`
 **Acoes:** `runs()` divide o trecho pela referencia e aplica italico e o corpo configurado. Com `sumario: sim`, entra uma pagina "Sumario" com `TableOfContents` (nivel 1-2) depois do front matter; a Parte vira titulo de nivel 1 e o capitulo, de nivel 2. `features.updateFields`.
 **Aceite:** a corrida da referencia tem `<w:i/>` e o `w:sz` configurado; o documento tem um `TOC` e as Partes em `Heading1`.
 
 ### ML-1D — indice
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `src/docx.mjs`
 **Acoes:** com `indice: personagens`, a prosa e desenhada cena a cena, e cada cena recebe os termos das fichas que declara. Cada paragrafo ganha um `XE` por ficha encontrada, e o livro termina numa pagina "Indice" com `INDEX \h "A" \c "1" \z "1046"`.
 **Aceite:** a marca aparece no paragrafo certo, o apelido fora da cena que o declara nao marca, e `indice_excluir` e respeitado.
@@ -79,7 +79,7 @@ Os da REQ.
 **Aceite:** no PDF real, o sumario e o indice tem numero de pagina.
 
 ### ML-1F — pagina final
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `src/docx.mjs`
 **Acoes:** `docs/pagina-final.md` (secao `## Titulo` e linhas) vira, depois do ultimo capitulo, uma secao do Word com `verticalAlign: bottom`, rodape igual, titulo de nivel 2 e cada linha alinhada a direita.
 **Aceite:** o documento tem a segunda secao com alinhamento vertical inferior, e o titulo aparece no sumario do PDF.
