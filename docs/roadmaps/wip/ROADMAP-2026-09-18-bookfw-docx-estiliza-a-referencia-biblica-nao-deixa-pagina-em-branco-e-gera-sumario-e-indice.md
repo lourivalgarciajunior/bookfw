@@ -94,13 +94,13 @@ Os da REQ.
 **Aceite:** `npm run check` verde; cada mutacao produz falha.
 
 ### ML-2B — docs e versao
-**Status:** 🔄 Em andamento
+**Status:** ✅ Concluído
 **Arquivos:** `README.md`, `CHANGELOG.md`, `bin/bookfw.mjs` (AJUDA), `package.json`, `package-lock.json`, `docs/agents-working-context.md`
 **Acoes:** documentar as chaves `referencia_biblica`, `referencia_biblica_corpo`, `sumario`, `indice`, `indice_excluir`; versao 0.9.0.
 **Aceite:** lint verde (README cita as chaves), versao 0.9.0 nos dois lugares.
 
 ### ML-2C — plugin
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** `plugin-skill/plugins/bookfw/agents/book-hermes.md`, `skills/bookfw/SKILL.md`, `.claude-plugin/plugin.json`
 **Acoes:** Hermes e a skill citam as chaves novas; versao 0.7.0 → 0.8.0; gates e publicacao no marketplace.
 **Aceite:** gates verdes e cache com a versao nova.
