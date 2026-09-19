@@ -212,6 +212,48 @@ dependência nenhuma, e quem só governa texto não precisa carregar um gerador 
 OOXML para rodar `status` ou `validate`. Sem ele, só este comando falha, e a
 mensagem diz o que instalar.
 
+**Página nova sem página em branco.** A partir da 0.9.0, cada página nova é
+propriedade do primeiro parágrafo dela (`pageBreakBefore`), e não um parágrafo
+só de quebra. O parágrafo de quebra deixava página vazia antes de cada divisor
+de Parte e depois do capítulo que terminava rente ao pé.
+
+### Referência bíblica, sumário, índice e página final
+
+Cinco chaves do `livro.yaml` ligam o que a versão de leitura de uma obra
+religiosa ou de não-ficção costuma pedir. Obra sem nenhuma delas sai como antes.
+
+```yaml
+referencia_biblica: romano        # ou arabico; liga o estilo e o gate
+referencia_biblica_corpo: 9       # em pontos; o texto corre em 10,5
+sumario: sim
+indice: personagens
+indice_excluir: [O leitor, Jesus]
+```
+
+- **`referencia_biblica`.** A referência entre parênteses — `(Mateus 20,3-4)`,
+  `(II Coríntios 4,7)`, `(Salmo 139(138),13)` — sai em itálico e com corpo
+  menor. Ela é reconhecida pela lista de livros da Bíblia, e não por "número,
+  vírgula, número". Por isso o `validate` passa a reprovar a referência **sem
+  livro**, como "(20,3-4)": o leitor não tem como adivinhar o livro, e a
+  referência incompleta sairia sem estilo sem ninguém ver. No modo `romano`, o
+  gate também reprova o livro numerado em algarismo ("1 Coríntios"). Um valor
+  desconhecido desliga a regra, com aviso.
+- **`sumario: sim`.** Uma página "Sumário" depois do front matter, com as
+  Partes e os capítulos.
+- **`indice: personagens`.** Uma página "Índice" no fim, com os nomes das fichas
+  de personagem do canon e as páginas onde eles aparecem. O apelido só vale na
+  cena que declara a ficha em `personagens:`: "José" é José de Nazaré no
+  capítulo que o declara e José do Egito no outro. Só entra termo que começa
+  com maiúscula, o mais longo primeiro. `indice_excluir` tira fichas do índice.
+- **`docs/pagina-final.md`.** Se existe, vira uma página depois do último
+  capítulo, com o título da seção `## ` e cada linha alinhada à direita, no pé
+  da página. O título entra no sumário.
+
+**Sumário e índice são campos do Word:** o número de página só existe depois que
+alguém pagina o texto. O DOCX sai marcado para o Word atualizar os campos ao
+abrir, e o `bookfw pdf` com Word atualiza os campos antes de exportar. Por outro
+conversor, os campos podem sair sem número, e o comando avisa.
+
 ## As Partes
 
 O `ato:` do frontmatter diz a que Parte um capítulo pertence. O plano diretor,

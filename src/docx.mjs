@@ -12,7 +12,9 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
-import { Erro, acharProjeto, c, lerConfig, partes, rel } from './core.mjs';
+import { Erro, acharProjeto, c, canon, lerConfig, partes, rel } from './core.mjs';
+import { modoDeReferencia, trechosDeReferencia } from './biblia.mjs';
+import { acharTermos, campoXE, fichasDoIndice, limparCampo, termosDaCena } from './indice.mjs';
 import { carimbo, revisaoAtual } from './revisao.mjs';
 import { CORTE_PADRAO, prosaFinal, selecao } from './build.mjs';
 import { blocos, trechos } from './markdown.mjs';
@@ -95,9 +97,49 @@ export async function docx(args) {
 
   const {
     Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
-    PageBreak, Footer, PageNumber, SectionType, LineRuleType,
+    Footer, PageNumber, SectionType, LineRuleType,
     Table, TableRow, TableCell, WidthType, BorderStyle,
+    TableOfContents, VerticalAlignSection, XmlComponent, XmlAttributeComponent,
   } = await carregarDocx(raiz);
+
+  // Campo do Word na forma que o proprio Word grava: inicio, instrucao, fim.
+  // O `SimpleField` da biblioteca sai como `<w:fldSimple/>` vazio, e o Word 16,
+  // ao abrir, embaralha a paginacao do livro inteiro: o PDF saiu com o
+  // capitulo 18 na pagina 1 e o rosto na 58. Medido em 2026-09-18.
+  class AtribFld extends XmlAttributeComponent { xmlKeys = { tipo: 'w:fldCharType', sujo: 'w:dirty' }; }
+  class AtribEspaco extends XmlAttributeComponent { xmlKeys = { espaco: 'xml:space' }; }
+  class Fld extends XmlComponent {
+    constructor(tipo, sujo) { super('w:fldChar'); this.root.push(new AtribFld({ tipo, sujo })); }
+  }
+  class Instr extends XmlComponent {
+    constructor(t) { super('w:instrText'); this.root.push(new AtribEspaco({ espaco: 'preserve' })); this.root.push(t); }
+  }
+  const corridaDe = (filho) => new TextRun({ children: [filho] });
+  /** Campo sem resultado (XE, TC) ou com resultado a calcular (INDEX). */
+  const campo = (instr, { resultado = false } = {}) => [
+    corridaDe(new Fld('begin', resultado || undefined)),
+    corridaDe(new Instr(` ${instr} `)),
+    ...(resultado ? [corridaDe(new Fld('separate'))] : []),
+    corridaDe(new Fld('end')),
+  ];
+
+  // ------------------------------------------------- o que a obra liga
+  // Tudo pelo livro.yaml; obra sem nenhuma destas chaves sai como antes.
+  const sim = (v) => /^(sim|true|yes)$/i.test(texto(v));
+  const modoRef = modoDeReferencia(cfg);
+  const refLigada = modoRef === 'romano' || modoRef === 'arabico';
+  // Em pontos no livro.yaml; o OOXML conta em meios-pontos.
+  const corpoRef = Math.round(Number(cfg.referencia_biblica_corpo || 9) * 2) || 18;
+  const comSumario = sim(cfg.sumario);
+  const comIndice = texto(cfg.indice).toLowerCase() === 'personagens';
+  const fichas = comIndice ? fichasDoIndice(canon(raiz).personagens, cfg.indice_excluir) : new Map();
+
+  // Sumario e indice sao campos do Word: o numero de pagina so existe depois
+  // que alguem pagina o texto. O TOC le campos TC, e nao os titulos, para a
+  // entrada sair em texto limpo, sem herdar corpo e caixa do divisor.
+  const entradaSumario = (t, nivel) => campo(`TC "${limparCampo(t)}" \\f S \\l ${nivel}`);
+  let entradas = 0;
+  let marcasIndice = 0;
 
   // ------------------------------------------------- markdown no papel
   // O `markdown.mjs` diz o que o texto e; daqui para baixo e so desenho. A
@@ -105,18 +147,37 @@ export async function docx(args) {
   // dependencia opcional — antes desta mudanca nao havia parser nenhum e o
   // bloco inteiro ia para um `TextRun` so, com o marcador a vista.
 
-  /** Trechos com estilo viram `TextRun`. Codigo troca de fonte, nao de corpo. */
-  const runs = (t, base = {}) => {
+  /**
+   * Trechos com estilo viram `TextRun`. Codigo troca de fonte, nao de corpo.
+   * A referencia biblica, com a regra ligada, sai em italico e corpo menor.
+   * Com `termos`, o nome do canon ganha a marca do indice logo depois dele.
+   */
+  const runs = (t, base = {}, termos = null) => {
     const fonte = base.font || SERIF;
     const tam = base.size || 21;
-    const lista = trechos(t).map((x) => new TextRun({
-      text: x.texto,
-      font: x.codigo ? MONO : fonte,
-      size: x.codigo ? tam - 2 : tam,
-      bold: x.negrito || base.negrito || undefined,
-      italics: x.italico || base.italico || undefined,
-      color: base.color,
-    }));
+    const vistos = new Set();
+    const lista = [];
+    for (const x of trechos(t)) {
+      const pedacos = refLigada && !x.codigo ? trechosDeReferencia(x.texto) : [{ texto: x.texto, referencia: false }];
+      for (const p of pedacos) {
+        const corrida = (text) => new TextRun({
+          text,
+          font: x.codigo ? MONO : fonte,
+          size: x.codigo ? tam - 2 : (p.referencia ? Math.min(corpoRef, tam) : tam),
+          bold: x.negrito || base.negrito || undefined,
+          italics: x.italico || base.italico || p.referencia || undefined,
+          color: base.color,
+        });
+        const marcas = termos?.length && !p.referencia && !x.codigo ? acharTermos(p.texto, termos, vistos) : [];
+        let i = 0;
+        for (const m of marcas) {
+          lista.push(corrida(p.texto.slice(i, m.fim)), ...campo(campoXE(m.nome)));
+          marcasIndice++;
+          i = m.fim;
+        }
+        if (i < p.texto.length) lista.push(corrida(p.texto.slice(i)));
+      }
+    }
     // Paragrafo sem nenhum run e paragrafo invalido no OOXML.
     return lista.length ? lista : [new TextRun({ text: '', font: fonte, size: tam })];
   };
@@ -160,7 +221,7 @@ export async function docx(args) {
           indent: { left: (recuo?.left || 0) + 460, hanging: 260, right: recuo?.right },
           children: [
             new TextRun({ text: `${it.marca}  `, font: base.font, size: base.size }),
-            ...runs(it.texto, base),
+            ...runs(it.texto, base, opts.termos),
           ],
         })));
         break;
@@ -214,7 +275,7 @@ export async function docx(args) {
             ? { before: 200, after: 200, line: 280, lineRule: LineRuleType.AUTO }
             : { after: opts.after ?? 160, line: 300, lineRule: LineRuleType.AUTO },
           indent: recuo,
-          children: runs(bloco.texto, base),
+          children: runs(bloco.texto, base, opts.termos),
         }));
     }
   }
@@ -226,8 +287,15 @@ export async function docx(args) {
     return saida;
   };
 
-  const quebra = () => new Paragraph({ children: [new PageBreak()] });
-  const rubrica = (t, before) => new Paragraph({
+  // A pagina nova e propriedade do primeiro paragrafo dela (`pageBreakBefore`),
+  // e nunca um paragrafo so de quebra. O paragrafo de quebra deixava pagina em
+  // branco em dois casos, medidos no PDF de uma obra de 107 paginas: duas
+  // quebras seguidas antes de cada divisor de Parte, e o capitulo que termina
+  // rente ao pe da pagina, empurrando o paragrafo da quebra sozinho para a
+  // pagina seguinte, onde ele quebra de novo.
+  // A excecao e o primeiro paragrafo de uma secao que ja abre pagina nova.
+  const rubrica = (t, before, quebra = true) => new Paragraph({
+    pageBreakBefore: quebra || undefined,
     spacing: { before, after: 300 }, alignment: AlignmentType.CENTER,
     children: [new TextRun({ text: t, font: SERIF, size: 22, allCaps: true, characterSpacing: 40, color: '666666' })],
   });
@@ -261,7 +329,6 @@ export async function docx(args) {
       children: [new TextRun({ text: texto(rev.nota), font: SERIF, size: 17, italics: true, color: '888888' })],
     }));
   }
-  filhos.push(quebra());
 
   // ------------------------------------------- front matter editorial
   // O texto e da obra, nao do gerador — aviso de conteudo e nota de versao
@@ -269,7 +336,12 @@ export async function docx(args) {
   for (const sec of secoes(join(raiz, 'docs', 'front-matter.md'))) {
     filhos.push(rubrica(sec.titulo, 1600));
     filhos.push(...paragrafos(sec.texto, { alignment: AlignmentType.LEFT, after: 200 }));
-    filhos.push(quebra());
+  }
+
+  // --------------------------------------------------------------- sumario
+  if (comSumario) {
+    filhos.push(rubrica('Sumário', 1200));
+    filhos.push(new TableOfContents('Sumário', { tcFieldIdentifier: 'S', tcFieldLevelRange: '1-2' }));
   }
 
   // ------------------------------------------------------------- capitulos
@@ -280,29 +352,31 @@ export async function docx(args) {
   const mapaPartes = partes(raiz);
   let atoAnterior = null;
   let divisores = 0;
-  caps.forEach((cap, i) => {
-    if (i > 0) filhos.push(quebra());
+  caps.forEach((cap) => {
     const ato = Number(cap.fm.ato) || null;
     const parte = ato && ato !== atoAnterior ? mapaPartes.get(ato) : null;
     if (ato && ato !== atoAnterior) atoAnterior = ato;
     if (parte) {
-      if (i > 0) filhos.push(quebra());
-      filhos.push(new Paragraph({ spacing: { before: 3200 }, children: [] }));
+      filhos.push(new Paragraph({ pageBreakBefore: true, spacing: { before: 3200 }, children: [] }));
       filhos.push(new Paragraph({
         alignment: AlignmentType.CENTER, spacing: { after: 260 },
         children: [new TextRun({ text: `PARTE ${texto(parte.romano)}`, font: SERIF, size: 20, characterSpacing: 120, color: '888888' })],
       }));
       filhos.push(new Paragraph({
         alignment: AlignmentType.CENTER,
-        children: [new TextRun({ text: texto(parte.titulo), font: SERIF, size: 40 })],
+        children: [
+          ...(comSumario ? entradaSumario(`Parte ${texto(parte.romano)} — ${texto(parte.titulo)}`, 1) : []),
+          new TextRun({ text: texto(parte.titulo), font: SERIF, size: 40 }),
+        ],
       }));
-      filhos.push(quebra());
+      if (comSumario) entradas++;
       divisores++;
     }
     const nota = ressalva(cap.fm, cfg);
     if (nota) comNota++;
 
     filhos.push(new Paragraph({
+      pageBreakBefore: true,
       spacing: { before: 900, after: 60 }, alignment: AlignmentType.LEFT,
       children: [new TextRun({
         text: `capitulo ${String(cap.numero).padStart(2, '0')}${cap.fm.ato ? `  ·  ato ${texto(cap.fm.ato)}` : ''}`,
@@ -311,8 +385,12 @@ export async function docx(args) {
     }));
     filhos.push(new Paragraph({
       heading: HeadingLevel.HEADING_1, spacing: { after: nota ? 140 : 500 }, alignment: AlignmentType.LEFT,
-      children: [new TextRun({ text: texto(cap.fm.titulo), font: SERIF, size: 34, color: '000000' })],
+      children: [
+        ...(comSumario ? entradaSumario(`${cap.numero}. ${texto(cap.fm.titulo)}`, divisores ? 2 : 1) : []),
+        new TextRun({ text: texto(cap.fm.titulo), font: SERIF, size: 34, color: '000000' }),
+      ],
     }));
+    if (comSumario) entradas++;
     if (nota) {
       filhos.push(new Paragraph({
         spacing: { after: 460 }, alignment: AlignmentType.LEFT,
@@ -320,37 +398,107 @@ export async function docx(args) {
       }));
     }
 
-    filhos.push(...paragrafos(prosaFinal(cap)));
+    // Com indice, a prosa sai cena a cena: cada cena marca so os nomes das
+    // fichas que ela declara. O separador e o mesmo que o `prosaFinal` poe.
+    const cenas = cap.cenas.filter((s) => s.prosa);
+    if (comIndice && cenas.length) {
+      cenas.forEach((s, k) => {
+        if (k) filhos.push(...paragrafos('* * *'));
+        filhos.push(...paragrafos(s.prosa, { termos: termosDaCena(fichas, s.personagens) }));
+      });
+    } else {
+      filhos.push(...paragrafos(prosaFinal(cap)));
+    }
   });
+
+  // ---------------------------------------------------------- pagina final
+  // Uma pagina depois do ultimo capitulo, com titulo e linhas no pe, a
+  // direita. O pe vem da secao com alinhamento vertical inferior, e nao de
+  // espaco estimado, que erraria com o tamanho do texto.
+  const final = secoes(join(raiz, 'docs', 'pagina-final.md'))[0];
+  const paginaFinal = [];
+  if (final) {
+    paginaFinal.push(new Paragraph({
+      alignment: AlignmentType.RIGHT, spacing: { after: 260 },
+      children: [
+        ...(comSumario ? entradaSumario(final.titulo, divisores ? 2 : 1) : []),
+        new TextRun({ text: final.titulo, font: SERIF, size: 26, italics: true }),
+      ],
+    }));
+    if (comSumario) entradas++;
+    for (const linha of final.texto.split('\n').map((l) => l.trim()).filter(Boolean)) {
+      paginaFinal.push(new Paragraph({
+        alignment: AlignmentType.RIGHT, spacing: { after: 40, line: 280, lineRule: LineRuleType.AUTO },
+        children: runs(linha, { font: SERIF, size: 21 }),
+      }));
+    }
+  }
+
+  // Apendice e indice fecham o livro. Com pagina final, abrem secao propria,
+  // que ja comeca em pagina nova: a primeira rubrica nao quebra de novo.
+  const fim = [];
+  const quebraFim = () => !(final && fim.length === 0);
 
   // ------------------------------------------------------------- apendice
   // Mesmo tratamento do front matter, no fim do livro. Serve para o que e do
   // produto mas nao e capitulo: lista de pendencias, glossario, fontes.
   for (const sec of secoes(join(raiz, 'docs', 'apendice.md'))) {
-    filhos.push(quebra());
-    filhos.push(rubrica(sec.titulo, 1200));
-    filhos.push(...paragrafos(sec.texto, { alignment: AlignmentType.LEFT, after: 200 }));
+    fim.push(rubrica(sec.titulo, 1200, quebraFim()));
+    fim.push(...paragrafos(sec.texto, { alignment: AlignmentType.LEFT, after: 200 }));
   }
 
+  // ---------------------------------------------------------------- indice
+  // Sem nenhuma marca, o Word imprimiria "Nenhuma entrada de indice remissivo
+  // foi encontrada" numa pagina propria: melhor nao ter pagina, e avisar.
+  if (comIndice && marcasIndice) {
+    fim.push(rubrica('Índice', 1200, quebraFim()));
+    fim.push(new Paragraph({ children: campo('INDEX \\h "A" \\c "1" \\z "1046"', { resultado: true }) }));
+  }
+
+  // O rodape e o mesmo em todas as secoes; cada uma recebe o seu, porque secao
+  // sem rodape declarado depende de heranca que nem todo leitor de DOCX faz.
+  const rodape = () => ({
+    default: new Footer({
+      children: [new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          ...(rev ? [new TextRun({ text: `revisao ${rev.numero}  ·  `, font: SERIF, size: 16, color: 'AAAAAA' })] : []),
+          new TextRun({ children: [PageNumber.CURRENT], font: SERIF, size: 18, color: '888888' }),
+        ],
+      })],
+    }),
+  });
+  const pagina = { size: A5, margin: MARGENS };
+  const secoesDoc = [{ properties: { type: SectionType.CONTINUOUS, page: pagina }, footers: rodape(), children: filhos }];
+  if (final) {
+    secoesDoc.push({
+      properties: { type: SectionType.NEXT_PAGE, page: pagina, verticalAlign: VerticalAlignSection.BOTTOM },
+      footers: rodape(), children: paginaFinal,
+    });
+    if (fim.length) secoesDoc.push({ properties: { type: SectionType.NEXT_PAGE, page: pagina }, footers: rodape(), children: fim });
+  } else {
+    filhos.push(...fim);
+  }
+
+  // TOC e INDEX usam os estilos "toc N" e "index N" do Word, que por padrao
+  // herdam a fonte do documento: sem isto, sumario e indice sairiam em Calibri
+  // no meio de um livro em Georgia.
+  const estilo = (id, name, run, paragraph) => ({ id, name, basedOn: 'Normal', next: 'Normal', run: { font: SERIF, ...run }, paragraph });
   const doc = new Document({
     creator: texto(cfg.autor),
     title: texto(cfg.titulo),
     description: 'Versao de leitura — nao publicada.',
-    sections: [{
-      properties: { type: SectionType.CONTINUOUS, page: { size: A5, margin: MARGENS } },
-      footers: {
-        default: new Footer({
-          children: [new Paragraph({
-            alignment: AlignmentType.CENTER,
-            children: [
-              ...(rev ? [new TextRun({ text: `revisao ${rev.numero}  ·  `, font: SERIF, size: 16, color: 'AAAAAA' })] : []),
-              new TextRun({ children: [PageNumber.CURRENT], font: SERIF, size: 18, color: '888888' }),
-            ],
-          })],
-        }),
-      },
-      children: filhos,
-    }],
+    features: comSumario || comIndice ? { updateFields: true } : undefined,
+    styles: {
+      default: { document: { run: { font: SERIF, size: 21 } } },
+      paragraphStyles: [
+        estilo('TOC1', 'toc 1', { size: 21, bold: true }, { spacing: { before: 200, after: 60 } }),
+        estilo('TOC2', 'toc 2', { size: 20 }, { spacing: { after: 40 }, indent: { left: 280 } }),
+        estilo('Index1', 'index 1', { size: 19 }, { spacing: { after: 20 } }),
+        estilo('IndexHeading', 'index heading', { size: 22, bold: true }, { spacing: { before: 200, after: 60 } }),
+      ],
+    },
+    sections: secoesDoc,
   });
 
   // O nome carrega a revisao: dois DOCX de revisoes diferentes nunca mais tem
@@ -381,6 +529,12 @@ export async function docx(args) {
   console.log(`${c.green('docx gerado')}  ${rel(raiz, alvo)}`);
   console.log(c.dim(`  corte: ${minimo} ou adiante | ${caps.length} capitulos, ${comNota} com ressalva`));
   if (divisores) console.log(c.dim(`  ${divisores} divisor(es) de Parte, do plano diretor`));
+  if (refLigada) console.log(c.dim(`  referencia biblica em italico, corpo ${corpoRef / 2} pt`));
+  if (comSumario) console.log(c.dim(`  sumario com ${entradas} entrada(s)`));
+  if (comIndice && marcasIndice) console.log(c.dim(`  indice com ${marcasIndice} marca(s) de ${fichas.size} ficha(s)`));
+  if (comIndice && !marcasIndice) console.log(c.yellow(`  indice ligado e nenhum nome encontrado (${fichas.size} ficha(s) no canon) — saiu sem pagina de indice. As cenas declaram as fichas em personagens:?`));
+  if (final) console.log(c.dim(`  pagina final: "${final.titulo}"`));
+  if (comSumario || comIndice) console.log(c.dim('  sumario e indice ganham numero de pagina quando o Word atualiza os campos (bookfw pdf faz isso)'));
   if (rev) console.log(c.dim(`  ${carimbo(rev).toLowerCase()} — ${rev.nota}`));
   else console.log(c.yellow('  sem revisao registrada — o arquivo saiu sem numero. bookfw revisao "o que mudou" antes de mandar a alguem'));
 }

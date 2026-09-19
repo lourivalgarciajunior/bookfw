@@ -16,7 +16,7 @@
 import { closeSync, existsSync, openSync, readSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { Erro, acharProjeto, c, rel } from './core.mjs';
+import { Erro, acharProjeto, c, lerConfig, rel } from './core.mjs';
 import { lerRevisoes } from './revisao.mjs';
 
 /** O nome que o `docx` da a um arquivo de revisao. Trava do Word (`~$`) fica fora. */
@@ -151,6 +151,13 @@ const SCRIPT_WORD = [
   '    $doc = $null',
   '    try {',
   '      $doc = $word.Documents.Open($lote[$i].docx, [ref]$naoConfirmar, [ref]$soLeitura, [ref]$foraDosRecentes)',
+  // Sumario e indice sao campos: sem atualizar, saem vazios. A ordem importa.
+  // O sumario muda de tamanho ao ganhar entradas e empurra o livro; o indice
+  // e numerado depois disso; e o numero de pagina do sumario e refeito no fim,
+  // com a paginacao ja estavel. Na copia aberta somente leitura, e nunca salva.
+  '      foreach ($t in $doc.TablesOfContents) { [void]$t.Update() }',
+  '      foreach ($x in $doc.Indexes) { [void]$x.Update() }',
+  '      foreach ($t in $doc.TablesOfContents) { [void]$t.UpdatePageNumbers() }',
   '      $doc.ExportAsFixedFormat($lote[$i].pdf, 17)',
   "      Write-Output ('ok|' + $i)",
   '    } catch {',
@@ -160,7 +167,9 @@ const SCRIPT_WORD = [
   '    }',
   '  }',
   '} finally {',
-  '  if ($word) { $word.Quit(); [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) }',
+  // Sem o `[ref]$naoSalvar`, o Word que atualizou sumario e indice fica aberto
+  // e escondido depois do Quit, esperando resposta para salvar.
+  '  if ($word) { $word.Quit([ref]$naoSalvar); [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) }',
   '}',
 ].join('\n');
 
@@ -240,6 +249,14 @@ export async function pdf(args) {
   }
 
   console.log(c.dim(`  ${pendentes.length} convertido(s) | ${pulados} ja atualizado(s)${conv ? ` | conversor ${conv.rotulo}` : ''}`));
+
+  // Sumario e indice so ganham numero de pagina quando o conversor atualiza os
+  // campos, e so o caminho do Word faz isso de forma garantida.
+  const cfg = lerConfig(raiz);
+  const campos = /^(sim|true|yes)$/i.test(String(cfg.sumario ?? '').trim()) || String(cfg.indice ?? '').trim().toLowerCase() === 'personagens';
+  if (conv && conv.tipo !== 'word' && campos) {
+    console.log(c.yellow(`  a obra tem sumario ou indice, e o conversor ${conv.rotulo} pode deixar os dois sem numero de pagina — abra o PDF, ou converta com --conversor word`));
+  }
 
   // So a revisao corrente pode ganhar DOCX agora; a antiga sem arquivo fica sem PDF.
   if (args.revisao === undefined) {

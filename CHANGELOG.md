@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.9.0 — 2026-09-18
+
+### Adicionado
+
+- **Referencia biblica em italico e corpo menor.** Com `referencia_biblica:
+  romano|arabico` no `livro.yaml`, a referencia entre parenteses
+  (`(Mateus 20,3-4)`) sai em italico, no corpo de `referencia_biblica_corpo`
+  (padrao 9 pt). E reconhecida pela lista de livros da Biblia.
+- **Gate da referencia sem livro.** Com a mesma chave, o `validate` reprova
+  "(20,3-4)" e, no modo `romano`, o livro numerado em algarismo ("1
+  Corintios"). Na obra que motivou a mudanca, 143 de 238 referencias estavam
+  sem livro.
+- **Sumario** (`sumario: sim`): pagina propria, com campo TOC sobre entradas
+  TC — Parte no nivel 1 e capitulo no nivel 2.
+- **Indice de nomes** (`indice: personagens`, `indice_excluir`): marca XE para
+  cada ficha do canon declarada na cena, e pagina final com campo INDEX. O
+  apelido so vale na cena que declara a ficha, o que resolve homonimos. Sem
+  nenhum nome encontrado, nao ha pagina de indice, e o comando avisa.
+- **Pagina final** (`docs/pagina-final.md`): titulo e linhas a direita, no pe
+  de uma pagina propria depois do ultimo capitulo.
+- **`bookfw pdf` com Word atualiza sumario e indice** antes de exportar, e
+  avisa quando outro conversor pode deixa-los sem numero.
+
+### Corrigido
+
+- **Pagina em branco na versao de leitura.** A quebra era um paragrafo proprio,
+  e deixava pagina vazia antes de cada divisor de Parte e depois de capitulo
+  que terminava rente ao pe. Eram quatro paginas no PDF de 107 da revisao 2 de
+  `ninguem-nasce-santo`. Agora a pagina nova e `pageBreakBefore` do primeiro
+  paragrafo.
+- **O Word fica aberto depois do `bookfw pdf`.** Depois de atualizar campos,
+  o `Quit` sem argumento deixava o Word escondido, esperando resposta para
+  salvar. Agora ele sai sem salvar.
+
 ## 0.8.0 — 2026-09-13
 
 ### Adicionado

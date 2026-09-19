@@ -1357,6 +1357,150 @@ function comAmostra(p, repeticoes = 40) {
   })());
 }
 
+// ---------------------------------------------------------------------------
+// 0.9.0 — referencia biblica, pagina sem quebra solta, sumario, indice e
+// pagina final. Ver ADR-2026-09-18.
+//
+// O modo de falha do gate e a referencia sem livro passar calada; o do indice,
+// o homonimo levar as paginas do outro ("Jose" de Nazare e do Egito). Os dois
+// sao medidos aqui pelo numero, e nao pela existencia do recurso.
+// ---------------------------------------------------------------------------
+{
+  const { trechosDeReferencia, problemasDeReferencia, modoDeReferencia } = await import('../src/biblia.mjs');
+  const { fichasDoIndice, termosDaCena, acharTermos, campoXE } = await import('../src/indice.mjs');
+
+  const frase = 'Diz (Mateus 20,3-4), (II Coríntios 4,7), (Salmo 139(138),13) e (Cântico dos Cânticos 2,7; 3,5). Mas (20,3), (1 Coríntios 6,1) e (3,5 milhões).';
+  const refs = trechosDeReferencia(frase).filter((x) => x.referencia).map((x) => x.texto);
+  ok('referencia reconhecida pelo livro, com salmo e lista', JSON.stringify(refs) === JSON.stringify(
+    ['(Mateus 20,3-4)', '(II Coríntios 4,7)', '(Salmo 139(138),13)', '(Cântico dos Cânticos 2,7; 3,5)', '(1 Coríntios 6,1)']));
+  ok('os trechos devolvem o texto inteiro', trechosDeReferencia(frase).map((x) => x.texto).join('') === frase);
+  const romano = problemasDeReferencia(frase, 'romano').map((p) => p.trecho);
+  ok('romano cobra referencia sem livro e algarismo arabico', romano.includes('(20,3)') && romano.includes('1 Coríntios 6') && romano.length === 2);
+  ok('arabico cobra so a referencia sem livro', JSON.stringify(problemasDeReferencia(frase, 'arabico').map((p) => p.trecho)) === '["(20,3)"]');
+  ok('numero decimal entre parenteses nao e referencia', !romano.some((t) => t.includes('milhões')));
+  ok('valor desconhecido de referencia_biblica e invalido, nao erro', modoDeReferencia({ referencia_biblica: 'sim' }) === 'invalido' && modoDeReferencia({}) === null);
+
+  const fichas = fichasDoIndice([
+    { nome: 'José de Nazaré', apelidos: ['José', 'o carpinteiro'] },
+    { nome: 'José do Egito', apelidos: ['José'] },
+    { nome: 'Maria de Nazaré', apelidos: ['Maria'] },
+    { nome: 'Irma Dulce', apelidos: ['Maria Rita'] },
+    { nome: 'O leitor', apelidos: [] },
+  ], ['O leitor']);
+  ok('indice_excluir tira a ficha', !fichas.has('o leitor'));
+  ok('apelido descritivo, em minuscula, nao vira termo', !fichas.get('jose de nazare').termos.includes('o carpinteiro'));
+  const nazare = termosDaCena(fichas, ['José de Nazaré']);
+  const ambos = termosDaCena(fichas, ['José de Nazaré', 'José do Egito']);
+  ok('a cena resolve o homonimo', acharTermos('José acordou.', nazare).map((m) => m.nome).join() === 'José de Nazaré');
+  ok('apelido de duas fichas da mesma cena fica de fora', acharTermos('José acordou.', ambos).length === 0);
+  ok('ficha nao declarada na cena nao marca', acharTermos('José acordou.', termosDaCena(fichas, ['Maria de Nazaré'])).length === 0);
+  const dulce = termosDaCena(fichas, ['Irma Dulce', 'Maria de Nazaré']);
+  ok('termo mais longo consome o trecho primeiro', acharTermos('Maria Rita rezava.', dulce).map((m) => m.nome).join() === 'Irma Dulce');
+  ok('aspas e barra saem da instrucao do campo', campoXE('Ana "a\\b"') === 'XE "Ana ab"');
+
+  // O gate, pela linha de comando.
+  const g = projeto('Gate da Referencia');
+  g.rodar('cap', 'new', 'Um', '--ato', '1');
+  const gArq = join(g.dir, 'capitulos', 'backlog', readdirSync(join(g.dir, 'capitulos', 'backlog'))[0]);
+  const gBase = readFileSync(gArq, 'utf8');
+  const gLivro = join(g.dir, 'livro.yaml');
+  const gLivroBase = readFileSync(gLivro, 'utf8');
+  const gateCom = (valor, prosa) => {
+    writeFileSync(gLivro, valor ? `${gLivroBase}\nreferencia_biblica: ${valor}\n` : gLivroBase, 'utf8');
+    writeFileSync(gArq, `${gBase}\n\n${prosa}\n`, 'utf8');
+    return g.rodar('validate');
+  };
+  const semLivro = gateCom('romano', 'Ele respondeu (20,3).');
+  ok('gate reprova referencia sem livro', semLivro.codigo === 1 && semLivro.saida.includes('referencia sem o livro'));
+  const arab = gateCom('romano', 'Paulo escreveu (1 Coríntios 6,1).');
+  ok('gate reprova algarismo no modo romano e diz a forma', arab.codigo === 1 && arab.saida.includes('I Coríntios'));
+  ok('gate aceita algarismo no modo arabico', gateCom('arabico', 'Paulo escreveu (1 Coríntios 6,1).').codigo === 0);
+  ok('gate aceita a referencia completa', gateCom('romano', 'Ele respondeu (Mateus 20,3).').codigo === 0);
+  ok('sem a chave, nada muda no gate', gateCom('', 'Ele respondeu (20,3).').codigo === 0);
+  const inval = gateCom('sim', 'Ele respondeu (20,3).');
+  ok('valor invalido desliga a regra com aviso', inval.codigo === 0 && inval.saida.includes('ficou desligada'));
+
+  // O papel.
+  let Zip = null;
+  try { await import('docx'); Zip = (await import('jszip')).default; } catch { /* ausente */ }
+  if (!Zip) {
+    console.log('  PULADO  docx 0.9.0 — pacote `docx` ausente (npm i docx para cobrir)');
+  } else {
+    const montar = (titulo, extras, comFinal) => {
+      const p = projeto(titulo);
+      const dirP = join(p.dir, 'docs', 'canon', 'personagens');
+      mkdirSync(dirP, { recursive: true });
+      const ficha = (arq, nome, apelidos) => writeFileSync(join(dirP, arq),
+        `---\nnome: ${nome}\napelidos: [${apelidos}]\nresumo: x\n---\n\n## Quem e\n\nx.\n`, 'utf8');
+      ficha('jose-de-nazare.md', 'José de Nazaré', 'José');
+      ficha('jose-do-egito.md', 'José do Egito', 'José');
+      ficha('marta.md', 'Marta', '');
+      const capitulo = (n, titulo2, quem, prosa) => {
+        p.rodar('cap', 'new', titulo2, '--ato', '1');
+        const arq = join(p.dir, 'capitulos', 'backlog', readdirSync(join(p.dir, 'capitulos', 'backlog')).find((f) => f.startsWith(`cap-0${n}`)));
+        const t = readFileSync(arq, 'utf8')
+          .replace('personagens: []', `personagens: [${quem}]`)
+          .replace('objetivo:', 'objetivo: a').replace('conflito:', 'conflito: b').replace('virada:', 'virada: c');
+        writeFileSync(arq, `${t}\n\n${prosa}\n`, 'utf8');
+        p.rodar('cap', 'move', String(n), 'revisao');
+      };
+      capitulo(1, 'O carpinteiro', 'José de Nazaré, Marta', 'José acordou e fez isso (Mateus 1,24). Marta viu.');
+      capitulo(2, 'O vendido', 'José do Egito', 'José foi vendido por vinte moedas (Gênesis 37,28).');
+      if (extras) writeFileSync(join(p.dir, 'livro.yaml'), `${readFileSync(join(p.dir, 'livro.yaml'), 'utf8')}\n${extras}\n`, 'utf8');
+      if (comFinal) {
+        writeFileSync(join(p.dir, 'docs', 'pagina-final.md'),
+          '## Deus capacita os escolhidos\n\nA nossa capacidade vem de Deus.\n(II Coríntios 3,5-6)\n', 'utf8');
+      }
+      const r = p.rodar('docx');
+      return { p, r };
+    };
+    const xmlDe = async (p) => {
+      const nome = readdirSync(join(p.dir, 'manuscrito')).find((f) => f.endsWith('.docx'));
+      const z = await Zip.loadAsync(readFileSync(join(p.dir, 'manuscrito', nome)));
+      return z.file('word/document.xml').async('string');
+    };
+    const conta = (s, alvo) => s.split(alvo).length - 1;
+
+    const com = montar('Livro Completo', [
+      'referencia_biblica: romano', 'referencia_biblica_corpo: 9', 'sumario: sim',
+      'indice: personagens', 'indice_excluir: [Marta]',
+    ].join('\n'), true);
+    ok('docx roda com as chaves novas', com.r.codigo === 0 && com.r.saida.includes('sumario com 3 entrada(s)'));
+    const x = await xmlDe(com.p);
+    const corridas = x.split('<w:r>').slice(1);
+    const daRef = corridas.find((r) => r.includes('>(Mateus 1,24)<')) || '';
+    ok('a referencia sai em italico e no corpo configurado', /<w:i\/>/.test(daRef) && daRef.includes('<w:sz w:val="18"/>'));
+    const daProsa = corridas.find((r) => r.includes('foi vendido')) || '';
+    ok('a prosa em volta continua reta e no corpo do texto', !/<w:i\/>/.test(daProsa) && daProsa.includes('<w:sz w:val="21"/>'));
+    ok('nenhum paragrafo so de quebra de pagina', !x.includes('w:type="page"'));
+    ok('cada capitulo abre pagina pelo proprio paragrafo', conta(x, '<w:pageBreakBefore/>') >= 3);
+    ok('o sumario e um TOC sobre campos TC', x.includes('TOC \\f &quot;S&quot; \\l &quot;1-2&quot;') && conta(x, ' TC &quot;') === 3);
+    ok('o sumario nao omite o numero de pagina', !/TOC [^<]*\\n/.test(x));
+    ok('Jose de Nazare marcado uma vez, no capitulo que o declara', conta(x, 'XE &quot;José de Nazaré&quot;') === 1);
+    ok('Jose do Egito marcado uma vez, no capitulo que o declara', conta(x, 'XE &quot;José do Egito&quot;') === 1);
+    ok('a marca do homonimo cai no capitulo certo', x.indexOf('XE &quot;José do Egito&quot;') > x.indexOf('O vendido'));
+    ok('indice_excluir e respeitado no papel', !x.includes('XE &quot;Marta&quot;'));
+    ok('o livro termina num campo INDEX', x.includes(' INDEX \\h &quot;A&quot;'));
+    ok('nenhum campo simples vazio, que embaralha o Word', !x.includes('fldSimple'));
+    // Campo sem inicio vira texto solto para o Word: XE, TC e INDEX somem.
+    const instrucoes = conta(x, '<w:instrText');
+    ok('todo campo abre e fecha: um inicio e um fim por instrucao',
+      instrucoes >= 5 && conta(x, 'w:fldCharType="begin"') === instrucoes && conta(x, 'w:fldCharType="end"') === instrucoes);
+    ok('a pagina final fica no pe da pagina, a direita', x.includes('<w:vAlign w:val="bottom"/>') && x.includes('Deus capacita os escolhidos') && x.includes('<w:jc w:val="right"/>'));
+
+    const sem = montar('Livro Simples', '', false);
+    const xs = await xmlDe(sem.p);
+    ok('sem as chaves, sem sumario, indice nem referencia estilizada', sem.r.codigo === 0
+      && !xs.includes(' TOC ') && !xs.includes(' XE ') && !xs.includes('vAlign')
+      && !(xs.split('<w:r>').find((r) => r.includes('>(Mateus 1,24)')) || '').includes('<w:i/>'));
+    ok('sem as chaves, tambem sem paragrafo de quebra', !xs.includes('w:type="page"'));
+
+    const vazio = montar('Indice Vazio', 'indice: personagens\nindice_excluir: [José de Nazaré, José do Egito, Marta]', false);
+    const xv = await xmlDe(vazio.p);
+    ok('indice sem nenhum nome nao gera pagina de indice, e avisa', !xv.includes(' INDEX ') && vazio.r.saida.includes('nenhum nome encontrado'));
+  }
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);

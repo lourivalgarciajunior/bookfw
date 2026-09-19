@@ -51,6 +51,8 @@ const AJUDA = `bookfw ${VERSAO} — governanca de escrita de livros
   bookfw pdf [--revisao N]          PDF de cada DOCX de revisao (LibreOffice ou Word)
   bookfw pdf --forcar               reconverte mesmo o PDF que ja esta atualizado
   bookfw pdf --conversor <c>        soffice, word, ou executavel proprio <entrada> <saida>
+                                    (livro.yaml: referencia_biblica, sumario, indice —
+                                    ver README, "A versao de leitura")
   bookfw revisao "o que mudou"      registra uma revisao da obra — numero, data e nota
                                     (vai no rosto, no rodape e no nome do DOCX)
 

@@ -3,6 +3,21 @@
 Estado de trabalho do bookfw para quem chegar depois. Uma entrada por frente,
 a mais recente no topo.
 
+## 2026-09-18 — referencia biblica, sumario, indice e pagina final (0.9.0)
+
+**O que mudou.** `src/biblia.mjs` (lista de livros, `trechosDeReferencia`,
+`problemasDeReferencia`) e `src/indice.mjs` (termos do canon por cena) sao
+novos. O `docx.mjs` estiliza a referencia, gera sumario (TOC sobre campos TC),
+indice (XE + INDEX) e a pagina final (secao com `vAlign bottom`), e troca o
+paragrafo de quebra por `pageBreakBefore`. O `validate` cobra a referencia sem
+livro. O `pdf.mjs` atualiza TOC e indice no Word antes de exportar.
+
+**O que vigiar.** Campo do Word so na forma `fldChar`/`instrText`: o
+`SimpleField` da biblioteca (`<w:fldSimple/>` vazio) fez o Word 16 embaralhar a
+paginacao do livro inteiro, com o capitulo 18 na pagina 1. O numero de pagina
+do sumario e do indice so existe depois do Word; pelo LibreOffice pode sair em
+branco.
+
 ## 2026-09-13 — `bookfw pdf` (0.8.0)
 
 **O que mudou.** `src/pdf.mjs` novo: `revisoesComDocx`, `resolverConversor`,
