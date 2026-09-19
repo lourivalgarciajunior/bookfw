@@ -73,7 +73,7 @@ Os da REQ.
 **Aceite:** a marca aparece no paragrafo certo, o apelido fora da cena que o declara nao marca, e `indice_excluir` e respeitado.
 
 ### ML-1E — Word atualiza os campos
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `src/pdf.mjs`
 **Acoes:** o script do Word atualiza o sumario, depois o indice, depois o numero de pagina do sumario, antes do `ExportAsFixedFormat`. Com outro conversor e a obra com `sumario` ou `indice`, o comando avisa.
 **Aceite:** no PDF real, o sumario e o indice tem numero de pagina.
@@ -88,7 +88,7 @@ Os da REQ.
 > Dependencies: Wave 1.
 
 ### ML-2A — regressao
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** `test/smoke.mjs`
 **Acoes:** casos para o gate, o desenho da referencia, a quebra de pagina, o sumario e o indice, incluindo o homonimo resolvido pela cena. Prova por mutacao: desligar cada ponto derruba o teste dele.
 **Aceite:** `npm run check` verde; cada mutacao produz falha.
