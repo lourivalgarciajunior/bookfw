@@ -55,13 +55,13 @@ Os da REQ.
 **Aceite:** "(20,3-4)" e "(1 Coríntios 6,1)" viram violacao no modo romano; "(II Coríntios 4,7)", "(Salmo 139(138),13)" e "(Cântico dos Cânticos 2,7; 3,5)" passam.
 
 ### ML-1B — quebra de pagina sem paragrafo proprio
-**Status:** 🔄 Em andamento
+**Status:** ✅ Concluído
 **Arquivos:** `src/docx.mjs`
 **Acoes:** trocar os `quebra()` por `pageBreakBefore` no primeiro paragrafo de cada pagina nova (front matter, divisor de Parte, capitulo, apendice).
 **Aceite:** zero `<w:br w:type="page"/>` no documento; o rosto, cada secao, cada divisor e cada capitulo abrem pagina.
 
 ### ML-1C — referencia estilizada e sumario
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** `src/docx.mjs`
 **Acoes:** `runs()` divide o trecho pela referencia e aplica italico e o corpo configurado. Com `sumario: sim`, entra uma pagina "Sumario" com `TableOfContents` (nivel 1-2) depois do front matter; a Parte vira titulo de nivel 1 e o capitulo, de nivel 2. `features.updateFields`.
 **Aceite:** a corrida da referencia tem `<w:i/>` e o `w:sz` configurado; o documento tem um `TOC` e as Partes em `Heading1`.

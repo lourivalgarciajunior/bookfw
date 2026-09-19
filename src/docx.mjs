@@ -95,7 +95,7 @@ export async function docx(args) {
 
   const {
     Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
-    PageBreak, Footer, PageNumber, SectionType, LineRuleType,
+    Footer, PageNumber, SectionType, LineRuleType,
     Table, TableRow, TableCell, WidthType, BorderStyle,
   } = await carregarDocx(raiz);
 
@@ -226,8 +226,14 @@ export async function docx(args) {
     return saida;
   };
 
-  const quebra = () => new Paragraph({ children: [new PageBreak()] });
+  // A pagina nova e propriedade do primeiro paragrafo dela (`pageBreakBefore`),
+  // e nunca um paragrafo so de quebra. O paragrafo de quebra deixava pagina em
+  // branco em dois casos, medidos no PDF de uma obra de 107 paginas: duas
+  // quebras seguidas antes de cada divisor de Parte, e o capitulo que termina
+  // rente ao pe da pagina, empurrando o paragrafo da quebra sozinho para a
+  // pagina seguinte, onde ele quebra de novo.
   const rubrica = (t, before) => new Paragraph({
+    pageBreakBefore: true,
     spacing: { before, after: 300 }, alignment: AlignmentType.CENTER,
     children: [new TextRun({ text: t, font: SERIF, size: 22, allCaps: true, characterSpacing: 40, color: '666666' })],
   });
@@ -261,7 +267,6 @@ export async function docx(args) {
       children: [new TextRun({ text: texto(rev.nota), font: SERIF, size: 17, italics: true, color: '888888' })],
     }));
   }
-  filhos.push(quebra());
 
   // ------------------------------------------- front matter editorial
   // O texto e da obra, nao do gerador — aviso de conteudo e nota de versao
@@ -269,7 +274,6 @@ export async function docx(args) {
   for (const sec of secoes(join(raiz, 'docs', 'front-matter.md'))) {
     filhos.push(rubrica(sec.titulo, 1600));
     filhos.push(...paragrafos(sec.texto, { alignment: AlignmentType.LEFT, after: 200 }));
-    filhos.push(quebra());
   }
 
   // ------------------------------------------------------------- capitulos
@@ -280,14 +284,12 @@ export async function docx(args) {
   const mapaPartes = partes(raiz);
   let atoAnterior = null;
   let divisores = 0;
-  caps.forEach((cap, i) => {
-    if (i > 0) filhos.push(quebra());
+  caps.forEach((cap) => {
     const ato = Number(cap.fm.ato) || null;
     const parte = ato && ato !== atoAnterior ? mapaPartes.get(ato) : null;
     if (ato && ato !== atoAnterior) atoAnterior = ato;
     if (parte) {
-      if (i > 0) filhos.push(quebra());
-      filhos.push(new Paragraph({ spacing: { before: 3200 }, children: [] }));
+      filhos.push(new Paragraph({ pageBreakBefore: true, spacing: { before: 3200 }, children: [] }));
       filhos.push(new Paragraph({
         alignment: AlignmentType.CENTER, spacing: { after: 260 },
         children: [new TextRun({ text: `PARTE ${texto(parte.romano)}`, font: SERIF, size: 20, characterSpacing: 120, color: '888888' })],
@@ -296,13 +298,13 @@ export async function docx(args) {
         alignment: AlignmentType.CENTER,
         children: [new TextRun({ text: texto(parte.titulo), font: SERIF, size: 40 })],
       }));
-      filhos.push(quebra());
       divisores++;
     }
     const nota = ressalva(cap.fm, cfg);
     if (nota) comNota++;
 
     filhos.push(new Paragraph({
+      pageBreakBefore: true,
       spacing: { before: 900, after: 60 }, alignment: AlignmentType.LEFT,
       children: [new TextRun({
         text: `capitulo ${String(cap.numero).padStart(2, '0')}${cap.fm.ato ? `  ·  ato ${texto(cap.fm.ato)}` : ''}`,
@@ -327,7 +329,6 @@ export async function docx(args) {
   // Mesmo tratamento do front matter, no fim do livro. Serve para o que e do
   // produto mas nao e capitulo: lista de pendencias, glossario, fontes.
   for (const sec of secoes(join(raiz, 'docs', 'apendice.md'))) {
-    filhos.push(quebra());
     filhos.push(rubrica(sec.titulo, 1200));
     filhos.push(...paragrafos(sec.texto, { alignment: AlignmentType.LEFT, after: 200 }));
   }
