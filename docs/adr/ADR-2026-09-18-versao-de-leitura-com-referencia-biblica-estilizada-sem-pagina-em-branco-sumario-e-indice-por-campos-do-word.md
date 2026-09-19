@@ -61,6 +61,12 @@ programa que abre o DOCX (Word ou LibreOffice). O `docx.mjs` nao pagina.
      pergunta nenhuma.
    - O termo mais longo casa primeiro ("Maria Rita" antes de "Maria").
    - `indice_excluir` tira fichas do indice (o leitor, Jesus).
+5. **Pagina final.** `docs/pagina-final.md`, quando existe, vira uma pagina
+   propria depois do ultimo capitulo: titulo e texto alinhados a direita, no
+   pe da pagina. O pe vem de uma secao do Word com alinhamento vertical
+   inferior, e nao de espaco estimado, que erraria com o tamanho do texto.
+   Cada linha do arquivo e uma linha na pagina, e o titulo entra no sumario.
+   Pedido do autor em 2026-09-18: um "mini capitulo bonus" depois do desfecho.
 
 ## Consequences
 

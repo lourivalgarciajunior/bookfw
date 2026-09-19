@@ -31,6 +31,7 @@ Decisao em ADR-2026-09-18-versao-de-leitura-com-referencia-biblica-estilizada-se
 - [ ] Com `sumario: sim`, o DOCX traz uma pagina "Sumario" com campo `TOC` sobre Parte (nivel 1) e capitulo (nivel 2).
 - [ ] Com `indice: personagens`, cada paragrafo com nome de ficha declarada na cena ganha uma marca `XE`, e o livro termina numa pagina "Indice" com campo `INDEX`; apelido so vale na cena que declara a ficha, termo mais longo primeiro, e `indice_excluir` e respeitado.
 - [ ] O DOCX sai com `updateFields`; o `bookfw pdf` com Word atualiza sumario e indice antes de exportar; com outro conversor e campo presente, avisa.
+- [ ] Com `docs/pagina-final.md`, o livro ganha, depois do ultimo capitulo, uma pagina com o titulo e as linhas alinhados a direita no pe da pagina, e o titulo entra no sumario.
 - [ ] Regressao em `test/smoke.mjs` para os quatro pontos, provada por mutacao.
 - [ ] `npm run check` verde; `trackfw validate` sem violacao; versao 0.9.0 no package.json e no CHANGELOG; README e AJUDA com as chaves novas.
 - [ ] Plugin `bookfw` em `plugin-skill` documenta as chaves, com versao subida e gates rodados.

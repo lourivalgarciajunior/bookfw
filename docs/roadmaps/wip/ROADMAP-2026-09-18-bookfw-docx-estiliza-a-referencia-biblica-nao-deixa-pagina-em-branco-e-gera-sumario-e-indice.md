@@ -78,6 +78,12 @@ Os da REQ.
 **Acoes:** o script do Word atualiza o sumario, depois o indice, depois o numero de pagina do sumario, antes do `ExportAsFixedFormat`. Com outro conversor e a obra com `sumario` ou `indice`, o comando avisa.
 **Aceite:** no PDF real, o sumario e o indice tem numero de pagina.
 
+### ML-1F — pagina final
+**Status:** ⬜ Pendente
+**Arquivos:** `src/docx.mjs`
+**Acoes:** `docs/pagina-final.md` (secao `## Titulo` e linhas) vira, depois do ultimo capitulo, uma secao do Word com `verticalAlign: bottom`, rodape igual, titulo de nivel 2 e cada linha alinhada a direita.
+**Aceite:** o documento tem a segunda secao com alinhamento vertical inferior, e o titulo aparece no sumario do PDF.
+
 ## Wave 2 — Testes, docs e versao
 > Dependencies: Wave 1.
 
