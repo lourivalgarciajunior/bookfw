@@ -477,8 +477,14 @@ export function fragmentos(raiz) {
     const titulo = (partido.length > 1 ? partido.slice(1).join(' — ') : cabecalho).trim()
       || String(fm.tipo || '').trim() || String(fm.id || arq);
 
+    // Regua horizontal na borda do corpo e decoracao do arquivo, nao do livro:
+    // o separador de fragmento quem poe e o `build`, e quem poe duas vezes
+    // entrega ao leitor duas linhas seguidas sem nada entre elas.
     const texto = (m ? corpo.slice(corpo.indexOf(m[0]) + m[0].length) : corpo)
       .replace(/<!--[\s\S]*?-->/g, '')
+      .trim()
+      .replace(/^(?:-{3,}|\*{3,}|_{3,})\s*\n/, '')
+      .replace(/\n\s*(?:-{3,}|\*{3,}|_{3,})\s*$/, '')
       .trim();
 
     out.push({

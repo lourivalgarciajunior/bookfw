@@ -3,7 +3,7 @@
  * prosa — contrato de cena e comentario nao entram no livro.
  */
 import { join } from 'node:path';
-import { ESTADOS_ATIVOS, Erro, acharProjeto, c, capitulos, escrever, hoje, lerConfig, palavras, partes, prosaDe, rel } from './core.mjs';
+import { ESTADOS_ATIVOS, Erro, acharProjeto, c, capitulos, escrever, fragmentos, hoje, lerConfig, palavras, partes, prosaDe, rel } from './core.mjs';
 import { carimbo, revisaoAtual } from './revisao.mjs';
 
 /** O corte que produz o manuscrito de trabalho — tudo que ja tem prosa completa. */
@@ -52,6 +52,34 @@ export function selecao(raiz, minimo = CORTE_PADRAO) {
   };
 }
 
+/**
+ * Os fragmentos que saem, indexados pelo capitulo que eles seguem.
+ *
+ * Fonte unica do `build` e do `docx` pelo mesmo motivo que `selecao` ja era:
+ * o gerador de DOCX vivia refazendo a selecao por conta propria e defasava.
+ *
+ * Fragmento cuja posicao aponta para capitulo fora do corte nao sai. O corte
+ * esconde o capitulo; deixar o documento que vem depois dele e entregar ao
+ * leitor um anexo sem o texto a que ele se refere. Fragmento sem posicao
+ * valida tambem nao sai — e ai quem reclama e o `validate`, porque aqui
+ * reclamar seria reclamar duas vezes da mesma coisa.
+ */
+export function fragmentosEmitidos(raiz, caps) {
+  const numeros = new Set(caps.map((x) => x.numero));
+  const fora = new Map();
+  for (const f of fragmentos(raiz)) {
+    if (f.depois === null || !numeros.has(f.depois)) continue;
+    if (!fora.has(f.depois)) fora.set(f.depois, []);
+    fora.get(f.depois).push(f);
+  }
+  return fora;
+}
+
+/** O fragmento no manuscrito: regua, titulo de terceiro nivel, corpo, regua. */
+export function fragmentoEmMarkdown(f) {
+  return `\n\n---\n\n### ${f.titulo}\n\n${f.corpo}\n\n---\n`;
+}
+
 export function build(args) {
   const raiz = acharProjeto();
   const cfg = lerConfig(raiz);
@@ -71,6 +99,12 @@ export function build(args) {
   const orfaos = new Set();
   let atoAnterior = null;
   let divisores = 0;
+  // Documento sem narrador entre capitulos. Ate 2026-09-20 o `build` nao sabia
+  // que eles existiam: numa obra de 38 capitulos, os 12 fragmentos saiam do
+  // manuscrito calados, e o DOCX so ficou certo por injecao manual revertida
+  // depois. Ver ADR-2026-09-20-fragmento-e-um-artefato-da-obra.
+  const mapaFragmentos = fragmentosEmitidos(raiz, caps);
+  let emitidos = 0;
   for (const cap of caps) {
     const ato = Number(cap.fm.ato) || null;
     if (ato && ato !== atoAnterior) {
@@ -82,6 +116,10 @@ export function build(args) {
     saida.push(`\n\n## ${String(cap.numero).padStart(2, '0')} — ${cap.fm.titulo || ''}\n`);
     const prosa = prosaFinal(cap);
     saida.push(prosa || `> _[capitulo ainda sem prosa — ${cap.cenas.length} cenas planejadas]_`);
+    for (const f of mapaFragmentos.get(cap.numero) || []) {
+      saida.push(fragmentoEmMarkdown(f));
+      emitidos++;
+    }
   }
   // Um arquivo por corte. O corte padrao fica com o nome limpo, e e o que as
   // ferramentas de exportacao leem; os outros ganham sufixo para nunca
@@ -102,6 +140,7 @@ export function build(args) {
   }
   if (rev) console.log(c.dim(`  ${carimbo(rev).toLowerCase()} — ${rev.nota}`));
   else console.log(c.yellow('  sem revisao registrada — bookfw revisao "o que mudou" antes de mandar a alguem'));
+  if (emitidos) console.log(c.dim(`  ${emitidos} fragmento(s) intercalado(s), de docs/fragmentos`));
   if (divisores) console.log(c.dim(`  ${divisores} divisor(es) de Parte, do plano diretor`));
   for (const a of orfaos) console.log(c.yellow(`  ato ${a} nao esta na tabela Estrutura do plano diretor — sem divisor`));
   console.log(c.dim('  versao de leitura em DOCX: bookfw docx'));
