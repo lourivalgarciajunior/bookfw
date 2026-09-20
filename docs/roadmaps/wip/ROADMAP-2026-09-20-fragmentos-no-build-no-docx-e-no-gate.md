@@ -126,7 +126,7 @@ Os da REQ (AC1 a AC12).
 > Dependencies: Wave 3.
 
 ### ML-4A — fumaca dos fragmentos
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** `test/smoke.mjs`
 **Acoes:** acrescentar casos cobrindo AC2, AC5, AC6, AC7, AC8, AC9 e AC12, no padrao ja usado no arquivo (projeto temporario, comandos reais, assercao sobre a saida).
 
