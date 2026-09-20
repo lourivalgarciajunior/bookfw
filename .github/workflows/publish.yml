@@ -91,4 +91,15 @@ jobs:
 
       # Sem NODE_AUTH_TOKEN, de proposito. A procedencia sai assinada por conta
       # da publicacao confiavel, sem nenhum flag.
+      # TEMPORARIO — diagnostico de 2026-09-20. O npm devolve ENEEDAUTH sem
+      # tentar o OIDC, e so ha duas causas possiveis: o runner nao recebeu as
+      # variaveis de OIDC (problema do lado do GitHub) ou recebeu e o npm
+      # desistiu (problema do lado da npm). Este passo separa as duas. Remover
+      # assim que a primeira publicacao confiavel funcionar.
+      - name: o runner recebeu as variaveis de OIDC?
+        run: |
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL   presente: ${ACTIONS_ID_TOKEN_REQUEST_URL:+sim}${ACTIONS_ID_TOKEN_REQUEST_URL:-NAO}"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN presente: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+sim}${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-NAO}"
+          echo "npm: $(npm --version)"
+
       - run: npm publish --access public
