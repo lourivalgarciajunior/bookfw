@@ -82,7 +82,7 @@ Os da REQ (AC1 a AC12).
 **Validacao:** `cd <obra> && bookfw build && grep -c "^### " manuscrito/sartre-exe.md`
 
 ### ML-2B — `docx` emite os mesmos fragmentos
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** `src/docx.mjs`
 **Acoes:**
 - Importar `fragmentosEmitidos` de `build.mjs`.
