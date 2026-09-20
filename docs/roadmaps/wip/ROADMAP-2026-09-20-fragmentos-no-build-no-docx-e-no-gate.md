@@ -145,7 +145,7 @@ Os da REQ (AC1 a AC12).
 > Dependencies: Wave 4.
 
 ### ML-5A — leitura adversarial antes de liberar
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** nenhum (revisao)
 **Acoes:** rodar a obra real de ponta a ponta (build, docx, pdf, validate, status), conferir que o repositorio da obra fica limpo, e confirmar AC12 numa obra sem fragmentos.
 
