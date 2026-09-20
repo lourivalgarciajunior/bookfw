@@ -134,7 +134,7 @@ Os da REQ (AC1 a AC12).
 **Validacao:** `npm test`
 
 ### ML-4B — README, CHANGELOG e versao
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** `README.md`, `CHANGELOG.md`, `package.json`, `templates/` (LEIAME de fragmentos, se couber)
 **Acoes:** documentar a convencao de fragmento, registrar a entrada no CHANGELOG e subir a versao menor para `0.10.0`.
 

@@ -72,6 +72,7 @@ docs/canon/personagens/         fichas
 docs/canon/lugares/             fichas
 docs/canon/cronologia.md        linha do tempo canonica
 docs/canon/regras.md            o que e verdade nesta obra
+docs/fragmentos/                documentos sem narrador, entre capitulos
 docs/style-card.md              a voz do autor, medida e julgada
 samples/                        textos ja escritos pelo autor
 capitulos/<estado>/             o kanban
@@ -135,6 +136,7 @@ livre — inclusive o `revisao -> escrita`, que e o "volta" de rotina da revisao
 - numeração sem duplicata
 - capítulo em revisão ou pronto com prosa de verdade, dentro da faixa de palavras
 - **toda promessa do plano diretor plantada e paga**
+- fragmento com `id` único e `depois_do_capitulo` apontando para capítulo que existe
 
 Com mais de um plano diretor em `docs/plano-diretor/`, **vale o mais recente** —
 e o gate diz qual, para a escolha não ser silenciosa.
@@ -168,6 +170,50 @@ a coluna final. Linha que não vira capítulo — um vão como `| 04–06 | a es
 quantos capítulos de quantos entraram. Capítulo com prosa que ficou de fora da
 escada — em `bloqueado` — é **nomeado na saída**: buraco no manuscrito não sai
 calado.
+
+## Fragmentos
+
+Documento sem narrador que entra **entre** capítulos — relatório, log,
+memorando, transcrição, boletim. É o recurso de lore que o leitor monta
+sozinho: o passado chega em pedaços, meio passo à frente do que os personagens
+sabem, e ninguém no livro comenta.
+
+Um arquivo por fragmento, em `docs/fragmentos/`:
+
+```markdown
+---
+id: F01
+depois_do_capitulo: 4
+tipo: boletim trimestral
+promessas: [P1]
+---
+
+# F01 — Boletim ao cotista
+
+Taxa de acerto impressa no rodapé, sem ninguém comentando.
+```
+
+`id` é obrigatório e único — é ele que ordena dois fragmentos que seguem o
+mesmo capítulo. `depois_do_capitulo` é a posição, **como número**: o texto
+livre vai no `tipo`. O título sai do que vem depois do travessão no `# ...`;
+sem cabeçalho, cai para o `tipo` e depois para o `id`. Régua horizontal na
+borda do corpo é decoração do arquivo e não sai duplicada — o separador quem
+põe é o `build`.
+
+`bookfw build` e `bookfw docx` intercalam o fragmento depois do capítulo
+declarado e dizem quantos emitiram. No DOCX ele sai em página própria, com o
+título em itálico e o corpo um ponto menor, recuado dos dois lados: o leitor
+vê de longe que aquilo não é capítulo. Fragmento apontando para capítulo
+**abaixo do corte** não sai — anexo sem o texto a que se refere não é leitura.
+
+O gate cobra `id` presente e único, posição numérica apontando para capítulo
+que existe, e promessa que esteja no plano diretor. Promessa declarada em
+fragmento conta como **plantada**: um fio pode ser aberto num documento e pago
+numa cena. Fragmento **não paga** promessa — pagamento é desfecho, e desfecho
+acontece com alguém em cena.
+
+Obra sem `docs/fragmentos/` sai exatamente como sempre saiu. O diretório
+ausente não é erro e não gera aviso.
 
 ## A versão de leitura
 
