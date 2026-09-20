@@ -34,7 +34,7 @@ Os da REQ (AC1 a AC12).
 > Dependencies: nenhuma.
 
 ### ML-0A — superficie nova e o que pode dar errado
-**Status:** ⬜ Pendente
+**Status:** ✅ Concluído
 **Arquivos:** nenhum (analise, registrada aqui)
 **Acoes:** listar a entrada nova e a falha de cada caminho.
 - Entrada nova: arquivos arbitrarios em `docs/fragmentos/*.md`, escritos a mao. Frontmatter passa pelo `yamlRaso`, que ja e tolerante e ja reporta linha solta.
