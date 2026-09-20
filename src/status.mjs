@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ESTADOS_ATIVOS, acharProjeto, artefatos, c, canon, capitulos, lerConfig, planoDiretor, promessas, rel, sumario, divergenciaDeAlvo } from './core.mjs';
+import { ESTADOS_ATIVOS, acharProjeto, artefatos, c, canon, capitulos, fragmentos, lerConfig, planoDiretor, promessas, rel, sumario, divergenciaDeAlvo } from './core.mjs';
 import { ARQUIVO as ARQ_REVISOES, carimbo, lerRevisoes, revisaoAtual } from './revisao.mjs';
 
 export function status() {
@@ -8,11 +8,16 @@ export function status() {
   const cfg = lerConfig(raiz);
   const caps = capitulos(raiz);
   const cn = canon(raiz);
+  // Fragmento e artefato da obra e sai no manuscrito. Ate 2026-09-20 o painel
+  // nao o contava, entao o autor lia "52.366 palavras" num livro que saia com
+  // 55.100 — e a diferenca eram os doze documentos que ninguem somava.
+  const frags = fragmentos(raiz);
+  const palavrasFrag = frags.reduce((a, x) => a + x.palavras, 0);
   const total = caps.reduce((a, x) => a + x.palavras, 0);
   const alvo = Number(cfg.palavras_alvo || 0);
 
   console.log(c.b(`${cfg.titulo || 'sem titulo'}`) + c.dim(`  ${cfg.genero || ''}`));
-  console.log(c.dim(`PD ${artefatos(raiz, 'plano-diretor').length ? 'sim' : 'NAO'} | SUM ${artefatos(raiz, 'sumario').length ? 'sim' : 'NAO'} | DEC ${artefatos(raiz, 'dec').length} | personagens no canon ${cn.personagens.length}`));
+  console.log(c.dim(`PD ${artefatos(raiz, 'plano-diretor').length ? 'sim' : 'NAO'} | SUM ${artefatos(raiz, 'sumario').length ? 'sim' : 'NAO'} | DEC ${artefatos(raiz, 'dec').length} | personagens no canon ${cn.personagens.length}${frags.length ? ` | fragmentos ${frags.length}` : ''}`));
   // A revisao e o que o leitor externo recebe; sem ela o DOCX sai sem numero e
   // duas leituras ficam com o mesmo nome. Por isso aparece aqui, e nao so no
   // arquivo de registro.
@@ -50,7 +55,8 @@ export function status() {
     for (const p of proms) console.log(`  ${pagas.has(p.id) ? c.green('x') : ' '} ${p.id} ${p.texto}`);
   }
 
-  console.log(`\n${c.b(String(total))} palavras${alvo ? ` de ${alvo} (${Math.round((total / alvo) * 100)}%)` : ''}`);
+  const comFrag = palavrasFrag ? c.dim(` + ${palavrasFrag} em fragmentos = ${total + palavrasFrag}`) : '';
+  console.log(`\n${c.b(String(total))} palavras${alvo ? ` de ${alvo} (${Math.round((total / alvo) * 100)}%)` : ''}${comFrag}`);
 }
 
 /**
