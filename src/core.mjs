@@ -429,3 +429,74 @@ export function promessas(raiz) {
   return [...sec.replace(/^```[\s\S]*?^```/gm, '').matchAll(/^-[ \t]*(P\d+)[ \t]*[—–-][ \t]*(\S.*)$/gm)]
     .map((m) => ({ id: m[1], texto: m[2].trim() }));
 }
+
+/**
+ * Fragmentos da obra: documento sem narrador que entra ENTRE capitulos —
+ * relatorio, log, memorando, transcricao. Um arquivo por fragmento, em
+ * `docs/fragmentos/`, com `id` e `depois_do_capitulo` no frontmatter.
+ *
+ * Nao e capitulo e nao e cena, por decisao registrada em
+ * ADR-2026-09-20-fragmento-e-um-artefato-da-obra. Como capitulo, um documento
+ * de 300 palavras renumeraria a obra e entraria no `wip_limit`; como cena, o
+ * gate cobraria dele objetivo, conflito e virada, que um memorando de 1988 nao
+ * tem — e preencher esses campos seria escrever mentira no contrato para calar
+ * o gate.
+ *
+ * Arquivo sem NENHUMA das duas chaves nao e fragmento: e o LEIAME do
+ * diretorio, ou uma nota de trabalho. Arquivo com uma so e fragmento
+ * incompleto, e quem reclama e o `validate` — aqui ele entra com o campo nulo,
+ * porque engolir o arquivo em silencio e como a obra que motivou isto perdeu
+ * doze documentos no DOCX sem um aviso.
+ *
+ * Ordem: por capitulo e, no empate, por `id`. Dois fragmentos depois do mesmo
+ * capitulo sao legitimos; o que nao pode e a ordem depender da varredura do
+ * diretorio.
+ */
+export function fragmentos(raiz) {
+  const dir = join(raiz, 'docs', 'fragmentos');
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) return [];
+  const out = [];
+  for (const arq of readdirSync(dir).filter((f) => f.endsWith('.md')).sort()) {
+    const caminho = join(dir, arq);
+    const problemas = [];
+    const { fm, corpo, linhaCorpo } = frontmatter(readFileSync(caminho, 'utf8'), problemas);
+    if (fm.id === undefined && fm.depois_do_capitulo === undefined) continue;
+
+    // Posicao so vale como numero. "depois do capitulo 4" e texto bonito que
+    // obrigaria a interpretar portugues; fica nulo e o gate cobra.
+    const bruto = String(fm.depois_do_capitulo ?? '').trim();
+    const depois = /^\d+$/.test(bruto) ? Number(bruto) : null;
+
+    // O titulo e o que vem depois do travessao no primeiro `# ...` do corpo —
+    // `# F01 — Boletim trimestral` vira "Boletim trimestral". Sem cabecalho,
+    // cai para o `tipo` e depois para o `id`: o fragmento sai no manuscrito de
+    // qualquer jeito, porque sumir e o unico desfecho inaceitavel.
+    const m = corpo.match(/^#[ \t]+(.+)$/m);
+    const cabecalho = m ? m[1].trim() : '';
+    const partido = cabecalho.split(/\s[—–-]\s/);
+    const titulo = (partido.length > 1 ? partido.slice(1).join(' — ') : cabecalho).trim()
+      || String(fm.tipo || '').trim() || String(fm.id || arq);
+
+    const texto = (m ? corpo.slice(corpo.indexOf(m[0]) + m[0].length) : corpo)
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .trim();
+
+    out.push({
+      arquivo: arq,
+      caminho,
+      fm,
+      linhaCorpo,
+      problemas,
+      id: String(fm.id ?? '').trim(),
+      depois,
+      brutoDepois: bruto,
+      tipo: String(fm.tipo ?? '').trim(),
+      titulo,
+      corpo: texto,
+      promessas: [].concat(fm.promessas || []),
+      paga: [].concat(fm.paga || []),
+      palavras: palavras(texto),
+    });
+  }
+  return out.sort((a, b) => (a.depois ?? Infinity) - (b.depois ?? Infinity) || a.id.localeCompare(b.id) || a.arquivo.localeCompare(b.arquivo));
+}
