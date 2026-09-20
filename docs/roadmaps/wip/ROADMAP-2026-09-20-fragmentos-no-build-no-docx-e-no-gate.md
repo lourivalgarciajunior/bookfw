@@ -52,7 +52,7 @@ Os da REQ (AC1 a AC12).
 > Dependencies: Wave 0.
 
 ### ML-1A — `fragmentos(raiz)` no core
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** `src/core.mjs`
 **Acoes:**
 - Acrescentar `export function fragmentos(raiz)`: le `docs/fragmentos/*.md`, ignora `LEIAME.md` e qualquer arquivo sem frontmatter com `id`.
