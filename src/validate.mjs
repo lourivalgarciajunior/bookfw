@@ -6,7 +6,7 @@
  */
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { acharProjeto, artefatos, c, canon, capitulos, divergenciaDeAlvo, lerConfig, linhasDoSumario, promessas, rel, slug, sumario } from './core.mjs';
+import { acharProjeto, artefatos, c, canon, capitulos, divergenciaDeAlvo, fragmentos, lerConfig, linhasDoSumario, promessas, rel, slug, sumario } from './core.mjs';
 import { modoDeReferencia, problemasDeReferencia } from './biblia.mjs';
 
 const OBRIGATORIOS = ['objetivo', 'conflito', 'virada'];
@@ -159,6 +159,47 @@ export function validate(args) {
     }
   }
 
+  // ---- fragmentos
+  // Documento sem narrador entre capitulos. O gate cobra tres coisas e so
+  // tres, por ADR-2026-09-20: posicao que existe, id unico, e promessa que
+  // esta no plano diretor. Obra sem `docs/fragmentos/` nao executa nada disto
+  // e nao ganha aviso — fragmento e opcional, e avisar da ausencia de uma
+  // coisa opcional treina o autor a ignorar aviso.
+  const frags = fragmentos(raiz);
+  const idsDeFragmento = new Map();
+  const numerosVivos = new Set(caps.filter((x) => x.estado !== 'abandonado').map((x) => x.numero));
+  const idsDePromessa = new Set(proms.map((x) => x.id));
+  for (const f of frags) {
+    const onde = rel(raiz, f.caminho);
+    for (const p of f.problemas || []) {
+      erro(`${onde}:${p.linha}`, `linha solta ${p.onde || 'no frontmatter'} — o texto nao pertence a nenhum campo: "${p.texto}"`);
+    }
+    if (!f.id) {
+      erro(onde, 'fragmento sem "id" — o id e o que da ordem estavel entre dois fragmentos do mesmo capitulo');
+    } else if (idsDeFragmento.has(f.id)) {
+      erro(onde, `id "${f.id}" duplicado com ${idsDeFragmento.get(f.id)}`);
+    } else {
+      idsDeFragmento.set(f.id, f.arquivo);
+    }
+    if (f.depois === null) {
+      erro(onde, f.brutoDepois
+        ? `"depois_do_capitulo: ${f.brutoDepois}" nao e um numero de capitulo — a posicao e o numero, o texto vai no "tipo"`
+        : 'sem "depois_do_capitulo" — fragmento sem posicao nao entra no manuscrito');
+    } else if (!numerosVivos.has(f.depois)) {
+      erro(onde, `depois_do_capitulo ${f.depois} — nao existe capitulo ${f.depois} no kanban`);
+    }
+    // Fragmento planta fio; nao fecha. Quem fecha e a cena, porque pagamento
+    // e desfecho e desfecho acontece com alguem em cena.
+    for (const pg of f.paga) {
+      erro(onde, `"paga: [${pg}]" — fragmento planta promessa e nao paga; declare o pagamento na cena de desfecho`);
+    }
+    for (const pr of f.promessas) {
+      if (!idsDePromessa.has(pr)) erro(onde, `promessa "${pr}" nao existe no plano diretor`);
+      else plantadas.add(pr);
+    }
+    if (!f.corpo) aviso(onde, 'fragmento sem corpo — sai no manuscrito como titulo solto');
+  }
+
   // ---- referencia biblica
   // Liga pela chave `referencia_biblica` do livro.yaml. So a prosa conta:
   // frontmatter e contrato de cena viram linhas em branco, para o numero da
@@ -206,11 +247,12 @@ export function validate(args) {
   }
 
   if (args.json) {
-    console.log(JSON.stringify({ erros, avisos, capitulos: caps.length, promessas: proms.length }, null, 2));
+    console.log(JSON.stringify({ erros, avisos, capitulos: caps.length, fragmentos: frags.length, promessas: proms.length }, null, 2));
     return erros.length ? 1 : 0;
   }
 
-  console.log(`capitulos ${caps.length} | cenas ${caps.reduce((a, x) => a + x.cenas.length, 0)} | palavras ${caps.reduce((a, x) => a + x.palavras, 0)}`);
+  const linhaFrag = frags.length ? ` | fragmentos ${frags.length}` : '';
+  console.log(`capitulos ${caps.length} | cenas ${caps.reduce((a, x) => a + x.cenas.length, 0)}${linhaFrag} | palavras ${caps.reduce((a, x) => a + x.palavras, 0)}`);
   for (const a of avisos) console.log(`  ${c.yellow('aviso')}  ${a}`);
   for (const e of erros) console.log(`  ${c.red('ERRO')}   ${e}`);
   if (erros.length) {

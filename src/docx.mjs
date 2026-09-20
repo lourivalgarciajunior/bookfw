@@ -16,7 +16,7 @@ import { Erro, acharProjeto, c, canon, lerConfig, partes, rel } from './core.mjs
 import { modoDeReferencia, trechosDeReferencia } from './biblia.mjs';
 import { acharTermos, campoXE, fichasDoIndice, limparCampo, termosDaCena } from './indice.mjs';
 import { carimbo, revisaoAtual } from './revisao.mjs';
-import { CORTE_PADRAO, prosaFinal, selecao } from './build.mjs';
+import { CORTE_PADRAO, fragmentosEmitidos, prosaFinal, selecao } from './build.mjs';
 import { blocos, trechos } from './markdown.mjs';
 
 const A5 = { width: 8391, height: 11906 };
@@ -350,6 +350,11 @@ export async function docx(args) {
   // antes do primeiro capitulo do ato. Ato sem linha na tabela nao inventa
   // titulo — fica sem divisor, e o build e quem avisa.
   const mapaPartes = partes(raiz);
+  // Os mesmos fragmentos que o `build` intercala, pela mesma funcao. Duas
+  // selecoes para a mesma coisa e como o gerador de DOCX defasou da primeira
+  // vez: o papel dizia uma coisa e o manuscrito dizia outra.
+  const mapaFragmentos = fragmentosEmitidos(raiz, caps);
+  let fragmentosNoPapel = 0;
   let atoAnterior = null;
   let divisores = 0;
   caps.forEach((cap) => {
@@ -408,6 +413,30 @@ export async function docx(args) {
       });
     } else {
       filhos.push(...paragrafos(prosaFinal(cap)));
+    }
+
+    // Fragmento: documento sem narrador, em pagina propria. Titulo em italico
+    // e corpo em modo citacao — um ponto menor, recuado dos dois lados — para
+    // o leitor ver de longe que aquilo nao e capitulo. Sem marca de indice: o
+    // indice e das fichas declaradas por cena, e fragmento nao tem cena.
+    for (const f of mapaFragmentos.get(cap.numero) || []) {
+      filhos.push(new Paragraph({
+        pageBreakBefore: true, spacing: { before: 900, after: 60 }, alignment: AlignmentType.CENTER,
+        children: [new TextRun({
+          text: texto(f.tipo || 'fragmento'),
+          font: SERIF, size: 17, allCaps: true, characterSpacing: 60, color: '888888',
+        })],
+      }));
+      filhos.push(new Paragraph({
+        alignment: AlignmentType.CENTER, spacing: { after: 420 },
+        children: [
+          ...(comSumario ? entradaSumario(texto(f.titulo), divisores ? 2 : 1) : []),
+          new TextRun({ text: texto(f.titulo), font: SERIF, size: 26, italics: true }),
+        ],
+      }));
+      if (comSumario) entradas++;
+      filhos.push(...paragrafos(f.corpo, { citacao: true }));
+      fragmentosNoPapel++;
     }
   });
 
@@ -529,6 +558,7 @@ export async function docx(args) {
   console.log(`${c.green('docx gerado')}  ${rel(raiz, alvo)}`);
   console.log(c.dim(`  corte: ${minimo} ou adiante | ${caps.length} capitulos, ${comNota} com ressalva`));
   if (divisores) console.log(c.dim(`  ${divisores} divisor(es) de Parte, do plano diretor`));
+  if (fragmentosNoPapel) console.log(c.dim(`  ${fragmentosNoPapel} fragmento(s) intercalado(s), de docs/fragmentos`));
   if (refLigada) console.log(c.dim(`  referencia biblica em italico, corpo ${corpoRef / 2} pt`));
   if (comSumario) console.log(c.dim(`  sumario com ${entradas} entrada(s)`));
   if (comIndice && marcasIndice) console.log(c.dim(`  indice com ${marcasIndice} marca(s) de ${fichas.size} ficha(s)`));

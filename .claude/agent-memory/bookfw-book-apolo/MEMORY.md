@@ -1,0 +1,1 @@
+- [Obra catequetica sem pejorativo](feedback_obra-catequetica-sem-pejorativo.md) — 4 diretrizes do autor: conflito de logicas, nunca pessoa exposta, desmascarada ou culpada

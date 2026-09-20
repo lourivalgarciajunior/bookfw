@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.10.0 — 2026-09-20
+
+### Adicionado
+
+- **Fragmentos** (`docs/fragmentos/`). Documento sem narrador entre capítulos —
+  relatório, log, memorando, transcrição. Um arquivo por fragmento, com `id`,
+  `depois_do_capitulo`, `tipo` e `promessas`. `build` e `docx` intercalam depois
+  do capítulo declarado e dizem quantos emitiram; no DOCX sai em página própria,
+  título em itálico e corpo um ponto menor. Fragmento apontando para capítulo
+  abaixo do corte não sai.
+- **Gate dos fragmentos.** O `validate` reprova `id` ausente ou duplicado,
+  posição ausente, não numérica ou apontando para capítulo que não existe,
+  promessa fora do plano diretor, e campo `paga` — fragmento planta fio e não
+  fecha. Promessa declarada em fragmento conta como plantada na regra de
+  Chekhov.
+- **`status` conta fragmentos** no cabeçalho e soma as palavras deles na linha
+  final. O autor lia 52.366 palavras numa obra que saía com 55.100; a diferença
+  eram os doze documentos que ninguém somava.
+
+Obra sem `docs/fragmentos/` produz build, docx, validate e status idênticos aos
+da 0.9.0.
+
+Motivado por `pessoal/book/sartre-exe` (38 capítulos, 12 fragmentos): o DOCX da
+revisão 2 só saiu completo por injeção manual dos fragmentos nos capítulos,
+revertida em seguida com `git checkout`.
+
 ## 0.9.0 — 2026-09-18
 
 ### Adicionado
