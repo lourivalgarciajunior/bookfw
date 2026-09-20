@@ -1508,7 +1508,10 @@ function comAmostra(p, repeticoes = 40) {
 // manuscrito calados e o DOCX so ficou certo por injecao manual revertida
 // depois. Ver ADR-2026-09-20-fragmento-e-um-artefato-da-obra.
 {
-  const { dir, rodar } = projeto('Obra com Fragmento');
+  // O titulo NAO pode conter a palavra que as assercoes procuram: o build
+  // imprime o caminho do manuscrito, e 'obra-com-fragmento.md' faria
+  // `saida.includes('fragmento')` passar sem nenhum fragmento existir.
+  const { dir, rodar } = projeto('Obra com Documento');
 
   // Um capitulo com prosa, para haver onde pendurar o fragmento.
   rodar('cap', 'new', 'O primeiro', '--ato', '1');
@@ -1545,7 +1548,7 @@ function comAmostra(p, repeticoes = 40) {
   ].join('\n'));
   const comFrag = rodar('build');
   ok('build intercala o fragmento e diz quantos', comFrag.codigo === 0 && comFrag.saida.includes('1 fragmento(s) intercalado(s)'));
-  const manuscrito = readFileSync(join(dir, 'manuscrito', 'obra-com-fragmento.md'), 'utf8');
+  const manuscrito = readFileSync(join(dir, 'manuscrito', 'obra-com-documento.md'), 'utf8');
   ok('o corpo do fragmento entra no manuscrito', manuscrito.includes('Taxa de acerto no rodape'));
   ok('o titulo do fragmento sai sem o id', manuscrito.includes('### Boletim ao cotista') && !manuscrito.includes('### F01 —'));
   ok('o fragmento vem depois do capitulo que ele segue', manuscrito.indexOf('Taxa de acerto') > manuscrito.indexOf('Prosa do primeiro capitulo'));
@@ -1560,7 +1563,7 @@ function comAmostra(p, repeticoes = 40) {
   frag('F02-tardio.md', ['---', 'id: F02', 'depois_do_capitulo: 2', '---', '', '# F02 — Tardio', '', 'Corpo do tardio.', ''].join('\n'));
   const corte = rodar('build');
   ok('fragmento depois de capitulo abaixo do corte nao sai', corte.saida.includes('1 fragmento(s) intercalado(s)')
-    && !readFileSync(join(dir, 'manuscrito', 'obra-com-fragmento.md'), 'utf8').includes('Corpo do tardio'));
+    && !readFileSync(join(dir, 'manuscrito', 'obra-com-documento.md'), 'utf8').includes('Corpo do tardio'));
 
   // AC6, AC7, AC9 — o gate.
   const gate = (nome, texto) => { frag(nome, texto); const r = rodar('validate'); return r.saida; };
@@ -1583,7 +1586,9 @@ function comAmostra(p, repeticoes = 40) {
   }
   const pds = readdirSync(join(dir, 'docs', 'plano-diretor'));
   const pdPath = join(dir, 'docs', 'plano-diretor', pds[pds.length - 1]);
-  writeFileSync(pdPath, readFileSync(pdPath, 'utf8').replace('- P1 — ', '- P1 — o boletim acerta demais e a obra explica por que'), 'utf8');
+  // Ancorado na linha: o template cita `- P1 — texto` na instrucao acima da
+  // lista, e um replace solto trocava o exemplo em vez da promessa.
+  writeFileSync(pdPath, readFileSync(pdPath, 'utf8').replace(/^- P1 —.*$/m, '- P1 — o boletim acerta demais e a obra explica por que'), 'utf8');
   frag('F01-boletim.md', [
     '---', 'id: F01', 'depois_do_capitulo: 1', 'promessas: [P1]', '---', '',
     '# F01 — Boletim ao cotista', '', 'Taxa de acerto no rodape.', '',
