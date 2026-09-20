@@ -98,7 +98,7 @@ Os da REQ (AC1 a AC12).
 > Dependencies: Wave 2.
 
 ### ML-3A — `validate` cobra fragmento
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** `src/validate.mjs`
 **Acoes:**
 - Ler `fragmentos(raiz)`; sem fragmento, nenhum caminho novo executa.
