@@ -113,7 +113,7 @@ Os da REQ (AC1 a AC12).
 **Validacao:** `cd <obra> && bookfw validate`
 
 ### ML-3B — `status` conta fragmento
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** `src/status.mjs`
 **Acoes:**
 - Na linha de cabecalho da governanca, acrescentar `| fragmentos N` quando houver algum.
