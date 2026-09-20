@@ -1,5 +1,5 @@
 ---
-status: wip
+status: done
 date: 2026-09-20
 req: "docs/req/REQ-2026-09-20-bookfw-costura-fragmentos-entre-capitulos-no-build-e-no-docx-e-o-gate-cobra-posicao-id-unico-e-promessa-existente.md"
 branch: "feat/fragmentos-no-build-no-docx-e-no-gate"
@@ -8,7 +8,7 @@ squad: ""
 
 # Roadmap: fragmentos no build, no docx e no gate
 
-> Created: 2026-09-20 | Status: wip
+> Created: 2026-09-20 | Status: done
 
 ## Context
 
@@ -145,7 +145,7 @@ Os da REQ (AC1 a AC12).
 > Dependencies: Wave 4.
 
 ### ML-5A — leitura adversarial antes de liberar
-**Status:** 🔄 Em andamento
+**Status:** ✅ Concluído
 **Arquivos:** nenhum (revisao)
 **Acoes:** rodar a obra real de ponta a ponta (build, docx, pdf, validate, status), conferir que o repositorio da obra fica limpo, e confirmar AC12 numa obra sem fragmentos.
 
