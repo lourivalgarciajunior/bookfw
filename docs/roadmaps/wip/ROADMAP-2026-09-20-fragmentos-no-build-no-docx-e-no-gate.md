@@ -70,7 +70,7 @@ Os da REQ (AC1 a AC12).
 > Dependencies: Wave 1.
 
 ### ML-2A — `build` intercala fragmento
-**Status:** ⬜ Pendente
+**Status:** 🔄 Em andamento
 **Arquivos:** `src/build.mjs`
 **Acoes:**
 - Acrescentar `export function fragmentosEmitidos(raiz, caps)`: agrupa os fragmentos por `depois`, descartando os que apontam para capitulo fora de `caps` ou com `depois === null`. Devolve `Map<numeroDoCapitulo, fragmento[]>`. Fonte unica do build e do docx.
