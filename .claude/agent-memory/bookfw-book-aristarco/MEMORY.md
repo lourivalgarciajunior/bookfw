@@ -1,3 +1,3 @@
 - [Os Oito Modelos da Reforma Tributária](projeto-os-oito-modelos.md) — obra tecnica em pessoal/book, revisor externo no circuito, veredito da revisao 3 e as decisoes ja tomadas
 - [Ninguém nasce santo](projeto-ninguem-nasce-santo.md) — nao-ficcao crista juvenil, terreno comum; veredito R1 volta, 3 bloqueios e decisoes do autor pendentes
-- [Onde Ele Não Está](projeto-onde-ele-nao-esta.md) — aventura YA, Sun Tzu sem vocabulario; veredito da Parte I, os 3 tiques da prosa e 4 decisoes do autor
+- [Onde Ele Não Está](projeto-onde-ele-nao-esta.md) — aventura YA, Sun Tzu sem vocabulario; obra completa revisada (R1-R4), a medicao das 4 Partes e os 4 reparos abertos do desfecho

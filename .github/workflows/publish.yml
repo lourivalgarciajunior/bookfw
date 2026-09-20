@@ -37,10 +37,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # SEM `registry-url`, de proposito. Com ele, o setup-node escreve um
+      # .npmrc com `_authToken=${NODE_AUTH_TOKEN}` e exporta NODE_AUTH_TOKEN
+      # com o placeholder literal `XXXXX-XXXXX-XXXXX-XXXXX`. O npm entao
+      # publica COM credencial — uma credencial invalida — e nunca chega a
+      # tentar o OIDC. O registry responde 404, que e a mascara dele para
+      # "nao autorizado", e a mensagem fala em pacote inexistente.
+      #
+      # Medido em 2026-09-20: duas execucoes seguidas com a publicacao
+      # confiavel ja configurada na pagina do pacote, as duas com
+      # `404 Not Found - PUT https://registry.npmjs.org/bookfw`, e o log da
+      # setup-node mostrando `NODE_AUTH_TOKEN: XXXXX-XXXXX-XXXXX-XXXXX`.
+      # O registry padrao ja e o da npm; nao ha o que configurar aqui.
       - uses: actions/setup-node@v4
         with:
           node-version: 22 # >= 22.14.0, exigencia do publish confiavel
-          registry-url: https://registry.npmjs.org
 
       # O npm que vem com o Node 22 e da linha 10 e nao sabe falar OIDC. A
       # exigencia e 11.5.1 ou mais novo, e a falha sem isto e um 404 obscuro
