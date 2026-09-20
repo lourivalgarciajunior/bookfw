@@ -1501,6 +1501,100 @@ function comAmostra(p, repeticoes = 40) {
   }
 }
 
+
+// ------------------------------------------------------------- fragmentos
+// Documento sem narrador entre capitulos. Antes de 2026-09-20 eles nao
+// existiam para o CLI: numa obra de 38 capitulos, os 12 fragmentos sairam do
+// manuscrito calados e o DOCX so ficou certo por injecao manual revertida
+// depois. Ver ADR-2026-09-20-fragmento-e-um-artefato-da-obra.
+{
+  const { dir, rodar } = projeto('Obra com Fragmento');
+
+  // Um capitulo com prosa, para haver onde pendurar o fragmento.
+  rodar('cap', 'new', 'O primeiro', '--ato', '1');
+  rodar('cap', 'move', '1', 'esboco');
+  const cap1 = join(dir, 'capitulos', 'esboco', 'cap-01-o-primeiro.md');
+  writeFileSync(cap1, readFileSync(cap1, 'utf8')
+    .replace('local:', 'local: Cozinha')
+    .replace('objetivo:', 'objetivo: sair de casa')
+    .replace('conflito:', 'conflito: a porta esta trancada')
+    .replace('virada:', 'virada: a chave nao e dela')
+    + '\n\nProsa do primeiro capitulo, com palavras suficientes para existir.\n', 'utf8');
+  rodar('cap', 'move', '1', 'escrita');
+  rodar('cap', 'move', '1', 'revisao');
+
+  const frag = (nome, texto) => {
+    mkdirSync(join(dir, 'docs', 'fragmentos'), { recursive: true });
+    writeFileSync(join(dir, 'docs', 'fragmentos', nome), texto, 'utf8');
+  };
+
+  // AC12 — sem o diretorio, nada muda.
+  const semFrag = rodar('build');
+  ok('sem docs/fragmentos o build nao fala em fragmento', !semFrag.saida.includes('fragmento'));
+  ok('sem docs/fragmentos o status nao fala em fragmento', !rodar('status').saida.includes('fragmento'));
+
+  // LEIAME do diretorio nao e fragmento: nao tem id nem posicao.
+  frag('LEIAME.md', '# Fragmentos\n\nComo escrever um fragmento.\n');
+  ok('arquivo sem id e sem posicao nao e fragmento', !rodar('build').saida.includes('fragmento'));
+
+  // AC2 — o fragmento sai depois do capitulo declarado.
+  frag('F01-boletim.md', [
+    '---', 'id: F01', 'depois_do_capitulo: 1', 'tipo: boletim trimestral', '---', '',
+    '# F01 — Boletim ao cotista', '', '---', '',
+    'Taxa de acerto no rodape, sem ninguem comentando.', '', '---', '',
+  ].join('\n'));
+  const comFrag = rodar('build');
+  ok('build intercala o fragmento e diz quantos', comFrag.codigo === 0 && comFrag.saida.includes('1 fragmento(s) intercalado(s)'));
+  const manuscrito = readFileSync(join(dir, 'manuscrito', 'obra-com-fragmento.md'), 'utf8');
+  ok('o corpo do fragmento entra no manuscrito', manuscrito.includes('Taxa de acerto no rodape'));
+  ok('o titulo do fragmento sai sem o id', manuscrito.includes('### Boletim ao cotista') && !manuscrito.includes('### F01 —'));
+  ok('o fragmento vem depois do capitulo que ele segue', manuscrito.indexOf('Taxa de acerto') > manuscrito.indexOf('Prosa do primeiro capitulo'));
+  // A regua da borda e do arquivo; o separador quem poe e o build.
+  ok('regua na borda do corpo nao sai duplicada', !/---\n\n---/.test(manuscrito));
+
+  // AC10 — o painel conta.
+  ok('status conta o fragmento', rodar('status').saida.includes('fragmentos 1'));
+
+  // AC5 — fragmento depois de capitulo abaixo do corte nao sai.
+  rodar('cap', 'new', 'O segundo', '--ato', '1');
+  frag('F02-tardio.md', ['---', 'id: F02', 'depois_do_capitulo: 2', '---', '', '# F02 — Tardio', '', 'Corpo do tardio.', ''].join('\n'));
+  const corte = rodar('build');
+  ok('fragmento depois de capitulo abaixo do corte nao sai', corte.saida.includes('1 fragmento(s) intercalado(s)')
+    && !readFileSync(join(dir, 'manuscrito', 'obra-com-fragmento.md'), 'utf8').includes('Corpo do tardio'));
+
+  // AC6, AC7, AC9 — o gate.
+  const gate = (nome, texto) => { frag(nome, texto); const r = rodar('validate'); return r.saida; };
+  ok('gate reprova id ausente',
+    gate('sem-id.md', ['---', 'depois_do_capitulo: 1', '---', '', '# Sem id', '', 'Corpo.', ''].join('\n')).includes('sem "id"'));
+  ok('gate reprova id duplicado',
+    gate('duplicado.md', ['---', 'id: F01', 'depois_do_capitulo: 1', '---', '', '# Outro F01', '', 'Corpo.', ''].join('\n')).includes('duplicado com'));
+  ok('gate reprova posicao que nao e numero',
+    gate('texto.md', ['---', 'id: F03', 'depois_do_capitulo: depois do capitulo 1', '---', '', '# F03', '', 'Corpo.', ''].join('\n')).includes('nao e um numero de capitulo'));
+  ok('gate reprova posicao apontando para capitulo inexistente',
+    gate('longe.md', ['---', 'id: F04', 'depois_do_capitulo: 99', '---', '', '# F04', '', 'Corpo.', ''].join('\n')).includes('nao existe capitulo 99'));
+  ok('gate reprova fragmento pagando promessa',
+    gate('paga.md', ['---', 'id: F05', 'depois_do_capitulo: 1', 'paga: [P1]', '---', '', '# F05', '', 'Corpo.', ''].join('\n')).includes('planta promessa e nao paga'));
+  ok('gate reprova promessa que nao esta no plano diretor',
+    gate('promessa.md', ['---', 'id: F06', 'depois_do_capitulo: 1', 'promessas: [P99]', '---', '', '# F06', '', 'Corpo.', ''].join('\n')).includes('"P99" nao existe no plano diretor'));
+
+  // AC8 e AC9 — promessa do PD declarada em fragmento conta como plantada.
+  for (const f of ['sem-id.md', 'duplicado.md', 'texto.md', 'longe.md', 'paga.md', 'promessa.md']) {
+    rmSync(join(dir, 'docs', 'fragmentos', f), { force: true });
+  }
+  const pds = readdirSync(join(dir, 'docs', 'plano-diretor'));
+  const pdPath = join(dir, 'docs', 'plano-diretor', pds[pds.length - 1]);
+  writeFileSync(pdPath, readFileSync(pdPath, 'utf8').replace('- P1 — ', '- P1 — o boletim acerta demais e a obra explica por que'), 'utf8');
+  frag('F01-boletim.md', [
+    '---', 'id: F01', 'depois_do_capitulo: 1', 'promessas: [P1]', '---', '',
+    '# F01 — Boletim ao cotista', '', 'Taxa de acerto no rodape.', '',
+  ].join('\n'));
+  const chekhov = rodar('validate');
+  ok('promessa plantada em fragmento nao e mais cobrada como ausente',
+    !chekhov.saida.includes('promessa P1 ("o boletim acerta demais e a obra explica por que") nao aparece em nenhuma cena'));
+  ok('promessa plantada em fragmento e cobrada como nao paga',
+    chekhov.saida.includes('promessa P1 plantada e nunca paga'));
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);
