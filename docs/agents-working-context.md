@@ -182,3 +182,100 @@ no `main`. Foi para mudanca propria — `test(smoke): a promessa P1 casa com CRL
 **Governanca.** ADR-2026-09-08-o-docx-do-bookfw-interpreta-markdown-…,
 REQ-2026-09-08-bookfw-docx-aplica-a-formatacao-do-markdown-…,
 ROADMAP-2026-09-08-docx-markdown.
+
+## 2026-11-12 — o `publish.yml` esta vermelho desde 20/09, e a causa e do lado da npm
+
+**Registro escrito porque a prova EXPIRA.** A conclusao abaixo foi derivada dos logs
+do Actions em 12/11/2026, e a retencao padrao e de **90 dias**: 20/09 + 90 ≈
+**19/12/2026**. Depois disso nao ha como refazer esta derivacao, e o que resta e o
+workflow vermelho sem explicacao.
+
+### O que falhou
+
+```
+35533826397  att=3  20/09 16:54  404 Not Found + E404   <- o modo do `registry-url`
+35534421834  att=2  20/09 17:05  ENEEDAUTH              } depois do fix que o tirou
+35534682364         20/09 17:10  ENEEDAUTH              }
+35535129035         20/09 17:18  ENEEDAUTH              }  (release v0.10.0)
+```
+
+4 runs, **4 failures**, todos em 20/09. Nenhum depois — e a `main` segue vermelha por
+isso, sem relacao com o conteudo de nenhum commit posterior.
+
+### O mecanismo: o npm parou na autenticacao SEM falar com o registry
+
+```
+npm notice total files: 33  ·  bookfw-0.10.0.tgz  ·  85.0 kB
+npm error code ENEEDAUTH
+npm error need auth This command requires you to be logged in to https://registry.npmjs.org/
+```
+
+🔴 **O discriminante e o CONTRASTE entre os runs, nao a ausencia de sinal:** o primeiro
+imprimiu `404 Not Found - PUT https://registry.npmjs.org/bookfw`, que e **resposta do
+registry**. Os tres ultimos nao imprimem nenhuma. Logo o npm **nao chegou a tentar a
+troca OIDC** — ele decidiu que nao tinha credencial e parou antes.
+
+### O lado do GitHub esta CORRETO, e isso foi medido na epoca
+
+O commit `3a0c2cd` acrescentou um passo de diagnostico cujo proprio comentario dizia:
+*"so ha duas causas possiveis: o runner nao recebeu as variaveis de OIDC (problema do
+lado do GitHub) ou recebeu e o npm desistiu (problema do lado da npm). Este passo
+separa as duas."* O log do run `35534682364` responde:
+
+```
+ACTIONS_ID_TOKEN_REQUEST_URL     presente: sim   (com a URL completa)
+ACTIONS_ID_TOKEN_REQUEST_TOKEN   presente: sim   (***)
+npm: 12.0.2
+```
+
+**Recebeu, e o npm desistiu.** A versao do npm fica eliminada por um segundo caminho,
+independente do diagnostico: o npm 10 imprime `npm ERR!` e o 11+ imprime `npm error`,
+e o log do publish diz `npm error` — logo o passo rodou o 12.0.2, nao o 10.9.8 que o
+`setup-node` instala com o Node 22.
+
+```
+visibility=public  ·  id-token: write declarado no nivel do workflow
+secrets=0, de proposito  ·  node v22.23.2 (>= 22.14.0)  ·  npm 12.0.2 (>= 11.5.1)
+```
+
+### 🔴 E a publicacao confiavel nunca funcionou uma vez
+
+```
+versoes no npm     ["0.8.0"]  — e so ela
+publicada em       13/09 21:47 local  por lourivalgarciajunior
+attestations       AUSENTE   ->  publicada com TOKEN, nao por OIDC
+tags locais        v0.10.0 · v0.8.0 · v0.3.0      (v0.9.0 nunca existiu)
+```
+
+O repo diz **0.10.0**, o npm serve **0.8.0**, e a release `v0.10.0` existe no GitHub
+desde 20/09. O vao de duas versoes e publico.
+
+### A causa que resta, e o que NAO se le do repositorio
+
+Sobra o lado da npm, e a unica peca que nao esta aqui e a linha de **Trusted
+Publisher** em `npmjs.com/package/bookfw/access`. 🔴 **O comentario do proprio
+`publish.yml` afirma que ela estava configurada** — *"duas execucoes seguidas com a
+publicacao confiavel ja configurada na pagina do pacote"* —, mas isso e **afirmacao
+num comentario, nao medicao**, e o `ENEEDAUTH` sem tentativa de troca e consistente
+com ela estar ausente ou nao casar. O que conferir, campo a campo:
+
+```
+npmjs.com/package/bookfw/access -> Trusted Publisher -> GitHub Actions
+  Organization or user   lourivalgarciajunior
+  Repository             bookfw
+  Workflow filename      publish.yml        <- so o nome, SEM .github/workflows/
+  Environment            (em branco)
+```
+
+### 🔴 O achado de processo: a investigacao foi abandonada no meio
+
+O `ecfdd59` removeu o diagnostico com a mensagem *"a pergunta dele ja foi
+respondida"*. A pergunta **dele**, sim; o problema, nao. O workflow ficou vermelho, a
+conclusao *"e do lado da npm"* nao foi escrita em lugar nenhum, e em 12/11 ela teve de
+ser re-derivada de log — que e justamente o que esta entrada existe para evitar da
+proxima vez.
+
+**Nao ha correcao neste repositorio a fazer.** O proximo passo e na pagina do pacote,
+que e conta e 2FA do usuario; depois dela, um `workflow_dispatch` publica a 0.10.0 —
+e repare que o gate *"a tag casa com a version"* so roda no evento `release`, entao um
+dispatch publica o que o `package.json` disser.
