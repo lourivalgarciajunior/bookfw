@@ -121,18 +121,18 @@ Chain: `ADR → REQ → ROADMAP` · States: `backlog / analyzing / wip / blocked
 
 ### Agent Protocol
 1. **Before any implementation (mandatory):** create governance artifacts FIRST, then branch:
-   `trackfw req new "title"` → `trackfw roadmap new "title"` → `trackfw roadmap move <name> wip` → `git checkout -b feat/<branch>`
+   `trackfw req new "title"` → `trackfw roadmap move <name> wip` → `trackfw branch new <type>/<slug>`
    ❌ Never create a branch before REQ + ROADMAP are in wip/
    ❌ Never defer REQ/ROADMAP creation to a future task — they are prerequisites, not deliverables
    ✓ `trackfw validate` enforces this via `branch_has_wip_roadmap` rule (v2.7.0+)
-2. **Before starting:** run `trackfw context` · read `docs/agents-working-context.md`
-3. **After finishing:** update `docs/agents-working-context.md` with what changed
+2. **Before starting:** run `trackfw context` · read the 10 most recent entries in `docs/agents-working-context/`
+3. **After finishing:** the orchestrating session (`trackfw_architect`) writes a new file in `docs/agents-working-context/<YYYYMMDDTHHMMSSZ>-<your-slug>-<topic>.md` with what changed. Subagents never write there; they state what started, what changed and what is pending in their final report.
 4. **Before PR:** `trackfw validate` must pass
 5. **ML lifecycle — mandatory:**
-   - Starting a ML: edit roadmap `**Status:** ⬜ Pendente` → `**Status:** 🔄 Em andamento` + commit.
-   - Completing a ML: edit roadmap → `**Status:** ✅ Concluído` + include in ML commit.
+   - Starting a ML: edit roadmap `**Status:** ⬜ Pending` → `**Status:** 🔄 In progress` + commit.
+   - Completing a ML: edit roadmap → `**Status:** ✅ Done` + include in ML commit.
    - Analyzing a roadmap: move from `backlog/` to `analyzing/`; to `wip/` only when coding starts.
-6. **Obrigatório: Inspecione e respeite todos os ADRs globais nos diretórios listados em adr_dirs (inclusive caminhos ~/...) antes de propor alterações de arquitetura.**
+6. **Mandatory: Inspect and respect all global ADRs in the directories listed in adr_dirs (including ~/... paths) before proposing architectural changes.**
 
 ### Attention Signal (when you need user input during a task)
 Write `docs/roadmaps/.trackfw-attention.json`:

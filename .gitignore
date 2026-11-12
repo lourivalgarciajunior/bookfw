@@ -3,3 +3,16 @@ manuscrito/*.docx
 manuscrito/*.epub
 manuscrito/*.pdf
 .bookfw-cache/
+# trackfw: branch<->roadmap link written by `trackfw branch new` — PER-CHECKOUT state,
+# not versioned. A clone, a fork and CI never have it by design: inference by branch
+# name is the fallback for that population. Committing it would let the link recorded
+# on one machine govern another, possibly on a different branch.
+docs/roadmaps/.trackfw-branch-links.json
+# trackfw: per-agent write-scope leases (D4, ADR-2026-10-23) — contain absolute paths
+# of the dispatching machine; committing them would govern writes on a different checkout.
+.trackfw/leases/
+# trackfw: agent-memory directories created in subdirectories when Claude Code is
+# dispatched from a cwd other than the repository root (issue #646). These are
+# harness residue or lost memory — never version-controlled. The root
+# .claude/agent-memory/ (legitimate, versioned) is NOT matched by this pattern.
+*/**/.claude/agent-memory/

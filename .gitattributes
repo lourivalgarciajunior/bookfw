@@ -1,0 +1,47 @@
+# Fim de linha: LF no que o trackfw GERA e depois CONFERE byte a byte.
+#
+# POR QUE ESTE ARQUIVO EXISTE, medido por efeito em 12/11/2026
+#
+# O `trackfw update` regenera os guards e os escreve em LF. Sem a regra abaixo o
+# proximo `git clone` ou `git checkout` materializa CRLF, e o `trackfw validate`
+# -- que compara BYTE A BYTE -- volta a acusar divergencia. Ou seja: o update
+# conserta o disco, e esta regra e o que impede o checkout de desfazer.
+#
+#   core.autocrlf=true   vive no escopo --system (instalador do Git for Windows),
+#                        logo vale para TODO repositorio desta maquina sem
+#                        .gitattributes
+#
+# Medido em clone descartavel, com os MESMOS bytes nas duas pontas:
+#
+#   guards em LF, como o gerador escreve     avisos=3 · diverges=0
+#   os mesmos bytes em CRLF                  avisos=5 · diverges=2
+#
+# O `git diff` NAO ve este defeito, e por isso ele sobrevive: o filtro de clean
+# normaliza CRLF -> LF na hora de hashear, entao o repositorio aparece LIMPO
+# enquanto os bytes no disco divergem do template. Quem decide e a leitura de
+# bytes (CR, LF, CRLF), nunca o `git status`.
+#
+# O ESCOPO E DERIVADO, NAO SIMETRICO
+#
+# Com os 17 arquivos que o `trackfw update` toca convertidos para CRLF, apenas
+# DOIS divergem:
+#
+#   scripts/trackfw-credential-guard.sh
+#   scripts/trackfw-git-branch-guard.sh
+#
+# Nada compara os 9 .md de .claude/commands/trackfw/, o .claude/settings.json, o
+# .gitignore, os dois scripts de attention nem o trackfw-validate.sh. Entao a
+# regra cobre `*.sh` -- que alcanca os dois que importam e, de graca, os outros
+# tres do mesmo diretorio -- e para ai.
+#
+# LIMITE DECLARADO: `*.md`, `*.json`, `*.yml` e `*.yaml` ficam FORA de proposito.
+# Nenhuma medicao pede cobertura deles; entrar por simetria seria afirmar
+# cobertura que nada exerce. Se um dia o produto passar a comparar um desses,
+# ele entra -- com a medicao que o justifique.
+
+*.sh            text eol=lf
+
+# E este arquivo cobre a si mesmo. Sem a linha abaixo o `git add` avisa
+# "LF will be replaced by CRLF the next time Git touches it" a cada toque, e
+# aviso que acende sempre deixa de ser lido.
+.gitattributes  text eol=lf
