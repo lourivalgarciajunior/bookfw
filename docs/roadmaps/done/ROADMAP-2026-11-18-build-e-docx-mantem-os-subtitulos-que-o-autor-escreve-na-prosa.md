@@ -1,5 +1,5 @@
 ---
-status: wip
+status: done
 date: 2026-11-18
 req: "docs/req/REQ-2026-11-18-build-e-docx-mantem-os-subtitulos-que-o-autor-escreve-na-prosa.md"
 squad: ""
@@ -7,7 +7,7 @@ squad: ""
 
 # Roadmap: build e docx mantem os subtitulos que o autor escreve na prosa
 
-> Created: 2026-11-18 | Status: wip
+> Created: 2026-11-18 | Status: done
 
 ## Context
 

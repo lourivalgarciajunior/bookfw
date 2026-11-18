@@ -279,3 +279,19 @@ proxima vez.
 que e conta e 2FA do usuario; depois dela, um `workflow_dispatch` publica a 0.10.0 —
 e repare que o gate *"a tag casa com a version"* so roda no evento `release`, entao um
 dispatch publica o que o `package.json` disser.
+
+## 2026-11-18 — a prosa mantem os subtitulos `###` a `######` (0.10.1)
+
+`prosaDe` e a extracao da prosa por cena (`src/core.mjs`) apagavam `^#{1,6}`, e o
+subtitulo que o autor escreve na prosa sumia do manuscrito e do DOCX sem aviso.
+Achado pela revisao editorial de `pessoal/book/os-oito-modelos` (rev. 11): quatro
+subtitulos dos caps. 15, 16 e 19 faltavam no DOCX. Agora saem so `#` e `##`
+(constante `TITULO_DE_ESTRUTURA`), que o bookfw reemite; o `docx` ja desenhava
+titulo de qualquer nivel. ADR-2026-11-18 registra que `##` no meio da prosa
+continua sumindo, porque e o nivel da cena.
+
+Smoke com nove casos (capitulo com e sem contrato, manuscrito e DOCX), provado
+por mutacao nos dois pontos. A versao 0.10.1 **nao foi publicada na npm**: o
+`publish.yml` segue parado pelo motivo da entrada de 12/11. A maquina do autor
+usa o `npm link` desta arvore, entao o conserto vale ali assim que a `main` local
+estiver com ele.

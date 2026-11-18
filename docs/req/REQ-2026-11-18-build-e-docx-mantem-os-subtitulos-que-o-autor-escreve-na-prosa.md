@@ -1,14 +1,14 @@
 ---
-status: Open
+status: Done
 date: 2026-11-18
 author: "Lourival Garcia"
 adr: "docs/adr/ADR-2026-11-18-a-prosa-so-perde-os-titulos-que-o-bookfw-reemite-e-mantem-do-terceiro-nivel-para-baixo.md"
-roadmap: "docs/roadmaps/wip/ROADMAP-2026-11-18-build-e-docx-mantem-os-subtitulos-que-o-autor-escreve-na-prosa.md"
+roadmap: "docs/roadmaps/done/ROADMAP-2026-11-18-build-e-docx-mantem-os-subtitulos-que-o-autor-escreve-na-prosa.md"
 ---
 
 # REQ: build e docx mantem os subtitulos que o autor escreve na prosa
 
-> Date: 2026-11-18 | Status: Open
+> Date: 2026-11-18 | Status: Done
 
 ## Motivation
 
@@ -57,4 +57,4 @@ ADR: docs/adr/ADR-2026-11-18-a-prosa-so-perde-os-titulos-que-o-bookfw-reemite-e-
 
 ## Linked Roadmap
 
-Roadmap: docs/roadmaps/wip/ROADMAP-2026-11-18-build-e-docx-mantem-os-subtitulos-que-o-autor-escreve-na-prosa.md
+Roadmap: docs/roadmaps/done/ROADMAP-2026-11-18-build-e-docx-mantem-os-subtitulos-que-o-autor-escreve-na-prosa.md
