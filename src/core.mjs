@@ -184,22 +184,32 @@ export function cenasDe(corpo, problemas = []) {
   // cabecalho escrito no meio do capitulo: o `status` contava o texto inteiro
   // e o `build` costurava so a primeira metade, sem ninguem ser avisado.
   // Nota de trabalho vai em comentario HTML, que sai daqui e do manuscrito.
+  // Dos titulos, saem so os de estrutura (ver TITULO_DE_ESTRUTURA).
   return blocos.map((b, i) => {
     const ate = i + 1 < blocos.length ? blocos[i + 1].inicio : corpo.length;
     const prosa = corpo.slice(b.fim, ate)
       .replace(/<!--[\s\S]*?-->/g, '')
-      .replace(/^#{1,6} .*$/gm, '')
+      .replace(TITULO_DE_ESTRUTURA, '')
       .trim();
     return { ...b.dados, prosa, palavras: palavras(prosa) };
   });
 }
 
-/** Prosa = corpo sem os blocos de contrato e sem os cabeçalhos. */
+/**
+ * Os titulos que o bookfw reemite, e que por isso saem da prosa: o `# Titulo`
+ * do capitulo, refeito a partir do frontmatter, e o `## ` de cada cena, trocado
+ * pelo separador na costura. Do `###` para baixo o titulo e do autor e fica.
+ * Apagar `#{1,6}` sumia com os subtitulos do manuscrito e do DOCX sem aviso
+ * (ADR-2026-11-18-a-prosa-so-perde-os-titulos-que-o-bookfw-reemite).
+ */
+const TITULO_DE_ESTRUTURA = /^#{1,2} .*$/gm;
+
+/** Prosa = corpo sem os blocos de contrato e sem os cabeçalhos de estrutura. */
 export function prosaDe(corpo) {
   return corpo
     .replace(/```cena\n[\s\S]*?```/g, '')
     .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/^#{1,6} .*$/gm, '');
+    .replace(TITULO_DE_ESTRUTURA, '');
 }
 
 export const palavras = (t) => (t.trim().match(/[\p{L}\p{N}'’-]+/gu) || []).length;
