@@ -33,12 +33,12 @@ do capitulo e o `## Secao N` de cada cena. O `docx` ja sabe desenhar bloco
 
 ## Acceptance Criteria
 
-- [ ] AC1 — `###`, `####`, `#####` e `######` escritos na prosa de um capitulo saem no `manuscrito/*.md` do `bookfw build`, com o mesmo nivel e o mesmo texto.
-- [ ] AC2 — Os mesmos subtitulos saem no DOCX do `bookfw docx` como paragrafo de titulo (negrito), e nao somem.
-- [ ] AC3 — O `# Titulo` do capitulo e o `## Secao N` das cenas continuam fora do manuscrito e do DOCX, como hoje.
-- [ ] AC4 — Vale para capitulo com cenas (prosa extraida por cena) e para capitulo sem contrato de cena (`prosaDe`).
-- [ ] AC5 — A contagem de palavras de capitulo e de cena passa a incluir as palavras dos subtitulos mantidos, e nada mais muda: obra sem `###`/`####` na prosa produz manuscrito, contagem e `validate` identicos aos de antes.
-- [ ] AC6 — `npm run check` passa, com teste de fumaca cobrindo AC1, AC3 e AC4, provado por mutacao (voltar a regex antiga faz o teste falhar).
+- [x] AC1 — `###`, `####`, `#####` e `######` escritos na prosa de um capitulo saem no `manuscrito/*.md` do `bookfw build`, com o mesmo nivel e o mesmo texto.
+- [x] AC2 — Os mesmos subtitulos saem no DOCX do `bookfw docx` como paragrafo de titulo (negrito), e nao somem.
+- [x] AC3 — O `# Titulo` do capitulo e o `## Secao N` das cenas continuam fora do manuscrito e do DOCX, como hoje.
+- [x] AC4 — Vale para capitulo com cenas (prosa extraida por cena) e para capitulo sem contrato de cena (`prosaDe`).
+- [x] AC5 — A contagem de palavras de capitulo e de cena passa a incluir as palavras dos subtitulos mantidos, e nada mais muda: obra sem `###`/`####` na prosa produz manuscrito, contagem e `validate` identicos aos de antes.
+- [x] AC6 — `npm run check` passa, com teste de fumaca cobrindo AC1, AC3 e AC4, provado por mutacao (voltar a regex antiga faz o teste falhar).
 
 ## Negative scope — o que esta REQ NAO faz
 

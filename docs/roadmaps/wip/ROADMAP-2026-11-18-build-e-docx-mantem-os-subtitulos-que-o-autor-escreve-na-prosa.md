@@ -17,11 +17,11 @@ Decisao em ADR-2026-11-18-a-prosa-so-perde-os-titulos-que-o-bookfw-reemite-e-man
 
 ## Acceptance Criteria
 
-- [ ] `###` a `######` da prosa saem no manuscrito do `build`, com nivel e texto (AC1).
-- [ ] Os mesmos saem no DOCX como titulo (AC2).
-- [ ] `#` e `##` continuam fora (AC3), em capitulo com e sem cenas (AC4).
-- [ ] Obra sem subtitulo identica a antes; com subtitulo, a contagem sobe so pelas palavras dele (AC5).
-- [ ] `npm run check` verde, com teste provado por mutacao (AC6).
+- [x] `###` a `######` da prosa saem no manuscrito do `build`, com nivel e texto (AC1).
+- [x] Os mesmos saem no DOCX como titulo (AC2).
+- [x] `#` e `##` continuam fora (AC3), em capitulo com e sem cenas (AC4).
+- [x] Obra sem subtitulo identica a antes; com subtitulo, a contagem sobe so pelas palavras dele (AC5).
+- [x] `npm run check` verde, com teste provado por mutacao (AC6).
 
 ## Status Legend
 ⬜ Pendente · 🔄 Em andamento · ✅ Concluído · ❌ Bloqueado
@@ -66,7 +66,7 @@ grep -c "^#{1,6} \|#{1,6}" src/core.mjs
 > Dependencies: Wave 0. Um ML so: os dois pontos estao no mesmo arquivo, e o teste no mesmo smoke.
 
 ### ML-1A — prosa mantem `###` a `######`, por cena e por `prosaDe`
-**Status:** 🔄 Em andamento
+**Status:** ✅ Concluído
 **Files affected:** `src/core.mjs`, `test/smoke.mjs`, `CHANGELOG.md`, `package.json`
 **Actions:**
 1. Em `src/core.mjs`, nas duas regex (`cenas`, l. ~191, e `prosaDe`, l. ~202),
@@ -82,8 +82,8 @@ grep -c "^#{1,6} \|#{1,6}" src/core.mjs
    falhar; restaurar.
 4. `CHANGELOG.md` e `package.json`: versao 0.10.1, fix.
 **Acceptance criteria:**
-- [ ] AC1 a AC6 da REQ
-- [ ] `npm run check` verde; mutacao registrada no commit
+- [x] AC1 a AC6 da REQ
+- [x] `npm run check` verde; mutacao registrada no commit
 **Validation:**
 ```bash
 npm run check
@@ -94,3 +94,8 @@ trackfw validate
 ```bash
 npm run check
 ```
+
+## Validacao final — 2026-11-18
+
+- `npm run check`: lint e smoke verdes; os nove casos novos passam, com o DOCX coberto (pacote `docx` presente, nenhum PULADO).
+- Mutacao: a regex antiga so na prosa por cena derruba "### da prosa de cena", "#### da prosa de cena" e "subtitulos saem no DOCX"; so em `prosaDe` derruba "### de capitulo sem contrato" e "subtitulos saem no DOCX". Restaurado, verde.

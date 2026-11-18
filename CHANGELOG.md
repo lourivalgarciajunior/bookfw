@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.10.1 — 2026-11-18
+
+### Corrigido
+
+- **Subtítulo da prosa some do manuscrito e do DOCX.** `prosaDe` e a extração
+  da prosa por cena apagavam todo título `#` a `######`. Agora saem só `#` e
+  `##`, que o bookfw reemite — o título do capítulo e o cabeçalho de cena. Do
+  `###` para baixo o título é do autor e sai no `build`, com o mesmo nível, e no
+  `docx`, como parágrafo de título. A contagem de palavras passa a incluir o
+  subtítulo. `##` escrito no meio da prosa continua sumindo: é o nível da cena.
+
+Obra sem `###` na prosa produz build, docx, validate e status idênticos aos da
+0.10.0.
+
+Motivado por `pessoal/book/os-oito-modelos`: quatro subtítulos dos caps. 15,
+16 e 19 faltavam no DOCX da revisão 11, e só a revisão editorial percebeu.
+
 ## 0.10.0 — 2026-09-20
 
 ### Adicionado

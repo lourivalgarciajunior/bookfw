@@ -1600,6 +1600,53 @@ function comAmostra(p, repeticoes = 40) {
     chekhov.saida.includes('promessa P1 plantada e nunca paga'));
 }
 
+// ---------------------------------------------------------------------------
+// 0.10.1 — o subtitulo da prosa sumia. `prosaDe` e a prosa por cena apagavam
+// `#{1,6}`, e o `### O grupo UB` de uma obra real saia do manuscrito e do DOCX
+// sem aviso. Saem so `#` e `##`, que o bookfw reemite. O teste mede os dois
+// sentidos: subtitulo que some e titulo de estrutura que sobra.
+// ---------------------------------------------------------------------------
+{
+  const p = projeto('Subtitulos');
+  p.rodar('cap', 'new', 'Com Cenas');
+  p.rodar('cap', 'new', 'Sem Cenas');
+  const dirBk = join(p.dir, 'capitulos', 'backlog');
+  const arqs = readdirSync(dirBk).filter((f) => f.endsWith('.md')).sort();
+  const comCenas = join(dirBk, arqs[0]);
+  const semCenas = join(dirBk, arqs[1]);
+  writeFileSync(comCenas, `${readFileSync(comCenas, 'utf8')}\n\nProsa da cena.\n\n### Subtitulo A\n\nTexto sob A.\n\n#### Subtitulo B\n\nTexto sob B.\n`, 'utf8');
+  // Sem contrato de cena: a prosa vem de `prosaDe`, e nao da extracao por cena.
+  const fm = readFileSync(semCenas, 'utf8').match(/^---\r?\n[\s\S]*?\r?\n---\r?\n/)[0];
+  writeFileSync(semCenas, `${fm}\n# Sem Cenas\n\n## Secao solta\n\nProsa corrida.\n\n### Subtitulo C\n\nTexto sob C.\n`, 'utf8');
+  p.rodar('cap', 'move', '1', 'revisao');
+  p.rodar('cap', 'move', '2', 'revisao');
+
+  const b = p.rodar('build');
+  const ms = readdirSync(join(p.dir, 'manuscrito')).find((f) => f.endsWith('.md'));
+  const md = ms ? readFileSync(join(p.dir, 'manuscrito', ms), 'utf8') : '';
+  ok('build roda com subtitulo na prosa', b.codigo === 0 && !!ms);
+  ok('### da prosa de cena sai no manuscrito', /^### Subtitulo A$/m.test(md));
+  ok('#### da prosa de cena sai no manuscrito', /^#### Subtitulo B$/m.test(md));
+  ok('### de capitulo sem contrato sai no manuscrito', /^### Subtitulo C$/m.test(md));
+  ok('o texto sob o subtitulo continua', md.includes('Texto sob B.') && md.includes('Texto sob C.'));
+  ok('## de cena continua fora do manuscrito', !/^## Cena 1$/m.test(md) && !/^## Secao solta$/m.test(md));
+  ok('# do capitulo continua fora do manuscrito', !/^# Com Cenas$/m.test(md) && !/^# Sem Cenas$/m.test(md));
+
+  let Zip = null;
+  try { await import('docx'); Zip = (await import('jszip')).default; } catch { /* ausente */ }
+  if (!Zip) {
+    console.log('  PULADO  subtitulo no DOCX — pacote `docx` ausente');
+  } else {
+    p.rodar('docx');
+    const nome = readdirSync(join(p.dir, 'manuscrito')).find((f) => f.endsWith('.docx'));
+    const xml = nome
+      ? await (await Zip.loadAsync(readFileSync(join(p.dir, 'manuscrito', nome)))).file('word/document.xml').async('string')
+      : '';
+    ok('subtitulos saem no DOCX', ['Subtitulo A', 'Subtitulo B', 'Subtitulo C'].every((s) => xml.includes(s)));
+    ok('## de cena continua fora do DOCX', !xml.includes('Secao solta'));
+  }
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);
