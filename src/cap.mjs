@@ -56,6 +56,19 @@ export function capMove(args) {
   if (alvos.length > 1) console.log(c.dim(`  ${alvos.length} capitulos movidos`));
 }
 
+/**
+ * Troca o `# Titulo` que abre o corpo, mas so quando ele repete o titulo
+ * antigo: H1 que o autor mudou de proposito nao e sobrescrito, e `# ` mais
+ * abaixo (prosa, bloco de codigo) nunca e candidato. O `corpo` comeca no
+ * `---` que fecha o frontmatter.
+ */
+function trocarTituloDoCorpo(corpo, antigo, novo) {
+  const m = /^(\r?\n---[ \t]*\r?\n(?:[ \t]*\r?\n)*)#[ \t]+([^\r\n]*)/.exec(corpo);
+  if (!m) return { corpo, h1: 'ausente' };
+  if (m[2].trim() !== String(antigo).trim()) return { corpo, h1: 'mantido', texto: m[2].trim() };
+  return { corpo: m[1] + `# ${novo}` + corpo.slice(m[0].length), h1: 'trocado' };
+}
+
 /** Reescreve id, numero e titulo no frontmatter e renomeia o arquivo junto. */
 function reescrever(raiz, cap, { numero = cap.numero, titulo = cap.fm.titulo || '' }) {
   const id = `cap-${String(numero).padStart(2, '0')}-${slug(titulo)}`;
@@ -72,9 +85,14 @@ function reescrever(raiz, cap, { numero = cap.numero, titulo = cap.fm.titulo || 
     .replace(/^id:.*$/m, `id: ${id}`)
     .replace(/^numero:.*$/m, `numero: ${numero}`)
     .replace(/^titulo:.*$/m, `titulo: ${titulo}`);
-  writeFileSync(cap.caminho, m[1] + fm + raw.slice(m[1].length + m[2].length), 'utf8');
+  let corpo = raw.slice(m[1].length + m[2].length);
+  let h1 = null;
+  let texto;
+  const antigo = cap.fm.titulo || '';
+  if (titulo !== antigo) ({ corpo, h1, texto } = trocarTituloDoCorpo(corpo, antigo, titulo));
+  writeFileSync(cap.caminho, m[1] + fm + corpo, 'utf8');
   if (novo !== cap.caminho) renameSync(cap.caminho, novo);
-  return { id, caminho: novo };
+  return { id, caminho: novo, h1, texto };
 }
 
 export function capRenumber(args) {
@@ -111,5 +129,7 @@ export function capRetitle(args) {
   const r = reescrever(raiz, cap, { titulo });
   console.log(`${c.green('retitulado')}  ${antes} -> ${rel(raiz, r.caminho)}`);
   console.log(c.dim(`  "${cap.fm.titulo || '(sem titulo)'}" -> "${titulo}"`));
+  if (r.h1 === 'trocado') console.log(c.dim('  o # do corpo acompanhou'));
+  if (r.h1 === 'mantido') console.log(c.yellow(`  o # do corpo diz "${r.texto}" e foi mantido — troque a mao se for o caso`));
   console.log(c.dim('  confira o sumario: o gate compara os dois'));
 }

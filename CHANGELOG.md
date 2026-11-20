@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.10.2 — 2026-11-20
+
+### Corrigido
+
+- **`cap retitle` deixa o `# Titulo` do corpo com o título velho.** O comando
+  renomeava o arquivo e reescrevia `id` e `titulo` no frontmatter, mas não o
+  `#` que o template põe na abertura do corpo. Agora o `#` acompanha quando é a
+  primeira linha não vazia do corpo e repete o título antigo. `#` que o autor
+  mudou de propósito fica como está, e o comando avisa numa linha. `#` mais
+  abaixo, na prosa ou em bloco de código, nunca é tocado. CRLF preservado.
+
+Capítulo retitulado antes desta versão continua com o `#` velho: o conserto não
+é retroativo.
+
+Motivado por `pessoal/book/verde-nao-e-prova`: os caps. 1 e 30 ficaram com o
+`#` antigo depois de retitulados, e o defeito só apareceu lendo o arquivo.
+
 ## 0.10.1 — 2026-11-18
 
 ### Corrigido

@@ -3,6 +3,19 @@
 Estado de trabalho do bookfw para quem chegar depois. Uma entrada por frente,
 a mais recente no topo.
 
+## 2026-11-20 — `cap retitle` troca o `#` do corpo (0.10.2)
+
+**O que mudou.** `src/cap.mjs` ganhou `trocarTituloDoCorpo`, chamada por
+`reescrever` quando o titulo muda: troca o `# ` da primeira linha nao vazia do
+corpo se ele repete o titulo antigo, e devolve `trocado`, `mantido` ou
+`ausente`. `capRetitle` diz numa linha quando o `#` acompanhou ou foi mantido.
+Seis casos novos no smoke, provados por mutacao (cinco falham sem a troca).
+
+**O que vigiar.** A comparacao e com o `titulo` do frontmatter **antes** do
+retitle. Capitulo retitulado na 0.10.1 ou antes tem `#` velho que nao repete o
+titulo atual, e o retitle seguinte o mantem e avisa — nao e retroativo, de
+proposito (ADR-2026-11-20).
+
 ## 2026-09-18 — referencia biblica, sumario, indice e pagina final (0.9.0)
 
 **O que mudou.** `src/biblia.mjs` (lista de livros, `trechosDeReferencia`,
