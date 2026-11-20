@@ -1,5 +1,5 @@
 ---
-status: wip
+status: done
 date: 2026-11-20
 req: "docs/req/REQ-2026-11-20-cap-retitle-atualiza-o-titulo-do-corpo-junto-com-o-frontmatter.md"
 squad: ""
@@ -7,7 +7,7 @@ squad: ""
 
 # Roadmap: cap retitle atualiza o titulo do corpo junto com o frontmatter
 
-> Created: 2026-11-20 | Status: wip
+> Created: 2026-11-20 | Status: done
 
 ## Context
 
@@ -21,10 +21,10 @@ em branch propria a partir de `origin/main` e nao toca os arquivos dele
 
 ## Acceptance Criteria
 
-- [ ] H1 do template trocado junto com o frontmatter (AC1).
-- [ ] H1 personalizado mantido, com aviso (AC2); linha `#` fora da abertura intocada (AC3).
-- [ ] CRLF preservado (AC4); `renumber` sem mexer no corpo (AC5).
-- [ ] `npm run check` verde, com teste provado por mutacao (AC6).
+- [x] H1 do template trocado junto com o frontmatter (AC1).
+- [x] H1 personalizado mantido, com aviso (AC2); linha `#` fora da abertura intocada (AC3).
+- [x] CRLF preservado (AC4); `renumber` sem mexer no corpo (AC5).
+- [x] `npm run check` verde, com teste provado por mutacao (AC6).
 
 ## Status Legend
 ⬜ Pending · 🔄 In progress · ✅ Done · ❌ Blocked
@@ -69,7 +69,7 @@ grep -c "reescrever(" src/cap.mjs
 > mutacao depende do codigo.
 
 ### ML-1A — retitle troca o H1 que repete o titulo antigo
-**Status:** 🔄 In progress
+**Status:** ✅ Done
 **Files affected:** `src/cap.mjs`, `test/smoke.mjs`, `CHANGELOG.md`, `package.json`, `package-lock.json`
 **Actions:**
 1. Em `src/cap.mjs`, `reescrever`: depois de montar o frontmatter, se o
@@ -86,9 +86,9 @@ grep -c "reescrever(" src/cap.mjs
 4. `CHANGELOG.md` com a 0.10.2 e `version` 0.10.2 em `package.json` (e no
    lock).
 **Acceptance criteria:**
-- [ ] AC1 a AC5 cobertos por teste de fumaca
-- [ ] Mutacao: comentar a troca do H1 faz pelo menos o teste de AC1 falhar
-- [ ] `npm run check` verde
+- [x] AC1 a AC5 cobertos por teste de fumaca
+- [x] Mutacao: comentar a troca do H1 faz pelo menos o teste de AC1 falhar (medido em 2026-11-20: 5 falhas, AC1, AC2-aviso, AC3, AC4)
+- [x] `npm run check` verde
 
 **Wave gates:**
 ```bash

@@ -46,7 +46,7 @@ bookfw cena add 1 --local Cozinha --objetivo "atender antes que desliguem"
 bookfw cap move 1 esboco
 bookfw cap move 2..5 escrita        # lista e faixa tambem valem
 bookfw cap renumber 5 9             # arquivo e frontmatter juntos
-bookfw cap retitle 9 "O nome novo"
+bookfw cap retitle 9 "O nome novo"   # arquivo, frontmatter e o # do corpo
 bookfw brief 1 --cena 1.1          # o pacote que o escritor recebe
 bookfw validate
 bookfw cap move 1 revisao

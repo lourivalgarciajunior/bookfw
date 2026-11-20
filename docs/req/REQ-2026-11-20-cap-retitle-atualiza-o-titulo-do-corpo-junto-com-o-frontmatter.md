@@ -1,14 +1,14 @@
 ---
-status: Open
+status: Done
 date: 2026-11-20
 author: "Lourival Garcia"
 adr: "docs/adr/ADR-2026-11-20-o-retitle-troca-o-titulo-do-corpo-so-quando-ele-repete-o-titulo-antigo.md"
-roadmap: "docs/roadmaps/wip/ROADMAP-2026-11-20-cap-retitle-atualiza-o-titulo-do-corpo-junto-com-o-frontmatter.md"
+roadmap: "docs/roadmaps/done/ROADMAP-2026-11-20-cap-retitle-atualiza-o-titulo-do-corpo-junto-com-o-frontmatter.md"
 ---
 
 # REQ: cap retitle atualiza o titulo do corpo junto com o frontmatter
 
-> Date: 2026-11-20 | Status: Open
+> Date: 2026-11-20 | Status: Done
 
 ## Motivation
 
@@ -22,12 +22,12 @@ frontmatter.
 
 ## Acceptance Criteria
 
-- [ ] AC1 — Depois de `bookfw cap retitle <n> "Novo"`, o capitulo cujo corpo abre com `# <titulo antigo>` passa a abrir com `# Novo`.
-- [ ] AC2 — H1 cujo texto difere do titulo antigo nao e tocado, e a saida do comando diz que o titulo do corpo foi mantido.
-- [ ] AC3 — Linha `# <titulo antigo>` que nao e a primeira linha nao vazia do corpo (prosa, bloco de codigo) nao e tocada.
-- [ ] AC4 — Funciona com CRLF: arquivo com `\r\n` sai com o H1 trocado e as quebras preservadas.
-- [ ] AC5 — `cap renumber` continua sem mexer no corpo.
-- [ ] AC6 — `npm run check` passa, com teste de fumaca cobrindo AC1, AC2, AC3 e AC4, provado por mutacao (tirar a troca do H1 faz o teste falhar).
+- [x] AC1 — Depois de `bookfw cap retitle <n> "Novo"`, o capitulo cujo corpo abre com `# <titulo antigo>` passa a abrir com `# Novo`.
+- [x] AC2 — H1 cujo texto difere do titulo antigo nao e tocado, e a saida do comando diz que o titulo do corpo foi mantido.
+- [x] AC3 — Linha `# <titulo antigo>` que nao e a primeira linha nao vazia do corpo (prosa, bloco de codigo) nao e tocada.
+- [x] AC4 — Funciona com CRLF: arquivo com `\r\n` sai com o H1 trocado e as quebras preservadas.
+- [x] AC5 — `cap renumber` continua sem mexer no corpo.
+- [x] AC6 — `npm run check` passa, com teste de fumaca cobrindo AC1, AC2, AC3 e AC4, provado por mutacao (tirar a troca do H1 faz o teste falhar).
 
 ## Negative scope — o que esta REQ NAO faz
 
@@ -45,4 +45,4 @@ ADR: docs/adr/ADR-2026-11-20-o-retitle-troca-o-titulo-do-corpo-so-quando-ele-rep
 
 ## Linked Roadmap
 
-Roadmap: docs/roadmaps/wip/ROADMAP-2026-11-20-cap-retitle-atualiza-o-titulo-do-corpo-junto-com-o-frontmatter.md
+Roadmap: docs/roadmaps/done/ROADMAP-2026-11-20-cap-retitle-atualiza-o-titulo-do-corpo-junto-com-o-frontmatter.md

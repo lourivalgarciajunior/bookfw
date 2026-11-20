@@ -562,6 +562,7 @@ function comCincoCapitulos(titulo) {
   const fm = readFileSync(join(p.dir, 'capitulos', 'backlog', 'cap-09-capitulo-5.md'), 'utf8');
   ok('renumber acerta o numero no frontmatter', /^numero: 9$/m.test(fm));
   ok('renumber acerta o id no frontmatter', /^id: cap-09-capitulo-5$/m.test(fm));
+  ok('renumber nao mexe no # do corpo', /^# Capitulo 5\r?$/m.test(fm));
   ok('o arquivo antigo nao fica para tras',
     !existsSync(join(p.dir, 'capitulos', 'backlog', 'cap-05-capitulo-5.md')));
 
@@ -592,6 +593,39 @@ function comCincoCapitulos(titulo) {
   ok('retitle nao mexe na prosa',
     readFileSync(join(p.dir, 'capitulos', 'backlog', 'cap-04-outro-nome.md'), 'utf8')
       .includes('Prosa com a palavra numero: no meio'));
+
+  // 0.10.2 — o `# Titulo` do corpo acompanha o frontmatter. Ficava com o titulo
+  // velho: medido em 2026-11-20 na obra verde-nao-e-prova, caps. 1 e 30.
+  ok('retitle troca o # do corpo que repete o titulo antigo',
+    /^# O nome novo\r?$/m.test(fm) && !/^# Capitulo 2\r?$/m.test(fm));
+  ok('retitle diz que o # acompanhou', r.saida.includes('o # do corpo acompanhou'));
+
+  // H1 que o autor mudou de proposito nao e sobrescrito
+  const arq3 = join(p.dir, 'capitulos', 'backlog', 'cap-03-capitulo-3.md');
+  writeFileSync(arq3, readFileSync(arq3, 'utf8').replace(/^# Capitulo 3$/m, '# Meu titulo proprio'), 'utf8');
+  const proprio = p.rodar('cap', 'retitle', '3', 'Terceiro');
+  ok('retitle mantem o # personalizado',
+    /^# Meu titulo proprio\r?$/m.test(readFileSync(join(p.dir, 'capitulos', 'backlog', 'cap-03-terceiro.md'), 'utf8')));
+  ok('e avisa que manteve', proprio.saida.includes('"Meu titulo proprio" e foi mantido'));
+
+  // so a abertura do corpo e candidata: `# Capitulo 5` na prosa fica
+  const arq5 = join(p.dir, 'capitulos', 'backlog', 'cap-05-capitulo-5.md');
+  writeFileSync(arq5, `${readFileSync(arq5, 'utf8').replace(/\s*$/, '')}\n\n\`\`\`sh\n# Capitulo 5\n\`\`\`\n`, 'utf8');
+  p.rodar('cap', 'retitle', '5', 'Quinto');
+  const cinco = readFileSync(join(p.dir, 'capitulos', 'backlog', 'cap-05-quinto.md'), 'utf8');
+  ok('retitle nao toca # fora da abertura',
+    /^# Quinto\r?$/m.test(cinco) && (cinco.match(/^# Capitulo 5\r?$/gm) || []).length === 1);
+}
+
+{
+  // CRLF, como o arquivo fica no disco do autor no Windows
+  const p = comCincoCapitulos('Retitular CRLF');
+  const arq = join(p.dir, 'capitulos', 'backlog', 'cap-01-capitulo-1.md');
+  writeFileSync(arq, readFileSync(arq, 'utf8').replace(/\r?\n/g, '\r\n'), 'utf8');
+  p.rodar('cap', 'retitle', '1', 'Com CRLF');
+  const crlf = readFileSync(join(p.dir, 'capitulos', 'backlog', 'cap-01-com-crlf.md'), 'utf8');
+  ok('retitle troca o # com CRLF', crlf.includes('\r\n# Com CRLF\r\n') && !crlf.includes('# Capitulo 1'));
+  ok('e preserva as quebras CRLF', !/[^\r]\n/.test(crlf));
 }
 
 // ---------------------------------------------------------------------------
