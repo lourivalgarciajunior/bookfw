@@ -1,14 +1,14 @@
 ---
-status: Open
+status: Done
 date: 2026-11-23
 author: "Lourival Garcia"
 adr: "docs/adr/ADR-2026-11-18-a-prosa-so-perde-os-titulos-que-o-bookfw-reemite-e-mantem-do-terceiro-nivel-para-baixo.md"
-roadmap: "docs/roadmaps/wip/ROADMAP-2026-11-23-build-e-docx-preservam-as-linhas-de-dentro-dos-blocos-de-codigo.md"
+roadmap: "docs/roadmaps/done/ROADMAP-2026-11-23-build-e-docx-preservam-as-linhas-de-dentro-dos-blocos-de-codigo.md"
 ---
 
 # REQ: build e docx preservam as linhas de dentro dos blocos de codigo
 
-> Date: 2026-11-23 | Status: Open
+> Date: 2026-11-23 | Status: Done
 
 ## Motivation
 
@@ -29,13 +29,13 @@ reemite.
 
 ## Acceptance Criteria
 
-- [ ] AC1 — Linha `# ...` e `## ...` dentro de bloco cercado por ``` sai no manuscrito do `build`, igual a fonte.
-- [ ] AC2 — O mesmo dentro de bloco cercado por `~~~`.
-- [ ] AC3 — Vale nos dois caminhos: capitulo com contrato de cena (`cenasDe`) e capitulo sem contrato (`prosaDe`).
-- [ ] AC4 — `# Titulo` do capitulo e `## Cena N` fora de cerca continuam saindo da prosa, como na 0.10.1.
-- [ ] AC5 — Comentario HTML dentro de cerca sai literal; fora de cerca continua sumindo.
-- [ ] AC6 — No DOCX, a linha `# ...` de dentro do bloco aparece no bloco de codigo.
-- [ ] AC7 — `npm run check` passa, com teste de fumaca cobrindo AC1 a AC6, provado por mutacao (tirar a protecao de cerca faz o teste falhar).
+- [x] AC1 — Linha `# ...` e `## ...` dentro de bloco cercado por ``` sai no manuscrito do `build`, igual a fonte.
+- [x] AC2 — O mesmo dentro de bloco cercado por `~~~`.
+- [x] AC3 — Vale nos dois caminhos: capitulo com contrato de cena (`cenasDe`) e capitulo sem contrato (`prosaDe`).
+- [x] AC4 — `# Titulo` do capitulo e `## Cena N` fora de cerca continuam saindo da prosa, como na 0.10.1.
+- [x] AC5 — Comentario HTML dentro de cerca sai literal; fora de cerca continua sumindo.
+- [x] AC6 — No DOCX, a linha `# ...` de dentro do bloco aparece no bloco de codigo.
+- [x] AC7 — `npm run check` passa, com teste de fumaca cobrindo AC1 a AC6, provado por mutacao (tirar a protecao de cerca faz o teste falhar).
 
 ## Negative scope — o que esta REQ NAO faz
 
@@ -54,4 +54,4 @@ ADR: docs/adr/ADR-2026-11-18-a-prosa-so-perde-os-titulos-que-o-bookfw-reemite-e-
 
 ## Linked Roadmap
 
-Roadmap: docs/roadmaps/wip/ROADMAP-2026-11-23-build-e-docx-preservam-as-linhas-de-dentro-dos-blocos-de-codigo.md
+Roadmap: docs/roadmaps/done/ROADMAP-2026-11-23-build-e-docx-preservam-as-linhas-de-dentro-dos-blocos-de-codigo.md

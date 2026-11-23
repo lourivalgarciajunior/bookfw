@@ -1,5 +1,5 @@
 ---
-status: wip
+status: done
 date: 2026-11-23
 req: "docs/req/REQ-2026-11-23-build-e-docx-preservam-as-linhas-de-dentro-dos-blocos-de-codigo.md"
 squad: ""
@@ -7,7 +7,7 @@ squad: ""
 
 # Roadmap: build e docx preservam as linhas de dentro dos blocos de codigo
 
-> Created: 2026-11-23 | Status: wip
+> Created: 2026-11-23 | Status: done
 
 ## Context
 
@@ -19,10 +19,10 @@ concreto, medido na obra `pessoal/book/verde-nao-e-prova` (caps. 4 e 29).
 
 ## Acceptance Criteria
 
-- [ ] `#`/`##` e comentario HTML dentro de cerca ``` e ~~~ saem literais no build, com e sem contrato de cena (AC1, AC2, AC3, AC5).
-- [ ] `# Titulo` e `## Cena` fora de cerca continuam saindo (AC4).
-- [ ] A linha aparece no bloco de codigo do DOCX (AC6).
-- [ ] `npm run check` verde, com teste provado por mutacao (AC7).
+- [x] `#`/`##` e comentario HTML dentro de cerca ``` e ~~~ saem literais no build, com e sem contrato de cena (AC1, AC2, AC3, AC5).
+- [x] `# Titulo` e `## Cena` fora de cerca continuam saindo (AC4).
+- [x] A linha aparece no bloco de codigo do DOCX (AC6).
+- [x] `npm run check` verde, com teste provado por mutacao (AC7).
 
 ## Status Legend
 ⬜ Pending · 🔄 In progress · ✅ Done · ❌ Blocked
@@ -68,7 +68,7 @@ grep -c "TITULO_DE_ESTRUTURA" src/core.mjs
 > mutacao depende do codigo.
 
 ### ML-1A — a limpeza da prosa para na cerca de codigo
-**Status:** 🔄 In progress
+**Status:** ✅ Done
 **Files affected:** `src/core.mjs`, `test/smoke.mjs`, `CHANGELOG.md`, `package.json`, `package-lock.json`
 **Actions:**
 1. Em `src/core.mjs`, criar `foraDeCerca(texto, fn)`, que aplica `fn` so aos
@@ -83,8 +83,8 @@ grep -c "TITULO_DE_ESTRUTURA" src/core.mjs
 4. Provar por mutacao: trocar `foraDeCerca(x, fn)` por `fn(x)` e ver o teste falhar.
 5. Subir para 0.10.3 (`package.json`, `package-lock.json`) e registrar no `CHANGELOG.md`.
 **Acceptance criteria:**
-- [ ] AC1 a AC6 da REQ cobertos pelo teste novo
-- [ ] Mutacao faz o teste falhar; sem ela, `npm run check` verde
+- [x] AC1 a AC6 da REQ cobertos pelo teste novo
+- [x] Mutacao faz o teste falhar; sem ela, `npm run check` verde
 
 **Wave gates:**
 ```bash
