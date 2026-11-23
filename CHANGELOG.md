@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.10.3 — 2026-11-23
+
+### Corrigido
+
+- **Linha `# ` de dentro de bloco de código some do manuscrito e do DOCX.** A
+  limpeza da prosa (`prosaDe` e a prosa por cena) tirava `#`/`##` e comentário
+  HTML do texto inteiro, inclusive de dentro da cerca. O comentário de um
+  script de shell num bloco ```` ``` ```` saía como linha em branco. Agora o que
+  está entre cercas (```` ``` ```` ou `~~~`) sai literal, com o mesmo
+  reconhecimento de cerca do parser do DOCX. Fora da cerca nada muda: `#` do
+  capítulo, `##` de cena e nota em comentário HTML continuam saindo.
+
+Manuscrito e DOCX gerados antes desta versão continuam sem a linha até o
+próximo `build`/`docx`.
+
+Motivado por `pessoal/book/verde-nao-e-prova`, revisão 35: o comentário do gate
+no cap. 4 e o do `confere-agendador.sh` no cap. 29 saíram em branco, com a
+fonte certa.
+
 ## 0.10.2 — 2026-11-20
 
 ### Corrigido

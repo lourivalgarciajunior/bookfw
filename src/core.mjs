@@ -187,10 +187,7 @@ export function cenasDe(corpo, problemas = []) {
   // Dos titulos, saem so os de estrutura (ver TITULO_DE_ESTRUTURA).
   return blocos.map((b, i) => {
     const ate = i + 1 < blocos.length ? blocos[i + 1].inicio : corpo.length;
-    const prosa = corpo.slice(b.fim, ate)
-      .replace(/<!--[\s\S]*?-->/g, '')
-      .replace(TITULO_DE_ESTRUTURA, '')
-      .trim();
+    const prosa = foraDeCerca(corpo.slice(b.fim, ate), limparProsa).trim();
     return { ...b.dados, prosa, palavras: palavras(prosa) };
   });
 }
@@ -204,12 +201,44 @@ export function cenasDe(corpo, problemas = []) {
  */
 const TITULO_DE_ESTRUTURA = /^#{1,2} .*$/gm;
 
+/** Nota de trabalho (comentario HTML) e titulo de estrutura saem da prosa. */
+const limparProsa = (t) => t.replace(/<!--[\s\S]*?-->/g, '').replace(TITULO_DE_ESTRUTURA, '');
+
+/**
+ * A cerca de codigo, com o mesmo reconhecimento do `src/markdown.mjs`: quem
+ * costura e quem desenha o DOCX tem de concordar sobre onde o bloco comeca.
+ */
+const CERCA = /^\s*(?:```|~~~)/;
+
+/**
+ * Aplica `fn` so ao texto fora de bloco de codigo cercado. Dentro da cerca nada
+ * e titulo nem nota de trabalho: e literal. Limpar o texto inteiro apagava o
+ * `# comentario` de um script de shell e entregava o bloco com a linha em
+ * branco no manuscrito e no DOCX (REQ-2026-11-23, medido no cap. 4 de uma obra
+ * real). Cerca nao fechada vale ate o fim, como no parser do DOCX.
+ */
+export function foraDeCerca(texto, fn) {
+  const saida = [];
+  let trecho = [];
+  let dentro = false;
+  const fechar = () => {
+    if (!trecho.length) return;
+    const t = trecho.join('\n');
+    saida.push(dentro ? t : fn(t));
+    trecho = [];
+  };
+  for (const linha of texto.split('\n')) {
+    if (!CERCA.test(linha)) { trecho.push(linha); continue; }
+    if (dentro) { trecho.push(linha); fechar(); dentro = false; }
+    else { fechar(); dentro = true; trecho.push(linha); }
+  }
+  fechar();
+  return saida.join('\n');
+}
+
 /** Prosa = corpo sem os blocos de contrato e sem os cabeçalhos de estrutura. */
 export function prosaDe(corpo) {
-  return corpo
-    .replace(/```cena\n[\s\S]*?```/g, '')
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(TITULO_DE_ESTRUTURA, '');
+  return foraDeCerca(corpo.replace(/```cena\n[\s\S]*?```/g, ''), limparProsa);
 }
 
 export const palavras = (t) => (t.trim().match(/[\p{L}\p{N}'’-]+/gu) || []).length;

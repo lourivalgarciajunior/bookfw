@@ -1681,6 +1681,61 @@ function comAmostra(p, repeticoes = 40) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// 0.10.3 — a linha `# ` de dentro de bloco de codigo sumia. A limpeza da prosa
+// tirava `#`/`##` e comentario HTML do texto inteiro, inclusive de dentro da
+// cerca, e o comentario de shell de um bloco ``` de obra real saia em branco no
+// manuscrito e no DOCX. Dentro de cerca nada e titulo nem nota: e literal. O
+// teste mede os dois caminhos (com e sem contrato de cena), as duas cercas
+// (``` e ~~~) e os dois sentidos (o de dentro fica, o de fora continua saindo).
+// ---------------------------------------------------------------------------
+{
+  const p = projeto('Cercas');
+  p.rodar('cap', 'new', 'Com Contrato');
+  p.rodar('cap', 'new', 'Sem Contrato');
+  const dirBk = join(p.dir, 'capitulos', 'backlog');
+  const arqs = readdirSync(dirBk).filter((f) => f.endsWith('.md')).sort();
+  const comContrato = join(dirBk, arqs[0]);
+  const semContrato = join(dirBk, arqs[1]);
+  const cercas = (tag) => '\n\n```\n$ cat gate.sh\n#!/bin/sh\n# comentario ' + tag + ' crase\n## linha ' + tag + ' crase\n<!-- literal ' + tag + ' crase -->\nexit 0\n```\n\n'
+    + 'Entre as cercas.\n\n~~~\n# comentario ' + tag + ' til\n<!-- literal ' + tag + ' til -->\n~~~\n\n<!-- nota ' + tag + ' fora -->\n\nDepois das cercas.\n';
+  writeFileSync(comContrato, `${readFileSync(comContrato, 'utf8')}\n\nProsa da cena.${cercas('A')}`, 'utf8');
+  const fm = readFileSync(semContrato, 'utf8').match(/^---\r?\n[\s\S]*?\r?\n---\r?\n/)[0];
+  writeFileSync(semContrato, `${fm}\n# Sem Contrato\n\n## Secao solta\n\nProsa corrida.${cercas('B')}`, 'utf8');
+  p.rodar('cap', 'move', '1', 'revisao');
+  p.rodar('cap', 'move', '2', 'revisao');
+
+  const b = p.rodar('build');
+  const ms = readdirSync(join(p.dir, 'manuscrito')).find((f) => f.endsWith('.md'));
+  const md = ms ? readFileSync(join(p.dir, 'manuscrito', ms), 'utf8') : '';
+  ok('build roda com # dentro de cerca', b.codigo === 0 && !!ms);
+  for (const t of ['A', 'B']) {
+    const via = t === 'A' ? 'com contrato' : 'sem contrato';
+    ok(`# dentro de \`\`\` sai no manuscrito (${via})`, md.includes(`# comentario ${t} crase\n`));
+    ok(`## dentro de \`\`\` sai no manuscrito (${via})`, md.includes(`## linha ${t} crase\n`));
+    ok(`# dentro de ~~~ sai no manuscrito (${via})`, md.includes(`# comentario ${t} til\n`));
+    ok(`comentario HTML dentro de cerca sai literal (${via})`, md.includes(`<!-- literal ${t} crase -->`) && md.includes(`<!-- literal ${t} til -->`));
+    ok(`comentario HTML fora de cerca continua sumindo (${via})`, !md.includes(`nota ${t} fora`));
+  }
+  ok('texto depois das cercas continua', (md.match(/Depois das cercas\./g) || []).length === 2);
+  ok('## de cena e # do capitulo continuam fora do manuscrito',
+    !/^## Cena 1$/m.test(md) && !/^## Secao solta$/m.test(md) && !/^# Com Contrato$/m.test(md) && !/^# Sem Contrato$/m.test(md));
+
+  let Zip = null;
+  try { await import('docx'); Zip = (await import('jszip')).default; } catch { /* ausente */ }
+  if (!Zip) {
+    console.log('  PULADO  # dentro de cerca no DOCX — pacote `docx` ausente');
+  } else {
+    p.rodar('docx');
+    const nome = readdirSync(join(p.dir, 'manuscrito')).find((f) => f.endsWith('.docx'));
+    const xml = nome
+      ? await (await Zip.loadAsync(readFileSync(join(p.dir, 'manuscrito', nome)))).file('word/document.xml').async('string')
+      : '';
+    ok('# dentro de cerca sai no DOCX', ['# comentario A crase', '# comentario B til'].every((s) => xml.includes(s)));
+    ok('## de cena continua fora do DOCX', !xml.includes('Secao solta'));
+  }
+}
+
 for (const d of descartar) rmSync(d, { recursive: true, force: true });
 console.log(falhas ? `\n${falhas} falha(s).` : '\nOK.');
 process.exit(falhas ? 1 : 0);
