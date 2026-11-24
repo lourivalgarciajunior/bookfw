@@ -110,6 +110,14 @@ export function validate(args) {
     }
     cap.cenas.forEach((cena, i) => {
       const tag = `${onde} cena ${cena.id || i + 1}`;
+      // Id `<n>.<resto>` com `<n>` que nao e o numero do capitulo: sobra de
+      // renumeracao. O `brief --cena` nao acha a cena e o `cena add` continua
+      // a sequencia errada. Id em outro formato e do autor e nao e cobrado
+      // (ADR-2026-11-24).
+      const prefixo = String(cena.id ?? '').trim().match(/^(\d+)\.(.+)$/);
+      if (prefixo && Number(prefixo[1]) !== cap.numero) {
+        erro(tag, `id "${cena.id}" nao bate com o capitulo ${cap.numero} — deveria ser ${cap.numero}.${prefixo[2]}`);
+      }
       const emBranco = OBRIGATORIOS.filter((campo) => !cena[campo] || String(cena[campo]).trim() === '');
       if (emBranco.length && cap.estado === 'backlog') {
         // em backlog o contrato ainda esta em branco de proposito

@@ -1,5 +1,5 @@
 ---
-status: wip
+status: done
 date: 2026-11-24
 req: "docs/req/REQ-2026-11-24-cap-renumber-reescreve-o-id-das-cenas-e-o-validate-cobra-o-prefixo.md"
 squad: ""
@@ -7,7 +7,7 @@ squad: ""
 
 # Roadmap: cap renumber reescreve o id das cenas e o validate cobra o prefixo
 
-> Created: 2026-11-24 | Status: wip
+> Created: 2026-11-24 | Status: done
 
 ## Context
 
@@ -21,10 +21,10 @@ branch propria a partir de `origin/main` e nao toca `.github/workflows/`.
 
 ## Acceptance Criteria
 
-- [ ] `renumber` reescreve o prefixo dos ids de cena, so dentro dos contratos (AC1, AC2, AC3, AC4, AC6).
-- [ ] `renumber` diz quantos ids reescreveu (AC5).
-- [ ] `validate` reprova prefixo desencontrado (AC7).
-- [ ] `npm run check` verde, com teste provado por mutacao nos dois lados (AC8).
+- [x] `renumber` reescreve o prefixo dos ids de cena, so dentro dos contratos (AC1, AC2, AC3, AC4, AC6).
+- [x] `renumber` diz quantos ids reescreveu (AC5).
+- [x] `validate` reprova prefixo desencontrado (AC7).
+- [x] `npm run check` verde, com teste provado por mutacao nos dois lados (AC8).
 
 ## Status Legend
 ⬜ Pending · 🔄 In progress · ✅ Done · ❌ Blocked
@@ -80,7 +80,7 @@ grep -c "reescrever(" src/cap.mjs
 > de mutacao depende do codigo.
 
 ### ML-1A — renumber leva o prefixo do id de cena, e o gate o cobra
-**Status:** 🔄 In progress
+**Status:** ✅ Done
 **Files affected:** `src/cap.mjs`, `src/validate.mjs`, `test/smoke.mjs`, `CHANGELOG.md`, `package.json`, `package-lock.json`
 **Actions:**
 1. Em `src/cap.mjs`, `reescrever`: quando `numero` muda, no corpo, trocar so
@@ -93,12 +93,15 @@ grep -c "reescrever(" src/cap.mjs
    id e o prefixo esperado.
 4. Em `test/smoke.mjs`, no bloco do renumber: AC1 a AC7, incluindo a troca em
    tres passos por 99, o caso CRLF e os cinco casos que nao podem mudar.
+   Achado na execucao: o template do `cap new` ja traz um contrato com
+   `id: <n>.1` (em CRLF no Windows), entao o cap. 5 do teste tem tres ids
+   com o prefixo 5, e o teste conta tres.
 5. `CHANGELOG.md` com a 0.10.4 e `version` 0.10.4 em `package.json` (e no
    lock).
 **Acceptance criteria:**
-- [ ] AC1 a AC7 cobertos por teste de fumaca
-- [ ] Mutacao: comentar a reescrita do id faz pelo menos o teste de AC1 falhar; comentar a regra do gate faz o teste de AC7 falhar
-- [ ] `npm run check` verde
+- [x] AC1 a AC7 cobertos por teste de fumaca (19 casos)
+- [x] Mutacao: comentar a reescrita do id faz pelo menos o teste de AC1 falhar; comentar a regra do gate faz o teste de AC7 falhar (medido em 2026-11-24: 7 falhas sem a reescrita, AC1, AC2, AC5, AC6; 1 falha sem a regra, AC7)
+- [x] `npm run check` verde
 
 **Wave gates:**
 ```bash
