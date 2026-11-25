@@ -69,6 +69,27 @@ function trocarTituloDoCorpo(corpo, antigo, novo) {
   return { corpo: m[1] + `# ${novo}` + corpo.slice(m[0].length), h1: 'trocado' };
 }
 
+/**
+ * Leva o prefixo do `id:` de cena do numero velho para o novo, so dentro dos
+ * blocos ```cena: `id: 15.2` vira `id: 17.2`. Id que nao comeca pelo numero
+ * velho (formato do autor, ou prefixo que ja estava errado) fica. Sem isto o
+ * `renumber` deixava os contratos com a numeracao antiga, o `brief --cena`
+ * caia na primeira cena sem avisar e o `cena add` continuava a sequencia
+ * velha (ADR-2026-11-24, medido numa obra real).
+ */
+function levarIdsDeCena(corpo, antigo, novo) {
+  let trocados = 0;
+  let dentro = false;
+  const prefixo = new RegExp(`^(id:[ \\t]*)${antigo}\\.(?=\\S)`);
+  const linhas = corpo.split('\n').map((linha) => {
+    if (!dentro && /^```cena[ \t]*\r?$/.test(linha)) { dentro = true; return linha; }
+    if (dentro && /^```[ \t]*\r?$/.test(linha)) { dentro = false; return linha; }
+    if (dentro && prefixo.test(linha)) { trocados += 1; return linha.replace(prefixo, `$1${novo}.`); }
+    return linha;
+  });
+  return { corpo: linhas.join('\n'), trocados };
+}
+
 /** Reescreve id, numero e titulo no frontmatter e renomeia o arquivo junto. */
 function reescrever(raiz, cap, { numero = cap.numero, titulo = cap.fm.titulo || '' }) {
   const id = `cap-${String(numero).padStart(2, '0')}-${slug(titulo)}`;
@@ -90,9 +111,11 @@ function reescrever(raiz, cap, { numero = cap.numero, titulo = cap.fm.titulo || 
   let texto;
   const antigo = cap.fm.titulo || '';
   if (titulo !== antigo) ({ corpo, h1, texto } = trocarTituloDoCorpo(corpo, antigo, titulo));
+  let idsDeCena = 0;
+  if (numero !== cap.numero) ({ corpo, trocados: idsDeCena } = levarIdsDeCena(corpo, cap.numero, numero));
   writeFileSync(cap.caminho, m[1] + fm + corpo, 'utf8');
   if (novo !== cap.caminho) renameSync(cap.caminho, novo);
-  return { id, caminho: novo, h1, texto };
+  return { id, caminho: novo, h1, texto, idsDeCena };
 }
 
 export function capRenumber(args) {
@@ -114,6 +137,7 @@ export function capRenumber(args) {
   const antes = cap.arquivo;
   const r = reescrever(raiz, cap, { numero });
   console.log(`${c.green('renumerado')}  ${antes} -> ${rel(raiz, r.caminho)}`);
+  if (r.idsDeCena) console.log(c.dim(`  ${r.idsDeCena} id(s) de cena reescrito(s): ${cap.numero}.N -> ${numero}.N`));
   console.log(c.dim('  confira o sumario: o gate compara os dois'));
 }
 

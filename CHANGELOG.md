@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.10.4 — 2026-11-24
+
+### Corrigido
+
+- **`cap renumber` deixa o `id:` das cenas com o número velho.** O comando
+  renomeava o arquivo e reescrevia `numero` e `id` no frontmatter, mas o
+  contrato de cena continuava `15.1`, `15.2` num capítulo que virou o 17. O
+  `brief --cena` não achava a cena e entregava a primeira sem avisar, e o
+  `cena add` continuava a sequência velha. Agora o prefixo do `id:` acompanha,
+  só dentro dos blocos ```` ```cena ```` e só quando ele era o número velho:
+  prosa, bloco de código comum, `# Titulo` e id em formato do autor
+  (`abertura`, ou `7.1` num capítulo 5) ficam como estão. O comando diz
+  quantos ids reescreveu.
+
+### Novo
+
+- **`validate` reprova id de cena que não bate com o capítulo.** Cena com id
+  `<n>.<resto>` num capítulo cujo `numero` não é `<n>` é erro, com o prefixo
+  esperado na mensagem. Id em outro formato não é cobrado.
+
+Obra renumerada antes desta versão fica vermelha no `validate` até os ids
+serem corrigidos à mão.
+
+Motivado por `pessoal/book/verde-nao-e-prova`, revisão 40: a troca dos caps.
+15, 16 e 17 passou no gate com os seis ids de cena na numeração antiga.
+
 ## 0.10.3 — 2026-11-23
 
 ### Corrigido

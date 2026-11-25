@@ -572,6 +572,59 @@ function comCincoCapitulos(titulo) {
   ok('renumber recusa numero invalido', p.rodar('cap', 'renumber', '1', 'zero').codigo === 1);
 }
 
+// ---------------------------------------------------------------------------
+// 0.10.4 — o renumber leva o prefixo do id de cena, e o gate o cobra
+// (REQ-2026-11-24). Medido numa obra real: a troca de tres capitulos passou no
+// validate com seis ids de cena na numeracao velha, o `brief --cena` caia na
+// primeira cena sem avisar e o `cena add` continuava a sequencia errada.
+// ---------------------------------------------------------------------------
+
+{
+  const p = comCincoCapitulos('Ids de cena');
+  const arq = (n, t) => join(p.dir, 'capitulos', 'backlog', `cap-${String(n).padStart(2, '0')}-capitulo-${t}.md`);
+  const cena = (id) => `\n\`\`\`cena\nid: ${id}\nlocal:\n\`\`\`\n`;
+  const acrescentar = (caminho, texto) => writeFileSync(caminho, readFileSync(caminho, 'utf8') + texto, 'utf8');
+
+  // cap 5: duas cenas do capitulo, uma com id do autor, uma que ja era de
+  // outro capitulo, e `id: 5.1` solto na prosa e num bloco de codigo comum
+  acrescentar(arq(5, 5), `\n## Cena 1\n${cena('5.1')}\nNa prosa: id: 5.1 fica.\n\n\`\`\`text\nid: 5.1\n\`\`\`\n`
+    + `\n## Cena 2\n${cena('5.2')}\n## Cena 3\n${cena('abertura')}\n## Cena 4\n${cena('7.1')}`);
+  const r = p.rodar('cap', 'renumber', '5', '9');
+  const c9 = readFileSync(arq(9, 5), 'utf8');
+  ok('renumber leva o prefixo das cenas (AC1)', /```cena\nid: 9\.1\n/.test(c9) && /```cena\nid: 9\.2\n/.test(c9));
+  ok('nenhum contrato fica com o numero velho (AC1)', !/```cena\r?\nid: 5\./.test(c9));
+  ok('nem o contrato que o template do cap new ja traz (AC1)', /```cena\r?\nid: 9\.1\r?\nlocal:\r?\ntempo:/.test(c9));
+  ok('id: 5.1 na prosa fica (AC3)', c9.includes('Na prosa: id: 5.1 fica.'));
+  ok('id: 5.1 em bloco de codigo comum fica (AC3)', c9.includes('```text\nid: 5.1\n```'));
+  ok('o # do corpo continua (AC3)', /^# Capitulo 5\r?$/m.test(c9));
+  ok('id do autor nao e reescrito (AC4)', c9.includes('id: abertura'));
+  ok('id que ja era de outro capitulo nao e reescrito (AC4)', /```cena\nid: 7\.1\n/.test(c9));
+  // tres: o contrato que o template do `cap new` ja traz (5.1), e os dois acrescentados
+  ok('renumber diz quantos ids reescreveu (AC5)', r.saida.includes('3 id(s) de cena reescrito(s)'));
+
+  // troca em tres passos por numero temporario (AC2)
+  acrescentar(arq(3, 3), `\n## Cena 1\n${cena('3.1')}`);
+  acrescentar(arq(4, 4), `\n## Cena 1\n${cena('4.1')}`);
+  p.rodar('cap', 'renumber', '3', '99');
+  p.rodar('cap', 'renumber', '4', '3');
+  p.rodar('cap', 'renumber', '99', '4');
+  ok('troca em tres passos: o 3 novo tem id 3.1 (AC2)', readFileSync(arq(3, 4), 'utf8').includes('id: 3.1\n'));
+  ok('troca em tres passos: o 4 novo tem id 4.1 (AC2)', readFileSync(arq(4, 3), 'utf8').includes('id: 4.1\n'));
+
+  // CRLF (AC6)
+  const c1 = readFileSync(arq(1, 1), 'utf8').replace(/\r?\n/g, '\r\n') + '\r\n## Cena 1\r\n\r\n```cena\r\nid: 1.1\r\nlocal:\r\n```\r\n';
+  writeFileSync(arq(1, 1), c1, 'utf8');
+  p.rodar('cap', 'renumber', '1', '6');
+  ok('contrato com CRLF tem o id reescrito e o \\r\\n preservado (AC6)', readFileSync(arq(6, 1), 'utf8').includes('```cena\r\nid: 6.1\r\nlocal:'));
+
+  // gate (AC7): o 7.1 que sobrou no cap 9 reprova; o id do autor nao
+  const v = p.rodar('validate');
+  ok('validate reprova id que nao bate com o capitulo (AC7)',
+    v.codigo === 1 && v.saida.includes('id "7.1" nao bate com o capitulo 9 — deveria ser 9.1'));
+  ok('validate nao cobra id do autor (AC7)', !v.saida.includes('id "abertura" nao bate'));
+  ok('validate nao cobra id certo (AC7)', !v.saida.includes('id "9.2" nao bate'));
+}
+
 {
   const p = comCincoCapitulos('Retitular');
   const r = p.rodar('cap', 'retitle', '2', 'O nome novo');

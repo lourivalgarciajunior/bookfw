@@ -1,0 +1,1 @@
+- [Verde não é prova — vozes](verde-nao-e-prova-vozes.md) — fichas com Voz vazia (Lia, Márcia, Rodrigo, Cida); idioleto no style-card; tiques de rubrica achados
