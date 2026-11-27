@@ -91,4 +91,9 @@ jobs:
 
       # Sem NODE_AUTH_TOKEN, de proposito. A procedencia sai assinada por conta
       # da publicacao confiavel, sem nenhum flag.
-      - run: npm publish --access public
+      #
+      # `--loglevel verbose`: quando a npm recusa a troca do token OIDC, o npm
+      # segue sem credencial e o erro final e um ENEEDAUTH que nao diz por que.
+      # O motivo da recusa so aparece no log detalhado. Medido em 2026-11-18:
+      # duas execucoes da v0.10.1 com ENEEDAUTH e nenhuma linha de causa.
+      - run: npm publish --access public --loglevel verbose
